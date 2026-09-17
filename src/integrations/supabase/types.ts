@@ -1155,21 +1155,6 @@ export type Database = {
     }
     Functions: {
       dashboard_resumo: { Args: { _propriedade_id: string }; Returns: Json }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      pode_administrar_propriedade: {
-        Args: { _propriedade_id: string }
-        Returns: boolean
-      }
-      tem_acesso_propriedade: {
-        Args: { _propriedade_id: string }
-        Returns: boolean
-      }
     }
     Enums: {
       app_role:
