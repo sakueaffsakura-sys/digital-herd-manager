@@ -1155,7 +1155,6 @@ export type Database = {
     }
     Functions: {
       dashboard_resumo: { Args: { _propriedade_id: string }; Returns: Json }
-      whoami: { Args: never; Returns: Json }
     }
     Enums: {
       app_role:
