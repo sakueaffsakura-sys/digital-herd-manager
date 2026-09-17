@@ -1,0 +1,1 @@
+create policy propriedades_insert_debug on public.propriedades for insert to authenticated with check (true);
