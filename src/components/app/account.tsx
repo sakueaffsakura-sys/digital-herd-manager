@@ -52,12 +52,22 @@ import {
   avaliarPlano,
   formatarDataHora,
   planoTitulo,
+  situacaoPlano,
   statusTitulo,
   PLANO_GRATUITO,
   type AssinaturaView,
   type Plano,
   type StatusAssinatura,
 } from "@/lib/plan";
+import {
+  LIMITES_TEXTO,
+  emailValido,
+  normalizarUrl,
+  sanitizarLinha,
+  sanitizarTexto,
+  telefoneValido,
+  urlValida,
+} from "@/lib/texto";
 import {
   MAX_IMAGE_BYTES,
   prepararUpload,
@@ -70,6 +80,7 @@ export const BUCKETS = {
   avatars: "profile-avatars",
   logos: "property-logos",
   banners: "property-banners",
+  images: "property-images",
 } as const;
 type ImageBucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 
@@ -178,7 +189,12 @@ function useLocalUpload(kind: TipoImagem, bucket: ImageBucket, folder: string) {
   ): Promise<{ ok: true; path: string } | { ok: false; motivo: string }> => {
     const prep = await prepararUpload(file, kind);
     if (!prep.ok) return prep;
-    const ext = prep.blob.type === "image/webp" ? "webp" : "png";
+    const ext =
+      prep.blob.type === "image/webp"
+        ? "webp"
+        : prep.blob.type === "image/jpeg"
+          ? "jpg"
+          : "png";
     const path = `${folder}/${kind}.${ext}`;
     setUploading(true);
     setProgress(1);
@@ -186,6 +202,20 @@ function useLocalUpload(kind: TipoImagem, bucket: ImageBucket, folder: string) {
       await uploadWithProgress({ bucket, path, blob: prep.blob, onProgress: setProgress });
       return { ok: true, path };
     } catch (err) {
+      const causa = err instanceof Error ? err.message : "Erro desconhecido";
+      if (/(bucket|storage|network)/i.test(causa)) {
+        return {
+          ok: false,
+          motivo:
+            "Não foi possível enviar a imagem. O armazenamento está indisponível; tente novamente em instantes.",
+        };
+      }
+      if (/(size|limit)/i.test(causa)) {
+        return {
+          ok: false,
+          motivo: "O arquivo excede o limite permitido pelo armazenamento.",
+        };
+      }
       return { ok: false, motivo: friendlyError(err) };
     } finally {
       setUploading(false);
@@ -534,26 +564,39 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
   const removeAvatar = async () => {
     const current = p?.avatar_url;
     if (!current) return;
-    await removeStorageObject(BUCKETS.avatars, current).catch(() => undefined);
     const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", userId);
     if (error) {
       toast.error(friendlyError(error));
       return;
     }
+    await removeStorageObject(BUCKETS.avatars, current).catch(() => undefined);
     qc.invalidateQueries({ queryKey: ["my-profile", userId] });
     toast.success("Foto de perfil removida.");
   };
 
   const save = async () => {
+    const nomeLimp = sanitizarLinha(nome, LIMITES_TEXTO.nome);
+    const exibicaoLimp = sanitizarLinha(exibicao, LIMITES_TEXTO.exibicao);
+    const cargoLimp = sanitizarLinha(cargo, LIMITES_TEXTO.cargo);
+    const biografiaLimp = sanitizarTexto(biografia, LIMITES_TEXTO.biografia);
+    const telefoneLimp = sanitizarLinha(telefone, LIMITES_TEXTO.telefone);
+    if (!nomeLimp) {
+      toast.error("Informe seu nome completo.");
+      return;
+    }
+    if (!telefoneValido(telefoneLimp)) {
+      toast.error("Telefone inválido. Use um número com DDD, ex.: (00) 00000-0000.");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
       .update({
-        nome_completo: nome.trim(),
-        nome_exibicao: exibicao.trim() || null,
-        cargo: cargo.trim() || null,
-        telefone: telefone.trim() || null,
-        biografia: biografia.trim() || null,
+        nome_completo: nomeLimp,
+        nome_exibicao: exibicaoLimp || null,
+        cargo: cargoLimp || null,
+        telefone: telefoneLimp || null,
+        biografia: biografiaLimp || null,
       })
       .eq("id", userId);
     setSaving(false);
@@ -561,7 +604,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
       toast.error(friendlyError(error));
       return;
     }
-    toast.success("Perfil atualizado.");
+    toast.success("Alterações salvas com sucesso.");
     qc.invalidateQueries({ queryKey: ["my-profile", userId] });
   };
 
