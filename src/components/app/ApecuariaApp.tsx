@@ -2,7 +2,7 @@ import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type Fo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
-  Activity, BarChart3, Bell, Beef, Building2, CircleDollarSign,
+  Activity, BarChart3, Bell, Beef, CircleDollarSign,
   CreditCard, FlaskConical, Gauge, HeartPulse, LayoutDashboard, LogOut,
   Eye, Menu, Milk, Plus, Search, Settings, ShoppingCart,
   ShieldCheck, Syringe, TrendingUp, Upload, UserRound, Warehouse, X,
