@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Activity, BarChart3, Bell, Beef, Building2, CircleDollarSign,
   CreditCard, FlaskConical, Gauge, HeartPulse, LayoutDashboard, LogOut,
-  Eye, Menu, Milk, NotebookPen, Plus, Search, Settings, ShoppingCart,
+  Eye, Menu, Milk, Plus, Search, Settings, ShoppingCart,
   ShieldCheck, Syringe, TrendingUp, Upload, UserRound, Warehouse, X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,12 +17,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Database } from "@/integrations/supabase/types";
 import {
-  Empty, EmptyProperty, EmptySection, Field, Module, Row, PageTitle, Status,
-  dateNow, friendlyError, money, pretty,
+  Empty, EmptyProperty, EmptySection, Module, Row, PageTitle, Status,
+  friendlyError, money, pretty,
 } from "./shared";
 import { useDebouncedValue, usePagedRows, type GridFilter } from "./usePagedRows";
 import { VirtualTable } from "./VirtualTable";
 import ImportDialog from "./ImportDialog";
+import { RecordDialog } from "./RecordDialog";
+import { NotesMural, productionNotes } from "./NotesMural";
 import {
   HeaderAccount,
   MyProfilePage,
@@ -58,7 +60,6 @@ const modules: Record<string, Module> = {
 };
 
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"Catálogo sanitário e intervalo recomendado entre aplicações.", searchColumns:["nome"], columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
-const productionNotes: Module = { title:"Anotações da Produção", singular:"anotação", table:"anotacoes_producao", icon:NotebookPen, description:"Comportamento, alimentação e observações ligadas à produção.", searchColumns:["observacao","comportamento","alimentacao"], columns:[{key:"data",label:"Data"},{key:"animal_id",label:"Animal"},{key:"lote_id",label:"Lote"},{key:"producao",label:"Produção (L)"},{key:"observacao",label:"Observação"}], fields:[{key:"animal_id",label:"Animal",type:"animal",activeOnly:true},{key:"lote_id",label:"Lote",type:"lote"},{key:"data",label:"Data",type:"date",required:true},{key:"producao",label:"Produção (L)",type:"number"},{key:"observacao",label:"Observação",type:"textarea",required:true},{key:"comportamento",label:"Comportamento"},{key:"alimentacao",label:"Alimentação"},{key:"informacoes_adicionais",label:"Informações adicionais",type:"textarea"}]};
 
 export function ApecuariaApp() {
   const { section = "inicio" } = useParams({ strict:false }) as { section?: string };
