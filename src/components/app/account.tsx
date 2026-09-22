@@ -805,9 +805,9 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
     qc.invalidateQueries({ queryKey: ["property-profile", propertyId] });
   };
 
-  const guard = (recurso: string): boolean => {
+  const guard = (): boolean => {
     if (premium) return true;
-    toast.error(`"${recurso}" é um recurso do plano Premium.`);
+    toast.error("Este recurso está disponível no plano Premium.");
     return false;
   };
 
@@ -820,7 +820,7 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
     label: string,
   ) => {
     if (!file) return;
-    if (!guard(label)) return;
+    if (!guard()) return;
     setBusy(label);
     const res = await upload.run(file);
     if (!res.ok) {
@@ -841,7 +841,7 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
   const removeMedia = async (col: "logo_url" | "banner_url" | "imagem_url", label: string) => {
     const current = p?.[col];
     if (!current) return;
-    if (!guard(label)) return;
+    if (!guard()) return;
     setBusy(label);
     const bucket: ImageBucket =
       col === "logo_url" ? BUCKETS.logos : col === "banner_url" ? BUCKETS.banners : BUCKETS.images;
