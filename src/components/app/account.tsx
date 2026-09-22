@@ -659,31 +659,40 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
 
         <section className="rounded-lg border border-border bg-card p-5">
           <h2 className="font-semibold">Dados pessoais</h2>
+          {profile.isLoading && (
+            <p className="mt-3 text-sm text-muted-foreground">Carregando perfil…</p>
+          )}
+          {profile.isError && (
+            <div className="mt-3 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              Não foi possível carregar os dados do perfil. Tente novamente em instantes.
+            </div>
+          )}
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Nome completo</Label>
-              <Input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
+              <Input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={LIMITES_TEXTO.nome} />
             </div>
             <div>
               <Label>Nome de exibição</Label>
               <Input
                 value={exibicao}
                 onChange={(e) => setExibicao(e.target.value)}
-                maxLength={60}
+                maxLength={LIMITES_TEXTO.exibicao}
                 placeholder="Como aparece no app"
               />
             </div>
             <div>
               <Label>Telefone</Label>
-              <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} maxLength={30} placeholder="(00) 00000-0000" />
+              <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} maxLength={LIMITES_TEXTO.telefone} placeholder="(00) 00000-0000" />
             </div>
             <div>
               <Label>Cargo</Label>
-              <Input value={cargo} onChange={(e) => setCargo(e.target.value)} maxLength={60} placeholder="Ex.: Médico veterinário" />
+              <Input value={cargo} onChange={(e) => setCargo(e.target.value)} maxLength={LIMITES_TEXTO.cargo} placeholder="Ex.: Médico veterinário" />
             </div>
             <div className="sm:col-span-2">
               <Label>Biografia</Label>
-              <Textarea value={biografia} onChange={(e) => setBiografia(e.target.value)} maxLength={2000} placeholder="Sobre você, experiência com pecuária…" />
+              <Textarea value={biografia} onChange={(e) => setBiografia(e.target.value)} maxLength={LIMITES_TEXTO.biografia} placeholder="Sobre você, experiência com pecuária…" />
             </div>
             <div className="sm:col-span-2 grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
               <div>
@@ -697,7 +706,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
             </div>
           </div>
           <div className="mt-6 flex items-center gap-3">
-            <Button onClick={save} disabled={saving}>
+            <Button onClick={save} disabled={saving || profile.isLoading}>
               <Save /> {saving ? "Salvando…" : "Salvar alterações"}
             </Button>
           </div>
@@ -727,7 +736,7 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
 
   const logo = useLocalUpload("logo", BUCKETS.logos, propertyId);
   const banner = useLocalUpload("banner", BUCKETS.banners, propertyId);
-  const imagem = useLocalUpload("avatar", BUCKETS.banners, propertyId);
+  const imagem = useLocalUpload("avatar", BUCKETS.images, propertyId);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
@@ -760,14 +769,32 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
   };
 
   const save = async () => {
+    const descricaoLimp = sanitizarTexto(descricao, LIMITES_TEXTO.descricao);
+    const telefoneLimp = sanitizarLinha(telefone, LIMITES_TEXTO.telefone);
+    const emailLimp = sanitizarLinha(email, LIMITES_TEXTO.email);
+    const enderecoLimp = sanitizarLinha(endereco, LIMITES_TEXTO.endereco);
+    const websiteLimp = normalizarUrl(website);
+    const textoLimp = sanitizarTexto(texto, LIMITES_TEXTO.texto);
+    if (!telefoneValido(telefoneLimp)) {
+      toast.error("Telefone inválido. Use um número com DDD.");
+      return;
+    }
+    if (!emailValido(emailLimp)) {
+      toast.error("E-mail inválido. Verifique o endereço informado.");
+      return;
+    }
+    if (!urlValida(websiteLimp)) {
+      toast.error("Website inválido. Use um endereço como https://….");
+      return;
+    }
     setSaving(true);
     const err = await upsert({
-      descricao: descricao.trim() || null,
-      telefone: telefone.trim() || null,
-      email: email.trim() || null,
-      endereco: endereco.trim() || null,
-      website: website.trim() || null,
-      texto_apresentacao: texto.trim() || null,
+      descricao: descricaoLimp || null,
+      telefone: telefoneLimp || null,
+      email: emailLimp || null,
+      endereco: enderecoLimp || null,
+      website: websiteLimp || null,
+      texto_apresentacao: textoLimp || null,
     });
     setSaving(false);
     if (err) {
@@ -817,12 +844,15 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
     if (!guard(label)) return;
     setBusy(label);
     const bucket: ImageBucket =
-      col === "logo_url" ? BUCKETS.logos : BUCKETS.banners;
-    await removeStorageObject(bucket, current).catch(() => undefined);
+      col === "logo_url" ? BUCKETS.logos : col === "banner_url" ? BUCKETS.banners : BUCKETS.images;
     const err = await upsert({ [col]: null } as never);
     setBusy(null);
-    if (err) toast.error(friendlyError(err));
-    else toast.success(`${label} removido.`);
+    if (err) {
+      toast.error(friendlyError(err));
+      return;
+    }
+    await removeStorageObject(bucket, current).catch(() => undefined);
+    toast.success(`${label} removido.`);
     qc.invalidateQueries({ queryKey: ["property-profile", propertyId] });
   };
 
@@ -932,7 +962,7 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
               "Foto de perfil da propriedade",
               "imagem_url",
               imagem,
-              BUCKETS.banners,
+              BUCKETS.images,
               "h-28",
               <div className="grid h-full w-full place-items-center bg-muted text-xs text-muted-foreground">
                 Sem foto
@@ -991,6 +1021,7 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
   const audit = useAudit(propertyId);
   const planStatus = plan.data ?? PLANO_GRATUITO;
   const r = avaliarPlano(planStatus);
+  const situacao = situacaoPlano(planStatus);
 
   const [plano, setPlano] = useState<Plano>("premium");
   const [status, setStatus] = useState<StatusAssinatura>("ativo");
@@ -1035,7 +1066,7 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold">{r.label}</h2>
+              <h2 className="text-2xl font-bold">{situacao.label}</h2>
               <DemoSeal plan={planStatus} />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
