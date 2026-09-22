@@ -80,7 +80,7 @@ export function VirtualTable({
   const summary = pageSummary({ page, pageSize, total });
   const last = maxPage({ total, pageSize });
   const window = pageWindow(page, total, pageSize);
-  const gridColumns = `[auto] repeat(${columns.length}, minmax(0, 1fr))${actions ? " 150px" : ""}`;
+  const gridColumns = `12px repeat(${columns.length}, minmax(0, 1fr))${actions ? " 150px" : ""}`;
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
