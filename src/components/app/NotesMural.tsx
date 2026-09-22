@@ -137,7 +137,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
 
   const summary = pageSummary({ page, pageSize, total: paged.total });
   const last = maxPage({ total: paged.total, pageSize });
-  const window = pageWindow(page, paged.total, pageSize);
+  const pages = pageWindow(page, paged.total, pageSize);
   const rows = useMemo(() => paged.rows, [paged.rows]);
 
   return (
@@ -270,7 +270,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
               <>
                 <Button variant="ghost" size="icon" aria-label="Primeira página" disabled={page <= 1} onClick={() => setPage(1)}><ChevronsLeft /></Button>
                 <Button variant="ghost" size="icon" aria-label="Página anterior" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft /></Button>
-                {window.map((p) => (
+                {pages.map((p) => (
                   <Button key={p} variant={p === page ? "default" : "ghost"} size="sm" className="min-w-9" onClick={() => setPage(p)}>{p}</Button>
                 ))}
                 <Button variant="ghost" size="icon" aria-label="Próxima página" disabled={page >= last} onClick={() => setPage(page + 1)}><ChevronRight /></Button>
