@@ -56,6 +56,7 @@ export default function ImportDialog({
     if (open) {
       setState({ step: "upload" });
       setFile(null);
+      resume.current = null;
       doneId.current += 1;
     }
   }, [open]);
@@ -227,16 +228,17 @@ export default function ImportDialog({
   };
 
   const probeResume = () => {
-    if (!file) return;
+    const selected = fileRef.current?.files?.[0];
+    if (!selected) return;
     void (async () => {
       const { data } = await supabase
         .from("importacoes")
         .select("processadas,rejeitadas_detalhe,status")
         .eq("propriedade_id", propertyId)
         .eq("tabela", config.table)
-        .eq("arquivo", file.name)
+        .eq("arquivo", selected.name)
         .maybeSingle();
-      if (data && data.status === "em_andamento" && String(data.processadas) !== "0") {
+      if (data && data.status === "em_andamento" && Number(data.processadas) !== 0) {
         resume.current = {
           processadas: Number(data.processadas),
           reasons: ((data.rejeitadas_detalhe as unknown) ?? []) as Reason[],

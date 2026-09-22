@@ -32,7 +32,7 @@ export function useDebouncedValue<T>(value: T, delay = 350): T {
 const serialize = (filters: FilterBag | undefined, search: string) =>
   `${search}\u0000${JSON.stringify(filters?.map((f) => [f.key, f.op, f.value]))}`;
 
-function applyKludges(
+function baseScopedQuery(
   table: string,
   propertyId: string,
   search: string,
@@ -74,7 +74,7 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       searchColumns?: string[];
       filters?: FilterBag;
     }) => {
-      const q = applyKludges(table, propertyId, search, searchColumns, filters);
+      const q = baseScopedQuery(table, propertyId, search, searchColumns, filters);
       const { count, error } = await (q as any).select("id", { count: "exact", head: true });
       return { count: (count ?? 0) as number, error };
     },
@@ -95,7 +95,7 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       filters?: FilterBag;
     }) => {
       const { from, to } = rangeOf(page, pageSize);
-      let q = applyKludges(table, propertyId, search, searchColumns, filters);
+      let q = baseScopedQuery(table, propertyId, search, searchColumns, filters);
       q = q.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
       const { data, error } = await q.select(cols);
       return { data: (data ?? []) as Record<string, unknown>[], error };
