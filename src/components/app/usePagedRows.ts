@@ -5,7 +5,7 @@ import { clampPage, rangeOf } from "@/lib/pagination";
 
 export type GridFilter = {
   key: string;
-  op: "eq" | "ilike" | "gte" | "lte";
+  op: "eq" | "ilike" | "gte" | "lte" | "is-null";
   value: string | null;
 };
 
@@ -42,7 +42,12 @@ function applyKludges(
   const base = supabase.from(table as any);
   let q = base.eq("propriedade_id", propertyId);
   for (const f of filters ?? []) {
-    if (!f || f.value === null || f.value === "") continue;
+    if (!f) continue;
+    if (f.op === "is-null") {
+      q = q.is(f.key, null);
+      continue;
+    }
+    if (f.value === null || f.value === "") continue;
     q = q[f.op](f.key, f.op === "ilike" ? `%${escapeILikeValue(f.value)}%` : f.value);
   }
   if (search && (searchColumns?.length ?? 0) > 0) {

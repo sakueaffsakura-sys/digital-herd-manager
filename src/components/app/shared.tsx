@@ -13,7 +13,9 @@ import type { Database } from "@/integrations/supabase/types";
 export type TableName = keyof Database["public"]["Tables"];
 export type Row = Record<string, unknown>;
 export type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina"; required?: boolean; options?: { value: string; label: string }[]; sex?: "M" | "F"; activeOnly?: boolean };
-export type Module = { title: string; singular: string; table: TableName; icon: typeof Beef; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean };
+export type FilterDef = { key: string; label: string; options: { value: string; label: string }[] };
+export type ImpliedFilter = { key: string; isNull?: boolean; value?: string };
+export type Module = { title: string; singular: string; table: TableName; icon: typeof Beef; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter };
 export type FormRefs = {
   animals: { id: string; nome: string | null; numero_brinco: string; data_nascimento: string | null; sexo: string; situacao: string }[];
   lots: { id: string; nome: string }[];

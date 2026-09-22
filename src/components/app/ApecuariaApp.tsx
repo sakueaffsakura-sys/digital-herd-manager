@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Activity, BarChart3, Bell, Beef, CircleDollarSign,
-  FlaskConical, HeartPulse, LayoutDashboard, LogOut,
+  FlaskConical, Gauge, HeartPulse, LayoutDashboard, LogOut,
   Eye, Menu, Milk, NotebookPen, Plus, Search, Settings, ShoppingCart,
-  ShieldCheck, Syringe, TrendingUp, Warehouse, X,
+  ShieldCheck, Syringe, TrendingUp, Upload, Warehouse, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,15 +20,20 @@ import {
   Empty, EmptyProperty, EmptySection, Field, Module, Row, PageTitle, Status,
   dateNow, friendlyError, money, pretty,
 } from "./shared";
+import { useDebouncedValue, usePagedRows, type GridFilter } from "./usePagedRows";
+import { VirtualTable } from "./VirtualTable";
+import ImportDialog from "./ImportDialog";
 
 const Dashboard = lazy(() => import("./Dashboard"));
 const Reports = lazy(() => import("./Reports"));
+const Diagnostics = lazy(() => import("./Diagnostics"));
 
 const nav = [
   ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", Beef], ["bezerros", "Evolução dos Bezerros", Activity],
   ["vacinacao", "Vacinação", Syringe], ["inseminacao", "Inseminação", FlaskConical], ["nascimentos", "Nascimentos", HeartPulse],
   ["lotes", "Lotes", Warehouse], ["producao", "Produção de Leite", Milk], ["relatorios", "Relatórios", BarChart3],
   ["financeiro", "Lucros e Investimentos", CircleDollarSign], ["comercial", "Compra e Venda", ShoppingCart], ["configuracoes", "Configurações", Settings],
+  ["diagnostico", "Diagnóstico", Gauge],
 ] as const;
 
 const modules: Record<string, Module> = {
