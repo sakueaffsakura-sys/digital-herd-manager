@@ -689,17 +689,12 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
 // ---------------------------------------------------------------------------
 // Perfil da Propriedade.
 // ---------------------------------------------------------------------------
-export function PropertyProfilePage({
-  propertyId,
-  plan,
-}: {
-  propertyId: string;
-  plan: PlanView;
-}) {
+export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
   const qc = useQueryClient();
   const profile = usePropertyProfile(propertyId);
   const p = profile.data ?? null;
-  const premium = avaliarPlano(plan).premium_ativo;
+  const planQuery = usePlan(propertyId);
+  const premium = avaliarPlano(planQuery.data ?? PLANO_GRATUITO).premium_ativo;
 
   const [descricao, setDescricao] = useState("");
   const [telefone, setTelefone] = useState("");
