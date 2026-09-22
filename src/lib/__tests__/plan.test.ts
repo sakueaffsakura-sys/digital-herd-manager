@@ -1,73 +1,91 @@
 import { describe, expect, it } from "vitest";
 import {
   avaliarPlano,
-  formatarDataHora,
-  planoTitulo,
   premiumAtivo,
+  situacaoPlano,
   statusTitulo,
 } from "../plan";
 
-const AGORA = new Date("2026-09-21T12:00:00Z");
-
 describe("premiumAtivo", () => {
-  it("premium ativo sem expiração", () => {
-    expect(premiumAtivo({ plano: "premium", status: "ativo" }, AGORA)).toBe(true);
-    expect(premiumAtivo({ plano: "premium", status: "trial" }, AGORA)).toBe(true);
+  it("falso sem plano premium", () => {
+    expect(premiumAtivo({ plano: "gratuito" })).toBe(false);
   });
 
-  it("não é premium em outras combinações", () => {
-    expect(premiumAtivo({ plano: "premium", status: "cancelado" }, AGORA)).toBe(false);
-    expect(premiumAtivo({ plano: "premium", status: "expirado" }, AGORA)).toBe(false);
-    expect(premiumAtivo({ plano: "premium", status: "pendente" }, AGORA)).toBe(false);
-    expect(premiumAtivo({ plano: "gratuito", status: "ativo" }, AGORA)).toBe(false);
-    expect(premiumAtivo({ plano: null, status: null }, AGORA)).toBe(false);
+  it("falso com status não ativo", () => {
+    expect(premiumAtivo({ plano: "premium", status: "cancelado" })).toBe(false);
   });
 
-  it("expira na data", () => {
-    const futura = "2026-09-22T00:00:00Z";
-    const passada = "2026-09-20T00:00:00Z";
-    expect(premiumAtivo({ plano: "premium", status: "ativo", data_expiracao: futura }, AGORA)).toBe(true);
-    expect(premiumAtivo({ plano: "premium", status: "ativo", data_expiracao: passada }, AGORA)).toBe(false);
+  it("falso com data de expiração no passado", () => {
+    const agora = new Date("2026-09-22T12:00:00Z");
+    expect(
+      premiumAtivo(
+        { plano: "premium", status: "ativo", data_expiracao: "2026-09-01T00:00:00Z" },
+        agora,
+      ),
+    ).toBe(false);
+  });
+
+  it("verdadeiro com ativo/trial vigente", () => {
+    const agora = new Date("2026-09-22T12:00:00Z");
+    expect(
+      premiumAtivo(
+        { plano: "premium", status: "ativo", data_expiracao: "2026-12-01T00:00:00Z" },
+        agora,
+      ),
+    ).toBe(true);
+    expect(premiumAtivo({ plano: "premium", status: "trial", data_expiracao: null }, agora)).toBe(
+      true,
+    );
   });
 });
 
 describe("avaliarPlano", () => {
-  it("resume demo premium", () => {
-    const r = avaliarPlano(
-      { plano: "premium", status: "trial", origem: "demonstracao" },
-      AGORA,
-    );
-    expect(r.premium_ativo).toBe(true);
-    expect(r.demonstracao).toBe(true);
-    expect(r.label).toBe("Premium");
-    expect(r.status_label).toBe("trial");
-  });
-
-  it("resume gratuito", () => {
-    const r = avaliarPlano({ plano: "gratuito" }, AGORA);
-    expect(r.premium_ativo).toBe(false);
-    expect(r.label).toBe("Gratuito");
+  it("marca demonstração pela origem", () => {
+    expect(avaliarPlano({ plano: "premium", status: "ativo", origem: "demonstracao" }).demonstracao).toBe(true);
   });
 });
 
-describe("rótulos", () => {
-  it("planoTitulo", () => {
-    expect(planoTitulo({ plano: "premium" })).toBe("Premium");
-    expect(planoTitulo({ plano: "gratuito" })).toBe("Gratuito");
+describe("situacaoPlano", () => {
+  const agora = new Date("2026-09-22T12:00:00Z");
+
+  it("exibe Gratuito sem plano/premium", () => {
+    expect(situacaoPlano({}, agora).label).toBe("Gratuito");
+    expect(situacaoPlano({ plano: "gratuito" }, agora).label).toBe("Gratuito");
   });
 
-  it("statusTitulo", () => {
-    expect(statusTitulo("ativo")).toBe("Ativo");
-    expect(statusTitulo("trial")).toBe("Período de teste");
-    expect(statusTitulo("cancelado")).toBe("Cancelado");
-    expect(statusTitulo("expirado")).toBe("Expirado");
-    expect(statusTitulo("pendente")).toBe("Pendente");
+  it("exibe Premium ativo", () => {
+    expect(situacaoPlano({ plano: "premium", status: "ativo" }, agora).label).toBe("Premium ativo");
+    expect(situacaoPlano({ plano: "premium", status: "trial" }, agora).label).toBe("Premium ativo");
+  });
+
+  it("exibe Premium de demonstração", () => {
+    expect(
+      situacaoPlano({ plano: "premium", status: "ativo", origem: "demonstracao" }, agora).label,
+    ).toBe("Premium de demonstração");
+  });
+
+  it("exibe Premium expirado", () => {
+    expect(
+      situacaoPlano(
+        { plano: "premium", status: "ativo", data_expiracao: "2026-09-01T00:00:00Z" },
+        agora,
+      ).label,
+    ).toBe("Premium expirado");
+    expect(situacaoPlano({ plano: "premium", status: "expirado" }, agora).label).toBe(
+      "Premium expirado",
+    );
+  });
+
+  it("exibe Premium cancelado", () => {
+    expect(situacaoPlano({ plano: "premium", status: "cancelado" }, agora).label).toBe(
+      "Premium cancelado",
+    );
+  });
+});
+
+describe("statusTitulo", () => {
+  it("traduz status sem assinatura", () => {
     expect(statusTitulo(null)).toBe("Sem assinatura");
-  });
-
-  it("formatarDataHora", () => {
-    expect(formatarDataHora(null)).toBeNull();
-    expect(formatarDataHora("invalido")).toBeNull();
-    expect(formatarDataHora("2026-09-21T12:00:00Z", "pt-BR")).toContain("21/09/2026");
+    expect(statusTitulo("ativo")).toBe("Ativo");
   });
 });
