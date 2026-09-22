@@ -52,7 +52,6 @@ import {
   avaliarPlano,
   formatarDataHora,
   planoTitulo,
-  premiumAtivo,
   statusTitulo,
   PLANO_GRATUITO,
   type AssinaturaView,
