@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { Beef, Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,10 @@ import cattleImageMobile from "@/assets/cattle-dashboard-800.webp";
 import cattleImageWide from "@/assets/cattle-dashboard.webp";
 
 export const Route = createFileRoute("/")({
+  validateSearch: z.object({
+    motivo: z.string().optional(),
+    redirect: z.string().optional(),
+  }),
   head: () => ({ meta: [
     { title: "Apecuária Digital | Gestão Pecuária" },
     { name: "description", content: "Controle seu rebanho, produção, vacinação e finanças em uma plataforma segura." },

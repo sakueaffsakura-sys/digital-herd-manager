@@ -90,6 +90,41 @@ export const statusTitulo = (s: StatusAssinatura | null | undefined): string => 
   }
 };
 
+export type SituacaoPlano =
+  | "sem_assinatura"
+  | "gratuito"
+  | "premium_ativo"
+  | "premium_demo"
+  | "premium_expirado"
+  | "premium_cancelado"
+  | "premium_pendente";
+
+export function situacaoPlano(
+  p: PlanoInput,
+  now: Date = new Date(),
+): { chave: SituacaoPlano; label: string } {
+  if (!p?.plano || p.plano === "gratuito") {
+    return { chave: "gratuito", label: "Gratuito" };
+  }
+  if (p.status === "cancelado") {
+    return { chave: "premium_cancelado", label: "Premium cancelado" };
+  }
+  if (
+    p.status === "expirado" ||
+    (p.data_expiracao &&
+      new Date(p.data_expiracao).getTime() <= now.getTime())
+  ) {
+    return { chave: "premium_expirado", label: "Premium expirado" };
+  }
+  if (p.origem === "demonstracao") {
+    return { chave: "premium_demo", label: "Premium de demonstração" };
+  }
+  if (p.status === "ativo" || p.status === "trial") {
+    return { chave: "premium_ativo", label: "Premium ativo" };
+  }
+  return { chave: "premium_pendente", label: "Premium pendente" };
+}
+
 export const formatarDataHora = (
   iso: string | null | undefined,
   locale = "pt-BR",
