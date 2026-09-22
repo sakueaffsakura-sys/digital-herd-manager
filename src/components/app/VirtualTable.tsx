@@ -80,14 +80,13 @@ export function VirtualTable({
   const summary = pageSummary({ page, pageSize, total });
   const last = maxPage({ total, pageSize });
   const window = pageWindow(page, total, pageSize);
-  const gridColumns = `[auto] repeat(${columns.length}, minmax(0, 1fr))${actions ? " 132px" : ""}`;
+  const gridColumns = `[auto] repeat(${columns.length}, minmax(0, 1fr))${actions ? " 150px" : ""}`;
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div ref={containerRef} className="max-h-[68vh] overflow-auto">
         <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridColumns, minWidth: 700 }}>
-          <div className="pointer-events-none sticky top-0 z-10 col-span-full h-0" />
-          <div className="col-span-full grid bg-muted/35 text-xs font-semibold uppercase text-muted-foreground" style={{ gridTemplateColumns: gridColumns }}>
+          <div className="sticky top-0 z-10 col-span-full grid bg-muted/35 text-xs font-semibold uppercase text-muted-foreground" style={{ gridTemplateColumns: gridColumns }}>
             <div className="px-3 py-2" />
             {columns.map((c) => (
               <div className="px-5 py-3" key={c.key}>{c.label}</div>

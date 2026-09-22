@@ -114,9 +114,9 @@ export default function ImportDialog({
       reasons.push(r);
     });
 
-    setState({ step: "running", data, fields: current.fields, progress: 0, total: data.rows.length, aceitas: 0, rejeitadas: rejectedLines.size });
+    setState({ step: "running", data, fields: current.fields, progress: startAt, total: data.rows.length, aceitas: 0, rejeitadas: rejectedLines.size });
 
-    const saveProgress = async (processadas: number, erro?: string) => {
+    const saveProgress = async (processadas: number, status: "em_andamento" | "erro" | "concluida" = "em_andamento", erro?: string) => {
       const payload = {
         propriedade_id: propertyId,
         tabela: config.table,
@@ -126,7 +126,7 @@ export default function ImportDialog({
         aceitas,
         rejeitadas: reasons.length,
         rejeitadas_detalhe: reasons.slice(0, MAX_DETAIL),
-        status: erro ? "erro" : "em_andamento",
+        status: status,
         erro: erro ?? null,
       };
       await supabase.from("importacoes").upsert(payload, { onConflict: "propriedade_id,tabela,arquivo" });
@@ -155,7 +155,7 @@ export default function ImportDialog({
     };
 
     try {
-      await saveProgress(0);
+      if (startAt === 0) await saveProgress(0);
       let innerReasons = reasons.length;
       for (let i = 0; i < data.rows.length; i += 50) {
         const sliceRows = data.rows.slice(i, i + 50).filter((r) => !rejectedLines.has(Number(r["__linha"])));
@@ -177,13 +177,13 @@ export default function ImportDialog({
         setState((s) => (s.step === "running" ? { ...s, progress: processed, aceitas, rejeitadas: innerReasons } : s));
         if (processed % 250 === 0) await saveProgress(processed);
       }
-      await saveProgress(data.rows.length);
       const duplicated = reasons.filter((r) => r.motivo.includes("duplicado")).length;
+      await saveProgress(data.rows.length, "concluida");
       setState({ step: "done", aceitas, rejeitadas: reasons.length, reasons: reasons.slice(0, MAX_DETAIL), duplicated });
       toast.success(`Importação concluída: ${aceitas} registros adicionados.`);
       onImported(aceitas);
     } catch (error) {
-      await saveProgress(data.rows.length, friendlyError(error)).catch(() => undefined);
+      await saveProgress(data.rows.length, "erro", friendlyError(error)).catch(() => undefined);
       setState({ step: "preview", data, fields: current.fields, valid: current.valid, reasons: [...current.reasons, { linha: 0, motivo: "Erro inesperado: " + friendlyError(error) }], fieldsTouched: current.fieldsTouched });
       toast.error("A importação foi pausada. Reabra o arquivo para retomar de onde parou.");
     }
