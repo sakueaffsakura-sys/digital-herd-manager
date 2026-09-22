@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Empty, PageTitle, Panel, pretty, type Row } from "./shared";
 
 type DiagnosticoItem = { tabela: string; contagem: number; ultima_atualizacao: string | null; tempo_ms: number };
-type Inconsistencia = { checagem: string; registros: Row[] };
+type Inconsistencia = { tabela: string; checagem: string; qtd: number; exemplos: Row[] };
 
 export default function Diagnostics({ propertyId }: { propertyId: string }) {
   const diagnostic = useQuery({
@@ -23,7 +23,7 @@ export default function Diagnostics({ propertyId }: { propertyId: string }) {
   });
   const total = (diagnostic.data?.rows ?? []).reduce((sum, r) => sum + Number(r.contagem || 0), 0);
   const tempo = (diagnostic.data?.rows ?? []).reduce((sum, r) => sum + Number(r.tempo_ms || 0), 0);
-  const inconsistentCount = (diagnostic.data?.checagens ?? []).reduce((sum, c) => sum + Number(c.registros?.length ?? 0), 0);
+  const inconsistentCount = (diagnostic.data?.checagens ?? []).reduce((sum, c) => sum + Number(c.qtd ?? 0), 0);
 
   return (
     <div className="space-y-5">
@@ -54,19 +54,18 @@ export default function Diagnostics({ propertyId }: { propertyId: string }) {
         </Panel>
 
         <Panel title="Revisão de consistência" subtitle={`${inconsistentCount} possível(is) irregularidade(s) — nenhum dado é apagado`} >
-          {diagnostic.isLoading ? <p className="text-sm text-muted-foreground">Verificando…</p> : !diagnostic.data?.checagens.length || inconsistentCount === 0 ? (
+          {diagnostic.isLoading ? <p className="text-sm text-muted-foreground">Verificando…</p> : !inconsistentCount ? (
             <Empty message="Nenhuma inconsistência detectada." />
           ) : (
             <div className="space-y-5">
-              {diagnostic.data.checagens.map((c) => (
+              {diagnostic.data?.checagens.map((c) => (
                 <div key={c.checagem} className="rounded-lg border border-border bg-muted/20 p-4">
-                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldAlert className="size-4 text-amber-500" />{c.checagem}</p>
-                  {c.registros.length ? (
+                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldAlert className="size-4 text-amber-500" />{c.checagem} <span className="ml-auto rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">{Number(c.qtd ?? 0).toLocaleString("pt-BR")}</span></p>
+                  {c.exemplos?.length ? (
                     <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
-                      {c.registros.slice(0, 20).map((r, i) => (
-                        <li key={i}>{pretty(r["detalhe"])}</li>
+                      {c.exemplos.slice(0, 5).map((r, i) => (
+                        <li key={i}>{r["id"] ? `ID ${String(r["id"]).slice(0, 8)}…` : ""}{r["vaca_id"] && r["bezerro_id"] ? ` — vaca ${String(r["vaca_id"]).slice(0, 8)}…, bezerro ${String(r["bezerro_id"]).slice(0, 8)}…` : ""}</li>
                       ))}
-                      {c.registros.length > 20 && <li>…e mais {c.registros.length - 20}.</li>}
                     </ul>
                   ) : <p className="mt-1 text-xs text-muted-foreground">OK</p>}
                 </div>
