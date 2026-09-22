@@ -796,23 +796,20 @@ export function PropertyProfilePage({
     if (!current) return;
     if (!guard(label)) return;
     setBusy(label);
-    await removeStorageObject(BUCKETS.banners, current).catch(() => undefined);
-    await removeStorageObject(BUCKETS.logos, current).catch(() => undefined);
+    const bucket: ImageBucket =
+      col === "logo_url" ? BUCKETS.logos : BUCKETS.banners;
+    await removeStorageObject(bucket, current).catch(() => undefined);
     const err = await upsert({ [col]: null } as never);
-    setBusy(busy);
     setBusy(null);
     if (err) toast.error(friendlyError(err));
     else toast.success(`${label} removido.`);
     qc.invalidateQueries({ queryKey: ["property-profile", propertyId] });
   };
 
-  const bucketFor = (kind: TipoImagem): ImageBucket =>
-    kind === "banner" ? BUCKETS.banners : BUCKETS.logos;
-
   const renderUpload = (
     label: string,
-    kind: TipoImagem,
     col: "logo_url" | "banner_url" | "imagem_url",
+    upload: ReturnType<typeof useLocalUpload>,
     bucket: ImageBucket,
     previewClass: string,
     fallback: ReactNode,
@@ -843,9 +840,11 @@ export function PropertyProfilePage({
             accept="image/png,image/jpeg,image/webp"
             className="hidden"
             id={`file-${col}`}
-            onChange={(e) => pickFile(kind, uploading ? logo : logo, bucket, e.target.files?.[0], col, label).then(() => {
+            onChange={(e) => {
+              const file = e.target.files?.[0];
               e.target.value = "";
-            })}
+              if (file) void pickFile(kindFor(col), upload, bucket, file, col, label);
+            }}
           />
           <Button
             size="sm"
@@ -853,7 +852,7 @@ export function PropertyProfilePage({
             disabled={uploading}
             onClick={() => document.getElementById(`file-${col}`)?.click()}
           >
-            <ImagePlus /> {uploading ? `${label} ${busy ? "…" : ""}` : "Escolher imagem"}
+            <ImagePlus /> {uploading ? "Enviando…" : "Escolher imagem"}
           </Button>
           {p?.[col] && (
             <Button
@@ -866,10 +865,13 @@ export function PropertyProfilePage({
             </Button>
           )}
         </div>
-        {uploading && <Progress className="mt-2" value={100} />}
+        {uploading && <Progress className="mt-2" value={upload.progress ?? 0} />}
       </div>
     );
   };
+
+  const kindFor = (col: "logo_url" | "banner_url" | "imagem_url"): TipoImagem =>
+    col === "banner_url" ? "banner" : col === "logo_url" ? "logo" : "avatar";
 
   return (
     <div className="space-y-5">
