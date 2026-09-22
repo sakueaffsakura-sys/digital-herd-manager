@@ -157,11 +157,15 @@ export default function ImportDialog({
 
     try {
       if (startAt === 0) await saveProgress(0);
+      const byLinha = new Map<number, Row>(current.valid.map((r) => [Number(r["__linha"]), r]));
       let innerReasons = reasons.length;
       for (let i = 0; i < data.rows.length; i += 50) {
-        const sliceRows = data.rows.slice(i, i + 50).filter((r) => !rejectedLines.has(Number(r["__linha"])));
         if (i < startAt) continue;
-        for (const row of sliceRows) {
+        const slice = data.rows
+          .slice(i, i + 50)
+          .map((raw) => byLinha.get(Number(raw["__linha"])))
+          .filter((r): r is Row => Boolean(r));
+        for (const row of slice) {
           const key = naturalKeyForTable(config.table, row);
           if (seen.has(key)) {
             reasons.push({ linha: Number(row["__linha"] ?? 0), motivo: "Registro duplicado dentro do próprio arquivo." });
@@ -169,7 +173,7 @@ export default function ImportDialog({
             continue;
           }
         }
-        const fresh = sliceRows.filter((r) => !rejectedLines.has(Number(r["__linha"])));
+        const fresh = slice.filter((r) => !rejectedLines.has(Number(r["__linha"])));
         if (fresh.length) {
           await insertChunk(fresh.map((r) => ({ ...r, propriedade_id: propertyId })));
           innerReasons = reasons.length;
