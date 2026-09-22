@@ -39,8 +39,8 @@ function baseScopedQuery(
   searchColumns: string[] | undefined,
   filters: FilterBag | undefined,
 ) {
-  const base = supabase.from(table as any);
-  let q = base.eq("propriedade_id", propertyId);
+  let q = (supabase.from(table as any) as any).select();
+  q = q.eq("propriedade_id", propertyId);
   for (const f of filters ?? []) {
     if (!f) continue;
     if (f.op === "is-null") {
