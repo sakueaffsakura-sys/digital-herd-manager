@@ -714,18 +714,22 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
   }, [p]);
 
   const upsert = async (patch: Partial<PropertyProfileRow>) => {
-    const { error } = await supabase
+    const { data: existing } = await supabase
       .from("propriedade_perfil")
-      .update(patch)
-      .eq("propriedade_id", propertyId);
-    if (!error || error.code === "PGRST116") {
-      const { error: ins } = await supabase.from("propriedade_perfil").insert({
-        propriedade_id: propertyId,
-        ...patch,
-      } as never);
-      if (ins) return ins;
-      return null;
+      .select("id")
+      .eq("propriedade_id", propertyId)
+      .maybeSingle();
+    if (existing) {
+      const { error } = await supabase
+        .from("propriedade_perfil")
+        .update(patch)
+        .eq("id", existing.id);
+      return error;
     }
+    const { error } = await supabase.from("propriedade_perfil").insert({
+      propriedade_id: propertyId,
+      ...patch,
+    } as never);
     return error;
   };
 
