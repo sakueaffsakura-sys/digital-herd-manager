@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" width="1600" height="500" role="img" aria-label="Banner padrão da propriedade">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f3d23"/>
+      <stop offset="0.55" stop-color="#14532d"/>
+      <stop offset="1" stop-color="#166534"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fde68a" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fde68a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="500" fill="url(#bg)"/>
+
+  <circle cx="1300" cy="150" r="170" fill="url(#sunGlow)"/>
+  <circle cx="1300" cy="150" r="62" fill="url(#gold)"/>
+
+  <!-- colinas ao fundo -->
+  <path d="M0 330 C 220 250, 460 290, 640 345 C 840 400, 1080 350, 1280 300 C 1420 266, 1520 290, 1600 270 L1600 500 L0 500 Z" fill="#166534" opacity="0.35"/>
+  <path d="M0 380 C 260 320, 520 360, 760 410 C 980 455, 1200 430, 1380 390 C 1480 372, 1550 388, 1600 380 L1600 500 L0 500 Z" fill="#14532d" opacity="0.45"/>
+
+  <!-- cerca -->
+  <g stroke="#052e16" opacity="0.85">
+    <line x1="80" y1="416" x2="720" y2="416" stroke-width="6"/>
+    <line x1="80" y1="446" x2="720" y2="446" stroke-width="6"/>
+    <g stroke-width="8" fill="none">
+      <line x1="100" y1="398" x2="100" y2="462"/>
+      <line x1="180" y1="398" x2="180" y2="462"/>
+      <line x1="260" y1="398" x2="260" y2="462"/>
+      <line x1="340" y1="398" x2="340" y2="462"/>
+      <line x1="420" y1="398" x2="420" y2="462"/>
+      <line x1="500" y1="398" x2="500" y2="462"/>
+      <line x1="580" y1="398" x2="580" y2="462"/>
+      <line x1="660" y1="398" x2="660" y2="462"/>
+    </g>
+  </g>
+
+  <!-- silhueta de curral/galpão -->
+  <g fill="#0b3a22">
+    <path d="M840 470 C 900 400, 1080 400, 1140 470 Z"/>
+    <rect x="1040" y="398" width="40" height="72" fill="#062316"/>
+    <path d="M1015 470 L1090 398 L1165 470 Z" fill="#0b3a22"/>
+  </g>
+
+  <g fill="#0f172a" opacity="0.6">
+    <ellipse cx="980" cy="468" rx="90" ry="28"/>
+    <rect x="1380" y="452" width="180" height="20" rx="8"/>
+  </g>
+
+  <!-- texto -->
+  <text x="60" y="120" font-family="ui-sans-serif, system-ui, sans-serif" font-size="34" font-weight="800" letter-spacing="8" fill="#f8fafc" opacity="0.95">APECUÁRIA DIGITAL</text>
+  <text x="62" y="158" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" letter-spacing="3" fill="#cbd5e1" opacity="0.85">SUA FAZENDA, EM UM SÓ LUGAR</text>
+  <text x="1310" y="452" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="400" fill="#94a3b8" opacity="0.7">Banner padrão · personalize no Perfil da Propriedade (Premium)</text>
+</svg>
