@@ -106,7 +106,10 @@ export function VirtualTable({
             </div>
           ) : error ? (
             <div className="col-span-full grid place-items-center gap-3 bg-card py-12 text-sm text-muted-foreground">
-              Erro ao carregar os registros.
+              <div className="grid gap-1 place-items-center text-center">
+                <span>Erro ao carregar os registros.</span>
+                <span className="max-w-xl text-xs text-destructive">{error.message}</span>
+              </div>
               <Button variant="outline" size="sm" onClick={onRetry}><RefreshCw />Tentar novamente</Button>
             </div>
           ) : rows.length === 0 ? (
