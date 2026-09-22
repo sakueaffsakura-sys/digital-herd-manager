@@ -890,8 +890,8 @@ export function PropertyProfilePage({
           <div className="space-y-4">
             {renderUpload(
               "Banner da propriedade",
-              "banner",
               "banner_url",
+              banner,
               BUCKETS.banners,
               "h-32",
               <div className="grid h-full w-full place-items-center bg-muted text-xs text-muted-foreground">
@@ -900,8 +900,8 @@ export function PropertyProfilePage({
             )}
             {renderUpload(
               "Logo da propriedade",
-              "logo",
               "logo_url",
+              logo,
               BUCKETS.logos,
               "h-28",
               <div className="grid h-full w-full place-items-center bg-muted text-xs text-muted-foreground">
@@ -910,8 +910,8 @@ export function PropertyProfilePage({
             )}
             {renderUpload(
               "Foto de perfil da propriedade",
-              "avatar",
               "imagem_url",
+              imagem,
               BUCKETS.banners,
               "h-28",
               <div className="grid h-full w-full place-items-center bg-muted text-xs text-muted-foreground">
@@ -1116,7 +1116,7 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
                 <SelectContent>
                   <SelectItem value="ativo">Ativo</SelectItem>
                   <SelectItem value="trial">Período de teste</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="cancelado">Cancelado</SelectItem>
                   <SelectItem value="expirado">Expirado</SelectItem>
                 </SelectContent>
@@ -1137,13 +1137,13 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
+            <Button
+              onClick={() => setConfirmOpen(true)}
+              disabled={setDemo.isPending || cancelDemo.isPending}
+            >
+              {planStatus.plano === "premium" ? "Atualizar" : "Ativar"} Premium (demo)
+            </Button>
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-              <AlertDialogCancel className="hidden" />
-              <AlertDialogAction asChild>
-                <Button onClick={() => setConfirmOpen(true)} disabled={setDemo.isPending || cancelDemo.isPending}>
-                  {planStatus.plano === "premium" ? "Atualizar" : "Ativar"} Premium (demo)
-                </Button>
-              </AlertDialogAction>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmar alteração de plano?</AlertDialogTitle>
@@ -1160,16 +1160,14 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
               </AlertDialogContent>
             </AlertDialog>
 
+            <Button
+              variant="outline"
+              onClick={() => setConfirmCancel(true)}
+              disabled={setDemo.isPending || cancelDemo.isPending}
+            >
+              Cancelar demonstração
+            </Button>
             <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-              <AlertDialogAction asChild>
-                <Button
-                  variant="outline"
-                  onClick={() => setConfirmCancel(true)}
-                  disabled={setDemo.isPending || cancelDemo.isPending}
-                >
-                  Cancelar demonstração
-                </Button>
-              </AlertDialogAction>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Cancelar a demonstração?</AlertDialogTitle>
