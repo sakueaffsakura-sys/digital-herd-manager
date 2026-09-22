@@ -41,9 +41,8 @@ const nav = [
   ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", Beef], ["bezerros", "Evolução dos Bezerros", Activity],
   ["vacinacao", "Vacinação", Syringe], ["inseminacao", "Inseminação", FlaskConical], ["nascimentos", "Nascimentos", HeartPulse],
   ["lotes", "Lotes", Warehouse], ["producao", "Produção de Leite", Milk], ["relatorios", "Relatórios", BarChart3],
-  ["financeiro", "Lucros e Investimentos", CircleDollarSign], ["comercial", "Compra e Venda", ShoppingCart], ["configuracoes", "Configurações", Settings],
-  ["diagnostico", "Diagnóstico", Gauge], ["perfil", "Meu Perfil", UserRound],
-  ["perfil-propriedade", "Perfil da Propriedade", Building2], ["assinatura", "Plano e Assinatura", CreditCard],
+  ["financeiro", "Lucros e Investimentos", CircleDollarSign], ["comercial", "Compra e Venda", ShoppingCart],
+  ["diagnostico", "Diagnóstico", Gauge], ["perfil", "Perfil", UserRound],
 ] as const;
 
 const modules: Record<string, Module> = {
