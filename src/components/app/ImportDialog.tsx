@@ -163,7 +163,7 @@ export default function ImportDialog({
         if (i < startAt) continue;
         const slice = data.rows
           .slice(i, i + 50)
-          .map((raw) => byLinha.get(Number(raw["__linha"])))
+          .map((_raw, k) => byLinha.get(i + k + 2))
           .filter((r): r is Row => Boolean(r));
         for (const row of slice) {
           const key = naturalKeyForTable(config.table, row);
