@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
-  Activity, BarChart3, Bell, Beef, CalendarDays, ChevronDown, CircleDollarSign,
-  ClipboardList, Droplets, FlaskConical, HeartPulse, LayoutDashboard, LogOut,
-  Eye, Menu, Milk, MoreHorizontal, NotebookPen, PackageOpen, Plus, Search, Settings, ShoppingCart,
-  ShieldCheck, Syringe, Tractor, TrendingDown, TrendingUp, Users, Warehouse, X,
+  Activity, BarChart3, Bell, Beef, CircleDollarSign,
+  FlaskConical, HeartPulse, LayoutDashboard, LogOut,
+  Eye, Menu, Milk, NotebookPen, Plus, Search, Settings, ShoppingCart,
+  ShieldCheck, Syringe, TrendingUp, Warehouse, X,
 } from "lucide-react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,13 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import cattleImage from "@/assets/cattle-dashboard.jpg";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  Empty, EmptyProperty, EmptySection, Module, Row, PageTitle, Status,
+  dateNow, friendlyError, money, pretty,
+} from "./shared";
 
-type TableName = keyof Database["public"]["Tables"];
-type Row = Record<string, unknown>;
-type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina"; required?: boolean; options?: { value: string; label: string }[]; sex?: "M" | "F"; activeOnly?: boolean };
-type Module = { title: string; singular: string; table: TableName; icon: typeof Beef; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean };
+const Dashboard = lazy(() => import("./Dashboard"));
+const Reports = lazy(() => import("./Reports"));
 
 const nav = [
   ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", Beef], ["bezerros", "Evolução dos Bezerros", Activity],
@@ -47,34 +47,17 @@ const modules: Record<string, Module> = {
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"Catálogo sanitário e intervalo recomendado entre aplicações.", columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
 const productionNotes: Module = { title:"Anotações da Produção", singular:"anotação", table:"anotacoes_producao", icon:NotebookPen, description:"Comportamento, alimentação e observações ligadas à produção.", columns:[{key:"data",label:"Data"},{key:"animal_id",label:"Animal"},{key:"lote_id",label:"Lote"},{key:"producao",label:"Produção (L)"},{key:"observacao",label:"Observação"}], fields:[{key:"animal_id",label:"Animal",type:"animal",activeOnly:true},{key:"lote_id",label:"Lote",type:"lote"},{key:"data",label:"Data",type:"date",required:true},{key:"producao",label:"Produção (L)",type:"number"},{key:"observacao",label:"Observação",type:"textarea",required:true},{key:"comportamento",label:"Comportamento"},{key:"alimentacao",label:"Alimentação"},{key:"informacoes_adicionais",label:"Informações adicionais",type:"textarea"}]};
 
-const dateNow = () => new Date().toISOString().slice(0,10);
-const money = (value: unknown) => Number(value || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const pretty = (value: unknown) => value == null || value === "" ? "—" : String(value).replaceAll("_"," ");
-const friendlyError = (error: unknown) => {
-  const e = error as { code?: string; message?: string };
-  const message = e?.message ?? "Não foi possível concluir a operação.";
-  if (e?.code === "23505") {
-    if (message.includes("numero_brinco")) return "Já existe um animal com esse número de brinco.";
-    if (message.includes("bezerro_id")) return "Esse bezerro já possui um nascimento registrado.";
-    if (message.includes("animal_id") && message.includes("data")) return "Já existe um registro desse animal nessa data.";
-    if (message.includes("nome")) return "Já existe um registro com esse nome nesta propriedade.";
-    return "Esse registro já existe.";
-  }
-  if (e?.code === "23514") return "Os dados informados não atendem às regras do cadastro. Revise as datas e os vínculos.";
-  if (e?.code === "23503") return "Esse registro está vinculado a outros dados e não pode ser removido.";
-  return message;
-};
-
 export function ApecuariaApp() {
   const { section = "inicio" } = useParams({ strict:false }) as { section?: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [mobileOpen,setMobileOpen] = useState(false);
   const [search,setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [propertyId,setPropertyId] = useState<string | null>(null);
   const [propertyDialog,setPropertyDialog] = useState(false);
 
-  const userQuery = useQuery({ queryKey:["session-user"], queryFn:async()=>{ const {data,error}=await supabase.auth.getUser(); if(error) throw error; return data.user; }});
+  const userQuery = useQuery({ queryKey:["session-user"], queryFn:async()=>{ const cached=await supabase.auth.getSession(); if(cached.data.session?.user) return cached.data.session.user; const {data,error}=await supabase.auth.getUser(); if(error) throw error; return data.user; }});
   const propertiesQuery = useQuery({ queryKey:["properties",userQuery.data?.id], enabled:!!userQuery.data, queryFn:async()=>{ const {data,error}=await supabase.from("propriedades").select("*").eq("ativo",true).order("created_at"); if(error) throw error; return data; }});
   useEffect(()=>{ if(!propertyId && propertiesQuery.data?.[0]) setPropertyId(propertiesQuery.data[0].id); },[propertiesQuery.data,propertyId]);
   useEffect(()=>{ if(propertiesQuery.isSuccess && !propertiesQuery.data.length) setPropertyDialog(true); },[propertiesQuery.isSuccess,propertiesQuery.data]);
@@ -93,7 +76,7 @@ export function ApecuariaApp() {
     <div className="lg:pl-[268px]">
       <header className="sticky top-0 z-20 flex h-[76px] items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-6"><Button variant="ghost" size="icon" className="lg:hidden" onClick={()=>setMobileOpen(true)} aria-label="Abrir menu"><Menu/></Button><div className="relative hidden max-w-xl flex-1 sm:block"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="h-10 bg-muted/50 pl-10" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Pesquisar em toda a propriedade..."/></div><div className="ml-auto flex items-center gap-2"><Select value={propertyId??""} onValueChange={setPropertyId}><SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Selecionar propriedade"/></SelectTrigger><SelectContent>{propertiesQuery.data?.map(p=><SelectItem value={p.id} key={p.id}>{p.nome}</SelectItem>)}</SelectContent></Select><Button variant="ghost" size="icon" aria-label="Notificações"><Bell/></Button><div className="grid size-9 place-items-center rounded-full bg-primary font-bold text-primary-foreground">{userQuery.data?.email?.[0]?.toUpperCase()??"A"}</div></div></header>
       <main className="mx-auto max-w-[1600px] p-4 sm:p-6">
-         {!propertyId ? <EmptyProperty onCreate={()=>setPropertyDialog(true)}/> : section==="inicio" ? <Dashboard propertyId={propertyId} propertyName={currentProperty?.nome??"Propriedade"} go={go}/> : section==="relatorios" ? <Reports propertyId={propertyId}/> : section==="comercial" ? <Commerce propertyId={propertyId}/> : section==="vacinacao" ? <VaccinationArea propertyId={propertyId} globalSearch={search}/> : section==="producao" ? <ProductionArea propertyId={propertyId} globalSearch={search}/> : section==="configuracoes" ? <SettingsPage property={currentProperty} user={userQuery.data} onUpdated={()=>queryClient.invalidateQueries({queryKey:["properties"]})}/> : modules[section] ? <CrudModule config={modules[section]} propertyId={propertyId} globalSearch={search}/> : <EmptySection go={()=>go("inicio")}/>} 
+         {!propertyId ? <EmptyProperty onCreate={()=>setPropertyDialog(true)}/> : section==="inicio" ? <Suspense fallback={<SectionLoading/>}><Dashboard propertyId={propertyId} propertyName={currentProperty?.nome??"Propriedade"} go={go}/></Suspense> : section==="relatorios" ? <Suspense fallback={<SectionLoading/>}><Reports propertyId={propertyId}/></Suspense> : section==="comercial" ? <Commerce propertyId={propertyId}/> : section==="vacinacao" ? <VaccinationArea propertyId={propertyId} globalSearch={deferredSearch}/> : section==="producao" ? <ProductionArea propertyId={propertyId} globalSearch={deferredSearch}/> : section==="configuracoes" ? <SettingsPage property={currentProperty} user={userQuery.data} onUpdated={()=>queryClient.invalidateQueries({queryKey:["properties"]})}/> : modules[section] ? <CrudModule config={modules[section]} propertyId={propertyId} globalSearch={deferredSearch}/> : <EmptySection go={()=>go("inicio")}/>} 
       </main>
     </div>
     <PropertyDialog open={propertyDialog} userId={userQuery.data?.id} onClose={()=>setPropertyDialog(false)} onCreated={(id)=>{setPropertyId(id);setPropertyDialog(false);queryClient.invalidateQueries({queryKey:["properties"]});}}/>
@@ -120,9 +103,10 @@ function Dashboard({propertyId,propertyName,go}:{propertyId:string;propertyName:
 }
 
 function CrudModule({config,propertyId,globalSearch}:{config:Module;propertyId:string;globalSearch:string}){
- const qc=useQueryClient();const [open,setOpen]=useState(false);const [editing,setEditing]=useState<Row|null>(null);const [details,setDetails]=useState<Row|null>(null);const [local,setLocal]=useState("");
+ const qc=useQueryClient();const [open,setOpen]=useState(false);const [editing,setEditing]=useState<Row|null>(null);const [details,setDetails]=useState<Row|null>(null);const [local,setLocal]=useState("");const deferredLocal=useDeferredValue(local);
  const table = supabase.from(config.table) as any;
- const query=useQuery({queryKey:[config.table,propertyId],queryFn:async()=>{const {data,error}=await table.select("*").eq("propriedade_id",propertyId).order("created_at",{ascending:false});if(error)throw error;return (data??[]) as Row[]}});
+ const selectCols=useMemo(()=>{const set=new Set<string>(["id",...config.columns.map(c=>c.key),...config.fields.map(f=>f.key)]);if(config.table==="movimentacoes_financeiras")set.add("origem_tipo");return [...set].join(",")},[config]);
+ const query=useQuery({queryKey:[config.table,propertyId],queryFn:async()=>{const {data,error}=await table.select(selectCols).eq("propriedade_id",propertyId).order("created_at",{ascending:false});if(error)throw error;return (data??[]) as Row[]}});
   const refs=useQuery({queryKey:["form-refs",propertyId],queryFn:async()=>{const [animals,lots,vaccines]=await Promise.all([supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id",propertyId),supabase.from("lotes").select("id,nome").eq("propriedade_id",propertyId).eq("ativo",true),supabase.from("tipos_vacinas").select("id,nome").eq("propriedade_id",propertyId).eq("ativo",true)]);const error=animals.error||lots.error||vaccines.error;if(error)throw error;return {animals:animals.data??[],lots:lots.data??[],vaccines:vaccines.data??[]}}});
  const save=useMutation({mutationFn:async(payload:Row)=>{const body:Row={...payload,propriedade_id:propertyId};const response=editing?await table.update(body).eq("id",String(editing["id"])):await table.insert(body);if(response.error)throw response.error;
   },onSuccess:()=>{toast.success(`${config.singular} ${editing?"atualizado":"cadastrado"} com sucesso`);setOpen(false);setEditing(null);qc.invalidateQueries({queryKey:[config.table,propertyId]});qc.invalidateQueries({queryKey:["animais",propertyId]});qc.invalidateQueries({queryKey:["form-refs",propertyId]});qc.invalidateQueries({queryKey:["dashboard",propertyId]});qc.invalidateQueries({queryKey:["reports",propertyId]})},onError:(e)=>toast.error(friendlyError(e))});
