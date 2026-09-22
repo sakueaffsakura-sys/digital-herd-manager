@@ -133,7 +133,11 @@ export default function ImportDialog({
     };
 
     const insertChunk = async (rows: Row[]): Promise<void> => {
-      const { data: inserted, error } = await supabase.from(config.table as string).insert(rows).select("id");
+      const payload = rows.map((r) => {
+        const { __linha: _line, ...rest } = r as Row & { __linha?: unknown };
+        return rest;
+      });
+      const { data: inserted, error } = await (supabase.from(config.table as string) as any).insert(payload).select("id");
       if (!error) {
         aceitas += inserted?.length ?? rows.length;
         for (const row of rows) seen.add(naturalKeyForTable(config.table, row));
@@ -208,7 +212,7 @@ export default function ImportDialog({
         mapped.forEach((row) => {
           const { value, errors: errs } = normalizeAndValidate(fields, row as Record<string, string>, Number(row["__linha"]));
           if (errs.length) errs.forEach((m) => errors.push({ linha: Number(row["__linha"]), motivo: m }));
-          else valid.push(value);
+          else valid.push({ ...value, __linha: row["__linha"] });
         });
         const combined = [...reasons, ...errors];
         const fieldNames = new Set(fields.map((f) => f.key));
