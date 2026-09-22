@@ -224,7 +224,7 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- 7) Correção das referências aprivate dentro das funções de relatório,
+-- 7) Correção das referências a private dentro das funções de relatório,
 --    diagnóstico e revisão (as mesmas apontavam para public.tem_acesso_* que
 --    foi movido ao schema private). Recriadas idênticas, apenas com private.*.
 -- ---------------------------------------------------------------------------
