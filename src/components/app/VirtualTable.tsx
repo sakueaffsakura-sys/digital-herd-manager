@@ -87,7 +87,7 @@ export function VirtualTable({
       <div ref={containerRef} className="max-h-[68vh] overflow-auto">
         <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridColumns, minWidth: 700 }}>
           <div className="sticky top-0 z-10 col-span-full grid bg-muted/35 text-xs font-semibold uppercase text-muted-foreground" style={{ gridTemplateColumns: gridColumns }}>
-            <div className="px-3 py-2" />
+            <div className="w-3" />
             {columns.map((c) => (
               <div className="px-5 py-3" key={c.key}>{c.label}</div>
             ))}
@@ -116,7 +116,7 @@ export function VirtualTable({
             <div className="col-span-full bg-card"><Empty message={emptyMessage} /></div>
           ) : (
             <div className="col-span-full grid bg-card" style={{ height: totalHeight, position: "relative" }}>
-              <div style={{ position: "absolute", top: start * ROW_HEIGHT, left: 0, right: 0 }} className="grid" >
+              <div style={{ position: "absolute", top: start * ROW_HEIGHT, left: 0, right: 0 }}>
                 {visible.map((row, i) => {
                   const realIndex = start + i;
                   return (
