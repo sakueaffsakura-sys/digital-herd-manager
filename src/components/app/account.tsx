@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -234,24 +234,26 @@ export function AvatarView({
   size?: number;
   className?: string;
 }) {
-  if (profile?.avatar_url) {
-    return (
-      <StorageImage
-        bucket={BUCKETS.avatars}
-        path={profile.avatar_url}
-        alt="Foto de perfil"
-        className={cn("size-9 shrink-0 rounded-full object-cover", className)}
-        fallback={
-          <Initials text={profile.nome_exibicao ?? profile.nome_completo} size={size} />
-        }
-      />
-    );
-  }
+  const dim = { width: size, height: size };
   return (
-    <Initials
-      text={profile?.nome_exibicao ?? profile?.nome_completo}
-      size={size}
-    />
+    <div style={dim} className={cn("shrink-0", className)}>
+      {profile?.avatar_url ? (
+        <StorageImage
+          bucket={BUCKETS.avatars}
+          path={profile.avatar_url}
+          alt="Foto de perfil"
+          className="h-full w-full rounded-full object-cover"
+          fallback={
+            <Initials text={profile.nome_exibicao ?? profile.nome_completo} size={size} />
+          }
+        />
+      ) : (
+        <Initials
+          text={profile?.nome_exibicao ?? profile?.nome_completo}
+          size={size}
+        />
+      )}
+    </div>
   );
 }
 
@@ -528,7 +530,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
     setBiografia(p?.biografia ?? "");
   }, [p]);
 
-  const pickAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const pickAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -580,13 +582,6 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
     qc.invalidateQueries({ queryKey: ["my-profile", userId] });
   };
 
-  const fotoPara = (url: string | null) =>
-    url ? (
-      <AvatarView profile={p} size={96} className="size-24" />
-    ) : (
-      <Initials text={p?.nome_exibicao ?? p?.nome_completo} size={96} />
-    );
-
   return (
     <div className="space-y-5">
       <PageTitle icon={UserRound} title="Meu Perfil" description="Dados pessoais, foto e forma de exibição no aplicativo." />
@@ -604,7 +599,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
                   <span className="text-xs font-bold">{avatar.progress ?? 0}%</span>
                 </span>
               )}
-              {fotoPara(p?.avatar_url ?? null)}
+              <AvatarView profile={p} size={96} />
             </div>
           </div>
           <div className="mt-5 space-y-2">
