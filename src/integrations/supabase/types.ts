@@ -378,6 +378,62 @@ export type Database = {
           },
         ]
       }
+      importacoes: {
+        Row: {
+          aceitas: number
+          arquivo: string
+          atualizado_em: string
+          criado_em: string
+          erro: string | null
+          id: string
+          processadas: number
+          propriedade_id: string
+          rejeitadas: number
+          rejeitadas_detalhe: Json
+          status: string
+          tabela: string
+          total_linhas: number
+        }
+        Insert: {
+          aceitas?: number
+          arquivo: string
+          atualizado_em?: string
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          processadas?: number
+          propriedade_id: string
+          rejeitadas?: number
+          rejeitadas_detalhe?: Json
+          status?: string
+          tabela: string
+          total_linhas?: number
+        }
+        Update: {
+          aceitas?: number
+          arquivo?: string
+          atualizado_em?: string
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          processadas?: number
+          propriedade_id?: string
+          rejeitadas?: number
+          rejeitadas_detalhe?: Json
+          status?: string
+          tabela?: string
+          total_linhas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "importacoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           ativo: boolean
@@ -1031,6 +1087,24 @@ export type Database = {
           },
         ]
       }
+      v_financeiro_por_categoria: {
+        Row: {
+          categoria: string | null
+          mes: string | null
+          propriedade_id: string | null
+          tipo: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_financeiras_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_financeiro_mensal: {
         Row: {
           despesas: number | null
@@ -1053,6 +1127,25 @@ export type Database = {
       v_producao_mensal: {
         Row: {
           media_registro: number | null
+          mes: string | null
+          propriedade_id: string | null
+          total_litros: number | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_leite_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_producao_por_lote: {
+        Row: {
+          lote_id: string | null
+          lote_nome: string | null
           mes: string | null
           propriedade_id: string | null
           total_litros: number | null
@@ -1155,6 +1248,12 @@ export type Database = {
     }
     Functions: {
       dashboard_resumo: { Args: { _propriedade_id: string }; Returns: Json }
+      diagnostico_propriedade: { Args: { _propriedade_id: string }; Returns: Json }
+      registros_inconsistentes: { Args: { _propriedade_id: string }; Returns: Json }
+      relatorio_indicadores: {
+        Args: { _propriedade_id: string; _de?: string; _ate?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
