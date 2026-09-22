@@ -138,7 +138,7 @@ export function usePagedRows({
   const cacheKey = serialize(filters, search);
 
   const list = useQuery({
-    queryKey: [`${table}-rows`, propertyId, cols, finalPage, pageSize, cacheKey],
+    queryKey: [table, propertyId, "rows", cols, finalPage, pageSize, cacheKey],
     queryFn: async () => {
       const res = await createPageableTable({ table, propertyId }).rows({
         cols,
@@ -155,7 +155,7 @@ export function usePagedRows({
   });
 
   const total = useQuery({
-    queryKey: [`${table}-total`, propertyId, cacheKey],
+    queryKey: [table, propertyId, "total", cacheKey],
     queryFn: async () => {
       const res = await createPageableTable({ table, propertyId }).count({
         search,
