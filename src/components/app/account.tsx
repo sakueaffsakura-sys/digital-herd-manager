@@ -148,38 +148,21 @@ export function StorageImage({
   return <img src={url} alt={alt} className={className} loading="lazy" />;
 }
 
-const SUPABASE_URL =
-  import.meta.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"] || "";
-const SUPABASE_KEY =
-  import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-  process.env["SUPABASE_PUBLISHABLE_KEY"] ||
-  "";
-
 export async function uploadWithProgress(opts: {
   bucket: ImageBucket;
   path: string;
   blob: Blob;
   onProgress?: (percent: number) => void;
 }): Promise<void> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const token = session?.access_token;
-  await new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${SUPABASE_URL}/storage/v1/object/${opts.bucket}/${opts.path}`, true);
-    xhr.setRequestHeader("apikey", SUPABASE_KEY);
-    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) opts.onProgress?.(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`Falha no upload (HTTP ${xhr.status}).`));
-    };
-    xhr.onerror = () => reject(new Error("Falha de rede durante o upload."));
-    xhr.send(opts.blob);
-  });
+  opts.onProgress?.(10);
+  const { error } = await supabase.storage
+    .from(opts.bucket)
+    .upload(opts.path, opts.blob, {
+      upsert: true,
+      contentType: opts.blob.type || "image/webp",
+    });
+  if (error) throw error;
+  opts.onProgress?.(100);
 }
 
 async function removeStorageObject(bucket: ImageBucket, path: string): Promise<void> {
