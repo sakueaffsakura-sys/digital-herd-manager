@@ -763,27 +763,36 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          biografia: string | null
+          cargo: string | null
           created_at: string
           id: string
           nome_completo: string
+          nome_exibicao: string | null
           preferencias: Json
           telefone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          biografia?: string | null
+          cargo?: string | null
           created_at?: string
           id: string
           nome_completo?: string
+          nome_exibicao?: string | null
           preferencias?: Json
           telefone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          biografia?: string | null
+          cargo?: string | null
           created_at?: string
           id?: string
           nome_completo?: string
+          nome_exibicao?: string | null
           preferencias?: Json
           telefone?: string | null
           updated_at?: string
@@ -815,6 +824,157 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "propriedade_membros_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assinaturas: {
+        Row: {
+          created_at: string
+          data_expiracao: string | null
+          data_inicio: string | null
+          id: string
+          origem: string
+          plano: Database["public"]["Enums"]["tipo_plano"]
+          propriedade_id: string
+          status: Database["public"]["Enums"]["status_assinatura"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_expiracao?: string | null
+          data_inicio?: string | null
+          id?: string
+          origem?: string
+          plano?: Database["public"]["Enums"]["tipo_plano"]
+          propriedade_id: string
+          status?: Database["public"]["Enums"]["status_assinatura"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_expiracao?: string | null
+          data_inicio?: string | null
+          id?: string
+          origem?: string
+          plano?: Database["public"]["Enums"]["tipo_plano"]
+          propriedade_id?: string
+          status?: Database["public"]["Enums"]["status_assinatura"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plano_auditoria: {
+        Row: {
+          alterado_por: string
+          assinatura_id: string | null
+          created_at: string
+          id: string
+          motivo: string | null
+          origem: string
+          plano_anterior: Database["public"]["Enums"]["tipo_plano"] | null
+          plano_novo: Database["public"]["Enums"]["tipo_plano"] | null
+          propriedade_id: string | null
+          status_anterior: Database["public"]["Enums"]["status_assinatura"] | null
+          status_novo: Database["public"]["Enums"]["status_assinatura"] | null
+          user_id: string
+        }
+        Insert: {
+          alterado_por: string
+          assinatura_id?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          origem?: string
+          plano_anterior?: Database["public"]["Enums"]["tipo_plano"] | null
+          plano_novo?: Database["public"]["Enums"]["tipo_plano"] | null
+          propriedade_id?: string | null
+          status_anterior?: Database["public"]["Enums"]["status_assinatura"] | null
+          status_novo?: Database["public"]["Enums"]["status_assinatura"] | null
+          user_id: string
+        }
+        Update: {
+          alterado_por?: string
+          assinatura_id?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          origem?: string
+          plano_anterior?: Database["public"]["Enums"]["tipo_plano"] | null
+          plano_novo?: Database["public"]["Enums"]["tipo_plano"] | null
+          propriedade_id?: string | null
+          status_anterior?: Database["public"]["Enums"]["status_assinatura"] | null
+          status_novo?: Database["public"]["Enums"]["status_assinatura"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      propriedade_perfil: {
+        Row: {
+          banner_url: string | null
+          descricao: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          imagem_url: string | null
+          logo_url: string | null
+          propriedade_id: string
+          telefone: string | null
+          texto_apresentacao: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          imagem_url?: string | null
+          logo_url?: string | null
+          propriedade_id: string
+          telefone?: string | null
+          texto_apresentacao?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          imagem_url?: string | null
+          logo_url?: string | null
+          propriedade_id?: string
+          telefone?: string | null
+          texto_apresentacao?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propriedade_perfil_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
             referencedRelation: "propriedades"
@@ -1247,11 +1407,27 @@ export type Database = {
       }
     }
     Functions: {
+      cancelar_plano_demonstracao: {
+        Args: { _propriedade_id: string; _motivo?: string }
+        Returns: Json
+      }
       dashboard_resumo: { Args: { _propriedade_id: string }; Returns: Json }
       diagnostico_propriedade: { Args: { _propriedade_id: string }; Returns: Json }
+      minha_assinatura: { Args: { _propriedade_id: string }; Returns: Json }
+      pode_gerenciar_planos: { Args: Record<PropertyKey, never>; Returns: boolean }
       registros_inconsistentes: { Args: { _propriedade_id: string }; Returns: Json }
       relatorio_indicadores: {
         Args: { _propriedade_id: string; _de?: string; _ate?: string }
+        Returns: Json
+      }
+      setar_plano_demonstracao: {
+        Args: {
+          _propriedade_id: string
+          _plano?: Database["public"]["Enums"]["tipo_plano"]
+          _status?: Database["public"]["Enums"]["status_assinatura"]
+          _data_expiracao?: string
+          _motivo?: string
+        }
         Returns: Json
       }
     }
@@ -1268,6 +1444,12 @@ export type Database = {
         | "perdido"
         | "falecido"
         | "transferido"
+      status_assinatura:
+        | "ativo"
+        | "trial"
+        | "cancelado"
+        | "expirado"
+        | "pendente"
       status_inseminacao:
         | "em_andamento"
         | "confirmada"
@@ -1276,6 +1458,7 @@ export type Database = {
         | "cancelada"
       tipo_movimento: "receita" | "despesa" | "investimento"
       tipo_operacao: "compra" | "venda"
+      tipo_plano: "gratuito" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1424,8 +1607,16 @@ export const Constants = {
         "parto_realizado",
         "cancelada",
       ],
+      status_assinatura: [
+        "ativo",
+        "trial",
+        "cancelado",
+        "expirado",
+        "pendente",
+      ],
       tipo_movimento: ["receita", "despesa", "investimento"],
       tipo_operacao: ["compra", "venda"],
+      tipo_plano: ["gratuito", "premium"],
     },
   },
 } as const
