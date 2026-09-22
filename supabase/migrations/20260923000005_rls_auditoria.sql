@@ -222,3 +222,166 @@ BEGIN
     RAISE NOTICE 'ATENÇÃO: % política(s) expõe(m) dados a anon/public. Revise com SELECT * FROM public.v_rls_auditoria;', v;
   END IF;
 END $$;
+
+-- ---------------------------------------------------------------------------
+-- 7) Correção das referências aprivate dentro das funções de relatório,
+--    diagnóstico e revisão (as mesmas apontavam para public.tem_acesso_* que
+--    foi movido ao schema private). Recriadas idênticas, apenas com private.*.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.dashboard_resumo(_propriedade_id uuid)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public, private
+AS $function$
+SELECT jsonb_build_object(
+ 'total_animais',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id),
+ 'animais_ativos',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id AND situacao='ativo'),
+ 'bezerros',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id AND situacao='ativo' AND data_nascimento >= current_date - interval '12 months'),
+ 'vacinacoes_em_dia',(SELECT COUNT(*) FROM public.v_vacinacoes_status WHERE propriedade_id=_propriedade_id AND status_calculado='em_dia'),
+ 'inseminacoes',(SELECT COUNT(*) FROM public.inseminacoes WHERE propriedade_id=_propriedade_id AND situacao IN ('em_andamento','confirmada')),
+ 'nascidos_mes',(SELECT COUNT(*) FROM public.nascimentos WHERE propriedade_id=_propriedade_id AND date_trunc('month',data_nascimento)=date_trunc('month',current_date)),
+ 'perdas_mes',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id AND situacao IN ('perdido','falecido') AND date_trunc('month',updated_at)=date_trunc('month',current_date)),
+ 'vendas_mes',(SELECT COUNT(*) FROM public.vendas WHERE propriedade_id=_propriedade_id AND date_trunc('month',data)=date_trunc('month',current_date)),
+ 'compras_mes',(SELECT COUNT(*) FROM public.compras WHERE propriedade_id=_propriedade_id AND date_trunc('month',data)=date_trunc('month',current_date)),
+ 'receitas_mes',(SELECT COALESCE(SUM(valor),0) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND tipo='receita' AND date_trunc('month',data)=date_trunc('month',current_date)),
+ 'despesas_mes',(SELECT COALESCE(SUM(valor),0) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND tipo='despesa' AND date_trunc('month',data)=date_trunc('month',current_date)),
+ 'investimentos_mes',(SELECT COALESCE(SUM(valor),0) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND tipo='investimento' AND date_trunc('month',data)=date_trunc('month',current_date)),
+ 'leite_mes',(SELECT COALESCE(SUM(litros),0) FROM public.producao_leite WHERE propriedade_id=_propriedade_id AND date_trunc('month',data)=date_trunc('month',current_date)),
+ 'total_lotes',(SELECT COUNT(*) FROM public.lotes WHERE propriedade_id=_propriedade_id)
+) WHERE private.tem_acesso_propriedade(_propriedade_id)
+$function$;
+REVOKE ALL ON FUNCTION public.dashboard_resumo(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.dashboard_resumo(uuid) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.relatorio_indicadores(_propriedade_id uuid, _de date DEFAULT '-infinity'::date, _ate date DEFAULT 'infinity'::date)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public, private
+AS $function$
+SELECT jsonb_build_object(
+ 'animais_cadastrados',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id AND created_at >= _de AND created_at < _ate + 1),
+ 'animais_ativos',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id AND situacao='ativo'),
+ 'nascidos',(SELECT COUNT(*) FROM public.nascimentos WHERE propriedade_id=_propriedade_id AND data_nascimento BETWEEN _de AND _ate),
+ 'perdas',(SELECT COUNT(*) FROM public.animais WHERE propriedade_id=_propriedade_id AND situacao IN ('perdido','falecido') AND updated_at BETWEEN _de AND _ate),
+ 'vendas_qtd',(SELECT COUNT(*) FROM public.vendas WHERE propriedade_id=_propriedade_id AND data BETWEEN _de AND _ate),
+ 'vendas_valor',(SELECT COALESCE(SUM(valor),0) FROM public.vendas WHERE propriedade_id=_propriedade_id AND data BETWEEN _de AND _ate),
+ 'compras_qtd',(SELECT COUNT(*) FROM public.compras WHERE propriedade_id=_propriedade_id AND data BETWEEN _de AND _ate),
+ 'compras_valor',(SELECT COALESCE(SUM(valor),0) FROM public.compras WHERE propriedade_id=_propriedade_id AND data BETWEEN _de AND _ate),
+ 'litros',(SELECT COALESCE(SUM(litros),0) FROM public.producao_leite WHERE propriedade_id=_propriedade_id AND data BETWEEN _de AND _ate),
+ 'valor_leite',(SELECT COALESCE(SUM(valor_total),0) FROM public.producao_leite WHERE propriedade_id=_propriedade_id AND data BETWEEN _de AND _ate),
+ 'receitas',(SELECT COALESCE(SUM(valor),0) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND tipo='receita' AND data BETWEEN _de AND _ate),
+ 'despesas',(SELECT COALESCE(SUM(valor),0) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND tipo='despesa' AND data BETWEEN _de AND _ate),
+ 'investimentos',(SELECT COALESCE(SUM(valor),0) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND tipo='investimento' AND data BETWEEN _de AND _ate)
+) WHERE private.tem_acesso_propriedade(_propriedade_id)
+$function$;
+REVOKE ALL ON FUNCTION public.relatorio_indicadores(uuid, date, date) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.relatorio_indicadores(uuid, date, date) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.diagnostico_propriedade(_propriedade_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY INVOKER
+SET search_path = public, private
+AS $$
+DECLARE
+  t text;
+  inicio timestamptz;
+  contagem bigint;
+  ultima timestamptz;
+  tempo_ms double precision;
+  linhas jsonb := '[]'::jsonb;
+BEGIN
+  IF NOT private.tem_acesso_propriedade(_propriedade_id) THEN
+    RETURN '[]'::jsonb;
+  END IF;
+
+  FOREACH t IN ARRAY ARRAY[
+    'animais','lotes','pesagens','vacinacoes','inseminacoes','nascimentos',
+    'producao_leite','anotacoes_producao','movimentacoes_financeiras',
+    'investimentos','compras','vendas','tipos_vacinas'
+  ] LOOP
+    inicio := clock_timestamp();
+    EXECUTE format(
+      'SELECT COUNT(*), MAX(updated_at) FROM public.%I WHERE propriedade_id = $1',
+      t
+    ) INTO contagem, ultima USING _propriedade_id;
+    tempo_ms := extract(epoch FROM (clock_timestamp() - inicio)) * 1000;
+    linhas := linhas || jsonb_build_object(
+      'tabela', t,
+      'contagem', contagem,
+      'ultima_atualizacao', ultima,
+      'tempo_ms', round(tempo_ms::numeric, 2)
+    );
+  END LOOP;
+
+  RETURN linhas;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.diagnostico_propriedade(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.diagnostico_propriedade(uuid) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.registros_inconsistentes(_propriedade_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY INVOKER
+SET search_path = public, private
+AS $$
+DECLARE
+  resultado jsonb := '[]'::jsonb;
+  exemplos jsonb;
+  qtd bigint;
+BEGIN
+  IF NOT private.tem_acesso_propriedade(_propriedade_id) THEN
+    RETURN '[]'::jsonb;
+  END IF;
+
+  SELECT COUNT(*), COALESCE(jsonb_agg(jsonb_build_object('id', id, 'vaca_id', vaca_id, 'bezerro_id', bezerro_id)), '[]'::jsonb)
+    INTO qtd, exemplos
+    FROM (SELECT id, vaca_id, bezerro_id FROM public.nascimentos WHERE propriedade_id=_propriedade_id AND vaca_id=bezerro_id LIMIT 10) s;
+  IF qtd > 0 THEN
+    resultado := resultado || jsonb_build_object('tabela','nascimentos','checagem','vaca igual ao bezerro','qtd',qtd,'exemplos',exemplos);
+  END IF;
+
+  SELECT COUNT(*), COALESCE(jsonb_agg(jsonb_build_object('id', id)), '[]'::jsonb)
+    INTO qtd, exemplos
+    FROM (SELECT id FROM public.vacinacoes WHERE propriedade_id=_propriedade_id AND (animal_id IS NULL OR lote_id IS NULL) LIMIT 10) s;
+  IF qtd > 0 THEN
+    resultado := resultado || jsonb_build_object('tabela','vacinacoes','checagem','vacinação sem animal ou lote','qtd',qtd,'exemplos',exemplos);
+  END IF;
+
+  SELECT COUNT(*) INTO qtd FROM public.vacinacoes WHERE propriedade_id=_propriedade_id AND animal_id IS NOT NULL AND lote_id IS NOT NULL;
+  IF qtd > 0 THEN
+    resultado := resultado || jsonb_build_object('tabela','vacinacoes','checagem','vacinação simultânea animal+lote','qtd',qtd,'exemplos','[]'::jsonb);
+  END IF;
+
+  SELECT (SELECT COUNT(*) FROM public.pesagens WHERE propriedade_id=_propriedade_id AND data > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.nascimentos WHERE propriedade_id=_propriedade_id AND data_nascimento > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.vacinacoes WHERE propriedade_id=_propriedade_id AND data_aplicacao > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.inseminacoes WHERE propriedade_id=_propriedade_id AND data_inseminacao > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.producao_leite WHERE propriedade_id=_propriedade_id AND data > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.anotacoes_producao WHERE propriedade_id=_propriedade_id AND data > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.movimentacoes_financeiras WHERE propriedade_id=_propriedade_id AND data > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.compras WHERE propriedade_id=_propriedade_id AND data > current_date + interval '1 day')
+       + (SELECT COUNT(*) FROM public.vendas WHERE propriedade_id=_propriedade_id AND data > current_date + interval '1 day')
+    INTO qtd;
+  IF qtd > 0 THEN
+    resultado := resultado || jsonb_build_object('tabela','datas','checagem','registros com data no futuro','qtd',qtd,'exemplos','[]'::jsonb);
+  END IF;
+
+  SELECT COUNT(*) INTO qtd
+    FROM (SELECT numero_brinco FROM public.animais WHERE propriedade_id=_propriedade_id GROUP BY numero_brinco HAVING COUNT(*) > 1) s;
+  IF qtd > 0 THEN
+    resultado := resultado || jsonb_build_object('tabela','animais','checagem','números de brinco duplicados','qtd',qtd,'exemplos','[]'::jsonb);
+  END IF;
+
+  RETURN resultado;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.registros_inconsistentes(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registros_inconsistentes(uuid) TO authenticated, service_role;
