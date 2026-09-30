@@ -38,7 +38,7 @@ type Sistema = {
 };
 type Detalhe = {
   id: string; email: string; admin: boolean; criado_em: string; ultimo_acesso: string | null;
-  perfil: { nome_completo?: string; nome_exibicao?: string; cargo?: string; biografia?: string; telefone?: string } | null;
+  perfil: ({ nome_completo?: string; nome_exibicao?: string; cargo?: string; biografia?: string; telefone?: string; bloqueado?: boolean } | null);
   armazenamento: { bucket: string; bytes: number }[]; armazenamento_total: number;
   propriedades: { id: string; nome: string; cidade: string | null; estado: string | null; criado_em: string; animais: number; producao: number; financeiro: number; plano: { plano: string; status: string; data_expiracao: string | null; origem: string } | null }[];
 };
@@ -155,9 +155,10 @@ function MetricasTab() {
   const cadastros = useMemo(() => (m?.cadastros_90d ?? []).map((d) => ({ ...d, label: diaCurto(d.dia) })), [m]);
   const acessos = useMemo(() => (m?.acessos_30d ?? []).map((d) => ({ ...d, label: diaCurto(d.dia) })), [m]);
   const registros = useMemo(() => {
-    const mapa = new Map<string, Record<string, number>>();
+    type Linha = { label: string } & Record<string, number>;
+    const mapa = new Map<string, Linha>();
     for (const r of m?.registros_dia ?? []) {
-      const linha = mapa.get(r.dia) ?? { label: diaCurto(r.dia) };
+      const linha: Linha = mapa.get(r.dia) ?? { label: diaCurto(r.dia) };
       linha[r.tabela] = (linha[r.tabela] ?? 0) + Number(r.qtd);
       mapa.set(r.dia, linha);
     }
