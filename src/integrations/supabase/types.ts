@@ -79,6 +79,13 @@ export type Database = {
             referencedColumns: ["lote_id"]
           },
           {
+            foreignKeyName: "animais_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_producao_por_lote"
+            referencedColumns: ["lote_id"]
+          },
+          {
             foreignKeyName: "animais_mae_id_fkey"
             columns: ["mae_id"]
             isOneToOne: false
@@ -167,7 +174,67 @@ export type Database = {
             referencedColumns: ["lote_id"]
           },
           {
+            foreignKeyName: "anotacoes_producao_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_producao_por_lote"
+            referencedColumns: ["lote_id"]
+          },
+          {
             foreignKeyName: "anotacoes_producao_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assinaturas: {
+        Row: {
+          created_at: string
+          data_expiracao: string | null
+          data_inicio: string | null
+          id: string
+          origem: string
+          plano: Database["public"]["Enums"]["tipo_plano"]
+          propriedade_id: string
+          status: Database["public"]["Enums"]["status_assinatura"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_expiracao?: string | null
+          data_inicio?: string | null
+          id?: string
+          origem?: string
+          plano?: Database["public"]["Enums"]["tipo_plano"]
+          propriedade_id: string
+          status?: Database["public"]["Enums"]["status_assinatura"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_expiracao?: string | null
+          data_inicio?: string | null
+          id?: string
+          origem?: string
+          plano?: Database["public"]["Enums"]["tipo_plano"]
+          propriedade_id?: string
+          status?: Database["public"]["Enums"]["status_assinatura"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
             referencedRelation: "propriedades"
@@ -263,6 +330,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "configuracoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      importacoes: {
+        Row: {
+          aceitas: number
+          arquivo: string
+          atualizado_em: string
+          criado_em: string
+          erro: string | null
+          id: string
+          processadas: number
+          propriedade_id: string
+          rejeitadas: number
+          rejeitadas_detalhe: Json
+          status: string
+          tabela: string
+          total_linhas: number
+        }
+        Insert: {
+          aceitas?: number
+          arquivo: string
+          atualizado_em?: string
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          processadas?: number
+          propriedade_id: string
+          rejeitadas?: number
+          rejeitadas_detalhe?: Json
+          status?: string
+          tabela: string
+          total_linhas?: number
+        }
+        Update: {
+          aceitas?: number
+          arquivo?: string
+          atualizado_em?: string
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          processadas?: number
+          propriedade_id?: string
+          rejeitadas?: number
+          rejeitadas_detalhe?: Json
+          status?: string
+          tabela?: string
+          total_linhas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "importacoes_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
             referencedRelation: "propriedades"
@@ -532,6 +655,13 @@ export type Database = {
             referencedColumns: ["lote_id"]
           },
           {
+            foreignKeyName: "nascimentos_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_producao_por_lote"
+            referencedColumns: ["lote_id"]
+          },
+          {
             foreignKeyName: "nascimentos_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
@@ -633,6 +763,65 @@ export type Database = {
           },
         ]
       }
+      plano_auditoria: {
+        Row: {
+          alterado_por: string
+          assinatura_id: string | null
+          created_at: string
+          id: string
+          motivo: string | null
+          origem: string
+          plano_anterior: Database["public"]["Enums"]["tipo_plano"] | null
+          plano_novo: Database["public"]["Enums"]["tipo_plano"] | null
+          propriedade_id: string | null
+          status_anterior:
+            | Database["public"]["Enums"]["status_assinatura"]
+            | null
+          status_novo: Database["public"]["Enums"]["status_assinatura"] | null
+          user_id: string
+        }
+        Insert: {
+          alterado_por: string
+          assinatura_id?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          origem?: string
+          plano_anterior?: Database["public"]["Enums"]["tipo_plano"] | null
+          plano_novo?: Database["public"]["Enums"]["tipo_plano"] | null
+          propriedade_id?: string | null
+          status_anterior?:
+            | Database["public"]["Enums"]["status_assinatura"]
+            | null
+          status_novo?: Database["public"]["Enums"]["status_assinatura"] | null
+          user_id: string
+        }
+        Update: {
+          alterado_por?: string
+          assinatura_id?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          origem?: string
+          plano_anterior?: Database["public"]["Enums"]["tipo_plano"] | null
+          plano_novo?: Database["public"]["Enums"]["tipo_plano"] | null
+          propriedade_id?: string | null
+          status_anterior?:
+            | Database["public"]["Enums"]["status_assinatura"]
+            | null
+          status_novo?: Database["public"]["Enums"]["status_assinatura"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_auditoria_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       producao_leite: {
         Row: {
           animal_id: string
@@ -696,6 +885,13 @@ export type Database = {
             referencedColumns: ["lote_id"]
           },
           {
+            foreignKeyName: "producao_leite_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_producao_por_lote"
+            referencedColumns: ["lote_id"]
+          },
+          {
             foreignKeyName: "producao_leite_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
@@ -707,27 +903,39 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          biografia: string | null
+          bloqueado: boolean
+          cargo: string | null
           created_at: string
           id: string
           nome_completo: string
+          nome_exibicao: string | null
           preferencias: Json
           telefone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          biografia?: string | null
+          bloqueado?: boolean
+          cargo?: string | null
           created_at?: string
           id: string
           nome_completo?: string
+          nome_exibicao?: string | null
           preferencias?: Json
           telefone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          biografia?: string | null
+          bloqueado?: boolean
+          cargo?: string | null
           created_at?: string
           id?: string
           nome_completo?: string
+          nome_exibicao?: string | null
           preferencias?: Json
           telefone?: string | null
           updated_at?: string
@@ -766,6 +974,62 @@ export type Database = {
           },
         ]
       }
+      propriedade_perfil: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          descricao: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          imagem_url: string | null
+          logo_url: string | null
+          propriedade_id: string
+          telefone: string | null
+          texto_apresentacao: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          imagem_url?: string | null
+          logo_url?: string | null
+          propriedade_id: string
+          telefone?: string | null
+          texto_apresentacao?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          imagem_url?: string | null
+          logo_url?: string | null
+          propriedade_id?: string
+          telefone?: string | null
+          texto_apresentacao?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propriedade_perfil_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: true
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       propriedades: {
         Row: {
           ativo: boolean
@@ -799,6 +1063,24 @@ export type Database = {
           periodo_gestacao_dias?: number
           proprietario_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          chave: string
+          contador: number
+          janela: string
+        }
+        Insert: {
+          chave: string
+          contador?: number
+          janela: string
+        }
+        Update: {
+          chave?: string
+          contador?: number
+          janela?: string
         }
         Relationships: []
       }
@@ -927,6 +1209,13 @@ export type Database = {
             referencedColumns: ["lote_id"]
           },
           {
+            foreignKeyName: "vacinacoes_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_producao_por_lote"
+            referencedColumns: ["lote_id"]
+          },
+          {
             foreignKeyName: "vacinacoes_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
@@ -1050,12 +1339,50 @@ export type Database = {
           },
         ]
       }
+      v_financeiro_por_categoria: {
+        Row: {
+          categoria: string | null
+          mes: string | null
+          propriedade_id: string | null
+          tipo: Database["public"]["Enums"]["tipo_movimento"] | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_financeiras_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_producao_mensal: {
         Row: {
           media_registro: number | null
           mes: string | null
           propriedade_id: string | null
           total_litros: number | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_leite_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_producao_por_lote: {
+        Row: {
+          lote_id: string | null
+          lote_nome: string | null
+          mes: string | null
+          propriedade_id: string | null
+          total_litros: number | null
+          vacas: number | null
           valor_total: number | null
         }
         Relationships: [
@@ -1137,6 +1464,13 @@ export type Database = {
             referencedColumns: ["lote_id"]
           },
           {
+            foreignKeyName: "vacinacoes_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "v_producao_por_lote"
+            referencedColumns: ["lote_id"]
+          },
+          {
             foreignKeyName: "vacinacoes_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
@@ -1154,7 +1488,60 @@ export type Database = {
       }
     }
     Functions: {
+      admin_contas: {
+        Args: never
+        Returns: {
+          admin: boolean
+          bloqueado: boolean
+          bytes_estimados: number
+          criado_em: string
+          email: string
+          nome: string
+          propriedades: number
+          registros: number
+          ultimo_acesso: string
+          user_id: string
+        }[]
+      }
+      admin_definir_conta: {
+        Args: { _admin?: boolean; _bloqueado?: boolean; _user_id: string }
+        Returns: undefined
+      }
+      admin_sistema: { Args: never; Returns: Json }
+      cancelar_plano_demonstracao: {
+        Args: { _motivo?: string; _propriedade_id: string }
+        Returns: Json
+      }
+      checar_limite: {
+        Args: { _chave: string; _max: number; _segundos: number }
+        Returns: boolean
+      }
       dashboard_resumo: { Args: { _propriedade_id: string }; Returns: Json }
+      diagnostico_propriedade: {
+        Args: { _propriedade_id: string }
+        Returns: Json
+      }
+      minha_assinatura: { Args: { _propriedade_id: string }; Returns: Json }
+      pode_gerenciar_planos: { Args: never; Returns: boolean }
+      registros_inconsistentes: {
+        Args: { _propriedade_id: string }
+        Returns: Json
+      }
+      relatorio_indicadores: {
+        Args: { _ate?: string; _de?: string; _propriedade_id: string }
+        Returns: Json
+      }
+      setar_plano_demonstracao: {
+        Args: {
+          _data_expiracao?: string
+          _motivo?: string
+          _plano?: Database["public"]["Enums"]["tipo_plano"]
+          _propriedade_id: string
+          _status?: Database["public"]["Enums"]["status_assinatura"]
+        }
+        Returns: Json
+      }
+      sou_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role:
@@ -1169,6 +1556,12 @@ export type Database = {
         | "perdido"
         | "falecido"
         | "transferido"
+      status_assinatura:
+        | "ativo"
+        | "trial"
+        | "cancelado"
+        | "expirado"
+        | "pendente"
       status_inseminacao:
         | "em_andamento"
         | "confirmada"
@@ -1177,6 +1570,7 @@ export type Database = {
         | "cancelada"
       tipo_movimento: "receita" | "despesa" | "investimento"
       tipo_operacao: "compra" | "venda"
+      tipo_plano: "gratuito" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1318,6 +1712,13 @@ export const Constants = {
         "falecido",
         "transferido",
       ],
+      status_assinatura: [
+        "ativo",
+        "trial",
+        "cancelado",
+        "expirado",
+        "pendente",
+      ],
       status_inseminacao: [
         "em_andamento",
         "confirmada",
@@ -1327,6 +1728,7 @@ export const Constants = {
       ],
       tipo_movimento: ["receita", "despesa", "investimento"],
       tipo_operacao: ["compra", "venda"],
+      tipo_plano: ["gratuito", "premium"],
     },
   },
 } as const

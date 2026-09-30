@@ -76,13 +76,14 @@ export function ApecuariaApp() {
   const currentProperty = propertiesQuery.data?.find(p=>p.id===propertyId);
 
   const go=(target:string)=>{ setMobileOpen(false); navigate({to:"/app/$section",params:{section:target}}); };
-  const signOut=async()=>{ await supabase.auth.signOut(); queryClient.clear(); navigate({to:"/"}); };
+  const isAdminQuery = useQuery({ queryKey:["sou-admin"], queryFn:async()=>{ const r=await (supabase.rpc as unknown as (f:string)=>Promise<{data:unknown}>)("sou_admin"); return r.data===true; }});
+  const signOut=async()=>{ await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({to:"/",replace:true}); };
 
   return <div className="dark min-h-screen bg-background text-foreground">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[268px] flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
       <div className="flex h-[76px] items-center gap-3 border-b border-sidebar-border px-5"><div className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground"><Beef className="size-6"/></div><div><strong className="block text-base">Apecuária</strong><span className="text-xs font-semibold uppercase text-primary">Digital</span></div><Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X/></Button></div>
       <nav className="flex-1 overflow-y-auto px-3 py-5"><p className="mb-2 px-3 text-[10px] font-bold uppercase text-muted-foreground">Gestão da propriedade</p>{nav.map(([key,label,Icon])=><Button key={key} variant="ghost" onClick={()=>go(key)} className={`mb-1 h-10 w-full justify-start px-3 ${section===key?"bg-sidebar-accent text-primary":"text-sidebar-foreground/70"}`}><Icon/>{label}</Button>)}</nav>
-      <div className="border-t border-sidebar-border p-3"><Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={signOut}><LogOut/>Sair</Button></div>
+      <div className="border-t border-sidebar-border p-3">{isAdminQuery.data&&<Button variant="ghost" className="mb-1 w-full justify-start text-primary" onClick={()=>navigate({to:"/admin"})}><ShieldCheck/>Área Admin</Button>}<Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={signOut}><LogOut/>Sair</Button></div>
     </aside>
     {mobileOpen&&<div className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden" onClick={()=>setMobileOpen(false)}/>}
     <div className="lg:pl-[268px]">
