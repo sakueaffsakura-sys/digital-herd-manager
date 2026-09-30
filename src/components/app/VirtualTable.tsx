@@ -85,8 +85,8 @@ export function VirtualTable({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div ref={containerRef} className="max-h-[68vh] overflow-auto">
-        <div className="grid gap-px bg-border" style={{ gridTemplateColumns: gridColumns, minWidth: 700 }}>
-          <div className="sticky top-0 z-10 col-span-full grid bg-muted/35 text-xs font-semibold uppercase text-muted-foreground" style={{ gridTemplateColumns: gridColumns }}>
+        <div className="grid bg-card" style={{ gridTemplateColumns: gridColumns, minWidth: 700 }}>
+          <div className="sticky top-0 z-10 col-span-full grid border-b border-border bg-muted text-xs font-semibold uppercase text-muted-foreground" style={{ gridTemplateColumns: gridColumns }}>
             <div className="w-3" />
             {columns.map((c) => (
               <div className="px-5 py-3" key={c.key}>{c.label}</div>
