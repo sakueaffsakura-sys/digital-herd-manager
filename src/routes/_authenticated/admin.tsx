@@ -159,7 +159,7 @@ function MetricasTab() {
     const mapa = new Map<string, Linha>();
     for (const r of m?.registros_dia ?? []) {
       const linha: Linha = mapa.get(r.dia) ?? { label: diaCurto(r.dia) };
-      linha[r.tabela] = (linha[r.tabela] ?? 0) + Number(r.qtd);
+      linha[r.tabela] = Number(linha[r.tabela] ?? 0) + Number(r.qtd);
       mapa.set(r.dia, linha);
     }
     return [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
