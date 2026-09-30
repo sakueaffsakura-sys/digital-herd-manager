@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, ArrowLeft, BarChart3, Database, Eye, Gauge, HardDrive, Lock, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, Users, Zap } from "lucide-react";
+import { AlertTriangle, BellRing, ShieldAlert, Activity, ArrowLeft, BarChart3, Database, Eye, Gauge, HardDrive, Lock, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, Users, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -83,6 +83,15 @@ function AdminPage() {
     queryKey: ["admin-sistema"], enabled: isAdmin.data === true, refetchInterval: 30000,
     queryFn: async () => { const t = performance.now(); const r = await rpc("admin_sistema"); setLatencia(Math.round(performance.now() - t)); if (r.error) throw r.error; return r.data as Sistema; },
   });
+  const alertas = useQuery({ queryKey: ["admin-alertas"], enabled: isAdmin.data === true, refetchInterval: 15000, queryFn: async () => { const r = await rpc("admin_alertas"); if (r.error) throw r.error; return r.data as Alertas; } });
+  const avisados = useRef(new Set<string>());
+  useEffect(() => {
+    (alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").forEach((a) => {
+      if (avisados.current.has(a.titulo)) return;
+      avisados.current.add(a.titulo);
+      (a.severidade === "critico" ? toast.error : toast.warning)(a.titulo, { description: a.detalhe, duration: 10000 });
+    });
+  }, [alertas.data]);
   const contas = useQuery({ queryKey: ["admin-contas"], enabled: isAdmin.data === true, queryFn: async () => { const r = await rpc("admin_contas"); if (r.error) throw r.error; return (r.data ?? []) as Conta[]; } });
 
   const acao = useMutation({
@@ -103,13 +112,14 @@ function AdminPage() {
   if (!isAdmin.data) return <Shell><div className="rounded-xl border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
 
   const s = sistema.data;
-  const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."] } as const;
+  const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."] } as const;
   return (
-    <Shell tab={tab} setTab={setTab}>
+    <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length}>
       <div>
         <h2 className="text-xl font-bold tracking-tight">{titulos[tab][0]}</h2>
         <p className="text-sm text-muted-foreground">{titulos[tab][1]}</p>
       </div>
+      <AlertasFaixa dados={alertas.data} erro={!!alertas.error} onVer={() => setTab("seguranca")} esconderVer={tab === "seguranca"} />
       {(tab === "contas" || tab === "desempenho") && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Card icon={Users} label="Contas" value={s?.usuarios ?? "…"} sub={`${s?.novos_7d ?? 0} novas · ${s?.ativos_7d ?? 0} ativas em 7 dias`} />
@@ -120,6 +130,7 @@ function AdminPage() {
       )}
 
       {tab === "tempo" && <TempoRealTab />}
+      {tab === "seguranca" && <SegurancaTab dados={alertas.data} carregando={alertas.isLoading} />}
       {tab === "contas" && <ContasTab filtradas={filtradas} contas={contas} busca={busca} setBusca={setBusca} acao={acao} onDetalhe={setDetalheId} />}
       {tab === "metricas" && <MetricasTab />}
       {tab === "desempenho" && <DesempenhoTab sistema={s} latencia={latencia} />}
@@ -522,15 +533,16 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "contas" | "metricas" | "desempenho";
+type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho";
 const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
   { k: "tempo", label: "Tempo real", icon: Radio },
+  { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
   { k: "contas", label: "Contas", icon: Users },
   { k: "metricas", label: "Métricas", icon: BarChart3 },
   { k: "desempenho", label: "Desempenho", icon: Gauge },
 ];
 
-function Shell({ children, tab, setTab }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void }) {
+function Shell({ children, tab, setTab, alertaCount }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number }) {
   return (
     <main className="dark min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
@@ -549,6 +561,7 @@ function Shell({ children, tab, setTab }: { children: React.ReactNode; tab?: Aba
                   className={`flex h-10 shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-colors ${tab === k ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"}`}>
                   <Icon className="size-4" />{label}
                   {k === "tempo" && <span className="ml-auto size-1.5 rounded-full bg-primary" />}
+                  {k === "seguranca" && (alertaCount ?? 0) > 0 && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">{alertaCount}</span>}
                 </button>
               ))}
             </nav>
@@ -572,4 +585,54 @@ function Card({ icon: Icon, label, value, sub }: { icon: typeof Users; label: st
 }
 function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return <section className={`rounded-xl border border-border bg-card p-5 ${className ?? ""}`}><h3 className="mb-4 text-sm font-semibold">{title}</h3>{children}</section>;
+}
+
+type Alerta = { categoria: "seguranca" | "desempenho"; severidade: "info" | "aviso" | "critico"; titulo: string; detalhe: string };
+type Alertas = {
+  alertas: Alerta[]; bloqueios_10min: number; bloqueios_60min: number; ips_60min: number; conexoes: number; conexoes_max: number; cache: number;
+  eventos: { criado_em: string; tipo: string; severidade: string; ip: string | null; caminho: string | null; quantidade: number; detalhe: string | null }[];
+  por_hora: { hora: string; total: number }[]; top_ips: { ip: string | null; total: number; ultimo: string }[];
+};
+const sevCls = { critico: "border-destructive/50 bg-destructive/10 text-destructive", aviso: "border-chart-4/50 bg-chart-4/10 text-chart-4", info: "border-border bg-muted/30 text-muted-foreground" } as const;
+const TIPOS: Record<string, string> = { rajada: "Rajada de acessos", limite_minuto: "Limite por minuto", pico_global: "Pico geral (DDoS)", envio_grande: "Envio grande demais" };
+
+function AlertasFaixa({ dados, erro, onVer, esconderVer }: { dados?: Alertas; erro: boolean; onVer: () => void; esconderVer: boolean }) {
+  const lista = (dados?.alertas ?? []).filter((a) => a.severidade !== "info");
+  if (erro) return <div className={`rounded-xl border p-3 text-sm ${sevCls.aviso}`}>Não foi possível verificar os alertas agora.</div>;
+  if (!lista.length) return null;
+  return <div className="space-y-2">{lista.map((a) => (
+    <div key={a.titulo} role="alert" className={`flex items-start gap-3 rounded-xl border p-3 ${sevCls[a.severidade]}`}>
+      {a.severidade === "critico" ? <AlertTriangle className="mt-0.5 size-5 shrink-0 animate-pulse" /> : <BellRing className="mt-0.5 size-5 shrink-0" />}
+      <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{a.titulo}</p><p className="text-xs text-foreground/80">{a.detalhe}</p></div>
+      {!esconderVer && <Button size="sm" variant="outline" onClick={onVer}>Ver</Button>}
+    </div>))}</div>;
+}
+
+function SegurancaTab({ dados, carregando }: { dados?: Alertas; carregando: boolean }) {
+  if (carregando || !dados) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  const nivel = dados.alertas.some((a) => a.severidade === "critico") ? "critico" : dados.alertas.some((a) => a.severidade === "aviso") ? "aviso" : "ok";
+  const horas = Array.from({ length: 24 }, (_, i) => { const d = new Date(Date.now() - (23 - i) * 3600e3); d.setMinutes(0, 0, 0); const f = dados.por_hora.find((x) => new Date(x.hora).getTime() === d.getTime()); return { hora: `${String(d.getHours()).padStart(2, "0")}h`, total: Number(f?.total ?? 0) }; });
+  return <div className="space-y-5">
+    <div className={`flex items-center gap-4 rounded-xl border p-5 ${nivel === "ok" ? "border-primary/40 bg-primary/10" : sevCls[nivel]}`}>
+      {nivel === "ok" ? <ShieldCheck className="size-10 text-primary" /> : <ShieldX className="size-10" />}
+      <div><p className="text-lg font-bold">{nivel === "ok" ? "Site protegido — nenhum ataque detectado" : nivel === "critico" ? "Atenção: problema grave detectado" : "Há avisos para verificar"}</p>
+      <p className="text-sm text-muted-foreground">A proteção bloqueia automaticamente quem faz acessos em excesso (rajadas de mais de 30–60 pedidos em 5 segundos ou mais de 120–300 por minuto).</p></div>
+    </div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <Card icon={ShieldX} label="Bloqueios (10 min)" value={dados.bloqueios_10min} sub="acessos recusados" />
+      <Card icon={ShieldAlert} label="Bloqueios (1 hora)" value={dados.bloqueios_60min} sub={`${dados.ips_60min} endereço(s) diferentes`} />
+      <Card icon={Users} label="Conexões do banco" value={`${dados.conexoes}/${dados.conexoes_max}`} sub={`${Math.round((100 * dados.conexoes) / Math.max(1, dados.conexoes_max))}% da capacidade`} />
+      <Card icon={Gauge} label="Cache do banco" value={`${dados.cache}%`} sub={dados.cache >= 95 ? "ótimo" : dados.cache >= 90 ? "bom" : "baixo"} />
+    </div>
+    <Panel title="Alertas ativos">{dados.alertas.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum alerta de segurança ou desempenho no momento.</p> :
+      <div className="space-y-2">{dados.alertas.map((a) => <div key={a.titulo} className={`rounded-lg border p-3 ${sevCls[a.severidade]}`}><div className="flex items-center gap-2 text-sm font-semibold">{a.categoria === "seguranca" ? <ShieldAlert className="size-4" /> : <Gauge className="size-4" />}{a.titulo}<span className="ml-auto text-[10px] uppercase">{a.categoria === "seguranca" ? "Segurança" : "Desempenho"}</span></div><p className="mt-1 text-xs text-foreground/80">{a.detalhe}</p></div>)}</div>}
+    </Panel>
+    <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+      <Panel title="Acessos bloqueados nas últimas 24 horas"><div className="h-60"><ResponsiveContainer width="100%" height="100%"><BarChart data={horas}><CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="hora" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval={2} /><YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} allowDecimals={false} /><Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v) => [v, "Bloqueios"]} /><Bar dataKey="total" fill="var(--destructive)" radius={[3, 3, 0, 0]} /></BarChart></ResponsiveContainer></div></Panel>
+      <Panel title="Endereços mais bloqueados (24h)">{dados.top_ips.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum endereço bloqueado.</p> : <div className="space-y-2 text-sm">{dados.top_ips.map((i) => <div key={String(i.ip)} className="flex items-center justify-between border-b border-border/50 pb-1.5"><span className="font-mono text-xs">{i.ip ?? "desconhecido"}</span><span className="text-xs text-muted-foreground">{i.total} · {new Date(i.ultimo).toLocaleTimeString("pt-BR")}</span></div>)}</div>}</Panel>
+    </div>
+    <Panel title="Últimos eventos de segurança">{dados.eventos.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum evento registrado. Quando alguém exceder os limites, aparecerá aqui.</p> :
+      <div className="max-h-96 overflow-auto"><table className="w-full min-w-[640px] text-sm"><thead className="sticky top-0 bg-card text-left text-xs uppercase text-muted-foreground"><tr><th className="py-2">Quando</th><th>Tipo</th><th>Endereço</th><th>Página</th><th className="text-right">Qtd.</th></tr></thead><tbody>{dados.eventos.map((e, i) => <tr key={i} className="border-t border-border/50"><td className="py-1.5 text-xs">{new Date(e.criado_em).toLocaleString("pt-BR")}</td><td><span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${sevCls[(e.severidade as keyof typeof sevCls) ?? "info"] ?? sevCls.info}`}>{TIPOS[e.tipo] ?? e.tipo}</span></td><td className="font-mono text-xs">{e.ip ?? "—"}</td><td className="max-w-[200px] truncate text-xs text-muted-foreground">{e.caminho ?? "—"}</td><td className="text-right tabular-nums">{e.quantidade}</td></tr>)}</tbody></table></div>}
+    </Panel>
+  </div>;
 }

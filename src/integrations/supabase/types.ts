@@ -337,6 +337,39 @@ export type Database = {
           },
         ]
       }
+      eventos_seguranca: {
+        Row: {
+          caminho: string | null
+          criado_em: string
+          detalhe: string | null
+          id: number
+          ip: string | null
+          quantidade: number
+          severidade: string
+          tipo: string
+        }
+        Insert: {
+          caminho?: string | null
+          criado_em?: string
+          detalhe?: string | null
+          id?: number
+          ip?: string | null
+          quantidade?: number
+          severidade?: string
+          tipo: string
+        }
+        Update: {
+          caminho?: string | null
+          criado_em?: string
+          detalhe?: string | null
+          id?: number
+          ip?: string | null
+          quantidade?: number
+          severidade?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       importacoes: {
         Row: {
           aceitas: number
@@ -1506,6 +1539,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_alertas: { Args: never; Returns: Json }
       admin_conta_detalhe: { Args: { _user_id: string }; Returns: Json }
       admin_contas: {
         Args: never
