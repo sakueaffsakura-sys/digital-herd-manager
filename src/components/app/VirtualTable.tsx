@@ -156,7 +156,7 @@ export function VirtualTable({
               <Button variant="ghost" size="icon" aria-label="Última página" disabled={page >= last} onClick={() => onPage(last)}><ChevronsRight /></Button>
             </>
           )}
-          <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))} disabled={total <= 25}>
+          <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
             <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
             <SelectContent>{PAGE_SIZES.map((s) => <SelectItem value={String(s)} key={s}>{s} por página</SelectItem>)}</SelectContent>
           </Select>
