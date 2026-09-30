@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, ArrowLeft, BarChart3, Database, Gauge, HardDrive, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Users, Zap } from "lucide-react";
+import { Activity, ArrowLeft, BarChart3, Database, Eye, Gauge, HardDrive, Lock, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, Users, Zap } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -252,22 +253,61 @@ function ContasTab({ filtradas, contas, busca, setBusca, acao, onDetalhe }: {
   filtradas: Conta[]; contas: { isError: boolean; isPending: boolean }; busca: string; setBusca: (v: string) => void;
   acao: { isPending: boolean; mutate: (a: { user_id: string; bloqueado?: boolean; admin?: boolean }) => void }; onDetalhe: (id: string) => void;
 }) {
+  const [filtro, setFiltro] = useState<"todas" | "ativas" | "bloqueadas" | "admins">("todas");
+  const [ordem, setOrdem] = useState<"recentes" | "acesso" | "espaco" | "registros">("recentes");
+  const lista = useMemo(() => {
+    const f = filtradas.filter((c) => filtro === "todas" || (filtro === "ativas" && !c.bloqueado) || (filtro === "bloqueadas" && c.bloqueado) || (filtro === "admins" && c.admin));
+    const val = (c: Conta) => ordem === "acesso" ? new Date(c.ultimo_acesso ?? 0).getTime() : ordem === "espaco" ? Number(c.bytes_estimados) : ordem === "registros" ? Number(c.registros) : new Date(c.criado_em).getTime();
+    return [...f].sort((a, b) => val(b) - val(a));
+  }, [filtradas, filtro, ordem]);
+  const maxEspaco = Math.max(1, ...filtradas.map((c) => Number(c.bytes_estimados)));
+  const cont = { todas: filtradas.length, ativas: filtradas.filter((c) => !c.bloqueado).length, bloqueadas: filtradas.filter((c) => c.bloqueado).length, admins: filtradas.filter((c) => c.admin).length };
+  const recente = (s: string | null) => !!s && Date.now() - new Date(s).getTime() < 86400000;
+
   return (
-    <Panel title={`Contas (${filtradas.length})`}>
-      <div className="relative mb-3 max-w-sm"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
-      {contas.isError && <p className="text-sm text-destructive">Não foi possível carregar as contas.</p>}
-      {contas.isPending ? <p className="text-sm text-muted-foreground">Carregando contas…</p> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="py-2">Conta</th><th>Cadastro</th><th>Último acesso</th><th>Propriedades</th><th>Registros</th><th>Espaço</th><th>Situação</th><th /></tr></thead>
-        <tbody>{filtradas.map((c) => <tr key={c.user_id} className="border-t border-border/50">
-          <td className="py-2"><div className="font-medium">{c.nome || "—"}</div><div className="text-xs text-muted-foreground">{c.email}</div></td>
-          <td className="text-xs">{data(c.criado_em)}</td><td className="text-xs">{data(c.ultimo_acesso)}</td>
-          <td>{c.propriedades}</td><td>{Number(c.registros).toLocaleString("pt-BR")}</td><td>{bytes(Number(c.bytes_estimados))}</td>
-          <td>{c.bloqueado ? <span className="rounded bg-destructive/15 px-2 py-0.5 text-xs text-destructive">Bloqueada</span> : <span className="rounded bg-primary/15 px-2 py-0.5 text-xs text-primary">Ativa</span>}{c.admin && <span className="ml-1 rounded bg-accent px-2 py-0.5 text-xs">Admin</span>}</td>
-          <td className="space-x-1 whitespace-nowrap text-right">
-            <Button size="sm" variant="outline" onClick={() => onDetalhe(c.user_id)}>Detalhes</Button>
-            <Button size="sm" variant="ghost" disabled={acao.isPending} onClick={() => acao.mutate({ user_id: c.user_id, bloqueado: !c.bloqueado })}>{c.bloqueado ? "Desbloquear" : "Bloquear"}</Button>
-            <Button size="sm" variant="ghost" disabled={acao.isPending} onClick={() => acao.mutate({ user_id: c.user_id, admin: !c.admin })}>{c.admin ? "Remover admin" : "Tornar admin"}</Button>
-          </td></tr>)}</tbody></table></div>}
-    </Panel>
+    <section className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-xs"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
+        <div className="flex flex-wrap gap-1">
+          {([["todas", "Todas"], ["ativas", "Ativas"], ["bloqueadas", "Bloqueadas"], ["admins", "Admins"]] as const).map(([k, l]) => (
+            <button key={k} type="button" onClick={() => setFiltro(k)} className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors ${filtro === k ? "border-primary/50 bg-primary/15 text-primary" : "border-border text-muted-foreground hover:text-foreground"}`}>{l} <span className="ml-1 opacity-70">{cont[k]}</span></button>
+          ))}
+        </div>
+        <select value={ordem} onChange={(e) => setOrdem(e.target.value as typeof ordem)} className="h-9 rounded-md border border-input bg-background px-3 text-sm lg:ml-auto">
+          <option value="recentes">Mais recentes</option><option value="acesso">Último acesso</option><option value="espaco">Mais espaço</option><option value="registros">Mais registros</option>
+        </select>
+      </div>
+      {contas.isError && <p className="p-4 text-sm text-destructive">Não foi possível carregar as contas.</p>}
+      {contas.isPending ? <div className="space-y-2 p-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-muted/40" />)}</div> :
+        lista.length === 0 ? <div className="p-10 text-center"><Users className="mx-auto size-8 text-muted-foreground" /><p className="mt-2 text-sm text-muted-foreground">Nenhuma conta encontrada.</p></div> :
+        <div className="overflow-x-auto"><table className="w-full min-w-[860px] text-sm">
+          <thead className="bg-muted/30 text-left text-[11px] uppercase tracking-wide text-muted-foreground"><tr><th className="px-4 py-2.5 font-medium">Conta</th><th className="font-medium">Situação</th><th className="font-medium">Último acesso</th><th className="text-right font-medium">Propr.</th><th className="text-right font-medium">Registros</th><th className="w-40 pl-6 font-medium">Espaço</th><th /></tr></thead>
+          <tbody>{lista.map((c) => {
+            const nome = c.nome || c.email.split("@")[0];
+            const pct = Math.round((100 * Number(c.bytes_estimados)) / maxEspaco);
+            return <tr key={c.user_id} className="cursor-pointer border-t border-border/60 transition-colors hover:bg-muted/25" onClick={() => onDetalhe(c.user_id)}>
+              <td className="px-4 py-3"><div className="flex items-center gap-3">
+                <span className={`relative grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold uppercase ${c.admin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{nome.slice(0, 2)}{recente(c.ultimo_acesso) && <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-card bg-primary" />}</span>
+                <div className="min-w-0"><div className="truncate font-medium">{nome}</div><div className="truncate text-xs text-muted-foreground">{c.email} · desde {new Date(c.criado_em).toLocaleDateString("pt-BR")}</div></div>
+              </div></td>
+              <td><div className="flex gap-1">{c.bloqueado ? <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-medium text-destructive">Bloqueada</span> : <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">Ativa</span>}{c.admin && <span className="rounded-full border border-primary/40 px-2 py-0.5 text-[11px] font-medium text-primary">Admin</span>}</div></td>
+              <td className="text-xs text-muted-foreground">{data(c.ultimo_acesso)}</td>
+              <td className="text-right tabular-nums">{c.propriedades}</td>
+              <td className="text-right tabular-nums">{Number(c.registros).toLocaleString("pt-BR")}</td>
+              <td className="pl-6"><div className="text-xs tabular-nums">{bytes(Number(c.bytes_estimados))}</div><div className="mt-1 h-1.5 w-28 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(pct, 2)}%` }} /></div></td>
+              <td className="px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Ações"><MoreHorizontal /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="dark">
+                    <DropdownMenuItem onClick={() => onDetalhe(c.user_id)}><Eye />Ver detalhes</DropdownMenuItem>
+                    <DropdownMenuItem disabled={acao.isPending} onClick={() => acao.mutate({ user_id: c.user_id, bloqueado: !c.bloqueado })}>{c.bloqueado ? <><Unlock />Desbloquear</> : <><Lock />Bloquear</>}</DropdownMenuItem>
+                    <DropdownMenuItem disabled={acao.isPending} onClick={() => acao.mutate({ user_id: c.user_id, admin: !c.admin })}><ShieldCheck />{c.admin ? "Remover admin" : "Tornar admin"}</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </td>
+            </tr>;
+          })}</tbody></table></div>}
+    </section>
   );
 }
 
