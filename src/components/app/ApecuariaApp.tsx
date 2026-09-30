@@ -97,7 +97,37 @@ export function ApecuariaApp() {
       </main>
     </div>
     <PropertyDialog open={propertyDialog} userId={userQuery.data?.id} onClose={()=>setPropertyDialog(false)} onCreated={(id)=>{setPropertyId(id);setPropertyDialog(false);queryClient.invalidateQueries({queryKey:["properties"]});}}/>
+    <AboutDialog open={aboutOpen} onClose={()=>setAboutOpen(false)}/>
   </div>;
+}
+
+function AboutDialog({open,onClose}:{open:boolean;onClose:()=>void}){
+  return <Dialog open={open} onOpenChange={v=>!v&&onClose()}>
+    <DialogContent className="dark border-border bg-card sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2"><Info className="size-5 text-primary"/>Sobre o sistema</DialogTitle>
+        <DialogDescription>Pecuária Digital — gestão completa da sua pecuária.</DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3 text-sm text-muted-foreground">
+        <p>Pecuária Digital ajuda você a controlar rebanho, vacinação, reprodução, produção de leite e finanças da fazenda em um só lugar, com dados seguros e salvos automaticamente.</p>
+        <div className="rounded-lg border border-border bg-muted/40 p-3">
+          <p className="font-medium text-foreground">Versão 1.0</p>
+          <p>Atualizado em setembro de 2026</p>
+        </div>
+        <div className="space-y-1">
+          <p className="font-medium text-foreground">Principais recursos</p>
+          <p>• Controle do rebanho com histórico por animal</p>
+          <p>• Vacinação com lembretes e status automático</p>
+          <p>• Reprodução com previsão de parto</p>
+          <p>• Produção de leite individual e por lote</p>
+          <p>• Financeiro com lucro calculado automaticamente</p>
+          <p>• Relatórios mensais e anuais com filtros</p>
+        </div>
+        <p className="text-xs">Seus dados ficam protegidos e cada conta só enxerga as próprias propriedades.</p>
+      </div>
+      <DialogFooter><Button onClick={onClose}>Fechar</Button></DialogFooter>
+    </DialogContent>
+  </Dialog>;
 }
 
 function PropertyDialog({open,userId,onClose,onCreated}:{open:boolean;userId:string|undefined;onClose:()=>void;onCreated:(id:string)=>void}){
