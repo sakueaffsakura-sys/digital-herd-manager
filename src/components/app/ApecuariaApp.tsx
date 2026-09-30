@@ -1,9 +1,10 @@
 import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
+import { HerdIcon } from "@/components/app/HerdIcon";
 import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
-  Activity, BarChart3, Bell, Beef, CircleDollarSign,
+  Activity, BarChart3, Bell, CircleDollarSign,
   FlaskConical, Gauge, HeartPulse, LayoutDashboard, LogOut,
   Eye, Menu, Milk, Plus, Search, Settings, ShoppingCart,
   ShieldCheck, Syringe, TrendingUp, Upload, UserRound, Warehouse, X,
@@ -39,7 +40,7 @@ const Reports = lazy(() => import("./Reports"));
 const Diagnostics = lazy(() => import("./Diagnostics"));
 
 const nav = [
-  ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", Beef], ["bezerros", "Evolução dos Bezerros", Activity],
+  ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", HerdIcon], ["bezerros", "Evolução dos Bezerros", Activity],
   ["vacinacao", "Vacinação", Syringe], ["inseminacao", "Inseminação", FlaskConical], ["nascimentos", "Nascimentos", HeartPulse],
   ["lotes", "Lotes", Warehouse], ["producao", "Produção de Leite", Milk], ["relatorios", "Relatórios", BarChart3],
   ["financeiro", "Lucros e Investimentos", CircleDollarSign], ["comercial", "Compra e Venda", ShoppingCart],
@@ -47,7 +48,7 @@ const nav = [
 ] as const;
 
 const modules: Record<string, Module> = {
-  rebanho: { title: "Meu Rebanho", singular: "animal", table: "animais", icon: Beef, description: "Cadastro completo e histórico do rebanho.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
+  rebanho: { title: "Meu Rebanho", singular: "animal", table: "animais", icon: HerdIcon, description: "Cadastro completo e histórico do rebanho.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
     {key:"numero_brinco",label:"Número do brinco",required:true},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo",type:"select",required:true,options:[{value:"F",label:"Fêmea"},{value:"M",label:"Macho"}]},{key:"raca",label:"Raça"},{key:"data_nascimento",label:"Data de nascimento",type:"date"},{key:"lote_id",label:"Lote",type:"lote"},{key:"mae_id",label:"Mãe",type:"animal",sex:"F"},{key:"pai_id",label:"Pai",type:"animal",sex:"M"},{key:"situacao",label:"Situação",type:"select",required:true,options:["ativo","vendido","perdido","falecido","transferido"].map(v=>({value:v,label:v}))},{key:"observacoes",label:"Observações",type:"textarea"}
   ]},
   bezerros: { title:"Evolução dos Bezerros", singular:"pesagem", table:"pesagens", icon:Activity, description:"Pesos e evolução dos animais jovens.", searchColumns:["data"], columns:[{key:"animal_id",label:"Animal"},{key:"data",label:"Data"},{key:"peso_kg",label:"Peso (kg)"},{key:"observacoes",label:"Observações"}], fields:[{key:"animal_id",label:"Bezerro",type:"animal",required:true,activeOnly:true},{key:"data",label:"Data",type:"date",required:true},{key:"peso_kg",label:"Peso (kg)",type:"number",required:true},{key:"observacoes",label:"Observações",type:"textarea"}]},
