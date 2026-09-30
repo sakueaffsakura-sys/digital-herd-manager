@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated")({
     if (!user) {
       const { data, error } = await supabase.auth.getUser();
       if (error || !data.user) {
-        const volta = encodeURIComponent(`${location.pathname}${location.search}`);
+        const volta = encodeURIComponent(location.href);
         throw redirect({ to: "/", search: { motivo: "sessao-expirada", redirect: volta } });
       }
       user = data.user;
