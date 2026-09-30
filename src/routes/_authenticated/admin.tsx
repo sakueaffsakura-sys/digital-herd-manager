@@ -110,7 +110,7 @@ function AdminPage() {
         <h2 className="text-xl font-bold tracking-tight">{titulos[tab][0]}</h2>
         <p className="text-sm text-muted-foreground">{titulos[tab][1]}</p>
       </div>
-      {tab !== "tempo" && (
+      {(tab === "contas" || tab === "desempenho") && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Card icon={Users} label="Contas" value={s?.usuarios ?? "…"} sub={`${s?.novos_7d ?? 0} novas · ${s?.ativos_7d ?? 0} ativas em 7 dias`} />
           <Card icon={Database} label="Banco de dados" value={s ? bytes(s.banco_bytes) : "…"} sub={`${s?.propriedades ?? 0} propriedades`} />
