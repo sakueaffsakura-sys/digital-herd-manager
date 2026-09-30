@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
-  Beef,
   ClipboardList,
   MoreHorizontal,
   PackageOpen,
@@ -15,7 +14,8 @@ export type Row = Record<string, unknown>;
 export type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina"; required?: boolean; options?: { value: string; label: string }[]; sex?: "M" | "F"; activeOnly?: boolean };
 export type FilterDef = { key: string; label: string; options: { value: string; label: string }[] };
 export type ImpliedFilter = { key: string; isNull?: boolean; value?: string };
-export type Module = { title: string; singular: string; table: TableName; icon: typeof Beef; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter };
+export type IconType = ComponentType<{ className?: string }>;
+export type Module = { title: string; singular: string; table: TableName; icon: IconType; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter };
 export type FormRefs = {
   animals: { id: string; nome: string | null; numero_brinco: string; data_nascimento: string | null; sexo: string; situacao: string }[];
   lots: { id: string; nome: string }[];
@@ -41,7 +41,7 @@ export const friendlyError = (error: unknown) => {
   return message;
 };
 
-export function PageTitle({ icon: Icon, title, description, action }: { icon: typeof Beef; title: string; description: string; action?: ReactNode }) {
+export function PageTitle({ icon: Icon, title, description, action }: { icon: IconType; title: string; description: string; action?: ReactNode }) {
   return <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="mb-2 flex items-center gap-2 text-primary"><Icon className="size-5" /><span className="text-xs font-bold uppercase">Pecuária Digital</span></div><h1 className="text-3xl font-bold">{title}</h1><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>{action}</div>;
 }
 
