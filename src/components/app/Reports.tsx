@@ -98,10 +98,10 @@ export default function Reports({ propertyId }: { propertyId: string }) {
   const byTipo = (t: string) => sum(fin.filter((r) => r.tipo === t), "valor");
   const receitas = byTipo("receita"), despesas = byTipo("despesa"), invest = byTipo("investimento");
 
-  const exportCSV = () => {
-    if (!premium) return toast.error("A exportação de dados é um recurso do plano Premium.");
-    const list = f.type === "leite" ? rows("milk") : f.type === "rebanho" ? rows("births") : f.type === "comercial" ? [...rows("compras").map((r) => ({ tipo: "compra", ...r })), ...rows("vendas").map((r) => ({ tipo: "venda", ...r }))] : fin;
-    if (!list.length) return toast.error("Não há dados no período selecionado.");
+  const exportCSV = (): void => {
+    if (!premium) { toast.error("A exportação de dados é um recurso do plano Premium."); return; }
+    const list: Row[] = f.type === "leite" ? rows("milk") : f.type === "rebanho" ? rows("births") : f.type === "comercial" ? [...rows("compras").map((r) => ({ tipo: "compra", ...r })), ...rows("vendas").map((r) => ({ tipo: "venda", ...r }))] : fin;
+    if (!list.length) { toast.error("Não há dados no período selecionado."); return; }
     const keys = Object.keys(list[0]).filter((k) => typeof list[0][k] !== "object");
     const csv = [keys, ...list.map((r) => keys.map((k) => r[k] ?? ""))].map((r) => r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(";")).join("\n");
     const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
