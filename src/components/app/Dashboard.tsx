@@ -91,7 +91,7 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
           <p className="mt-2 text-sm text-foreground/75">Resumo do rebanho, da produção e das finanças da propriedade.</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={() => go("rebanho")}><Plus />Cadastrar animal</Button>
-            <Button variant="outline" className="bg-background/60 backdrop-blur" onClick={() => go("leite")}><Milk />Registrar leite</Button>
+            <Button variant="outline" className="bg-background/60 backdrop-blur" onClick={() => go("producao")}><Milk />Registrar leite</Button>
             <Button variant="outline" className="bg-background/60 backdrop-blur" onClick={() => go("vacinacao")}><Syringe />Vacinação</Button>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
       <Metric label="Receitas no mês" value={v(money(cur?.receitas))} icon={TrendingUp} onClick={() => go("lucros")} hint={<Delta value={variacao(cur?.receitas ?? 0, prev?.receitas ?? 0)} label="vs mês anterior" />} />
       <Metric label="Despesas no mês" value={v(money(cur?.despesas))} icon={TrendingDown} tone="destructive" onClick={() => go("lucros")} hint={<Delta invert value={variacao(cur?.despesas ?? 0, prev?.despesas ?? 0)} label="vs mês anterior" />} />
       <Metric label="Investimentos no mês" value={v(money(n("investimentos_mes")))} icon={Wallet} tone="chart-4" onClick={() => go("lucros")} />
-      <Metric label="Produção de leite" value={v(`${compact(cur?.leite ?? 0)} L`)} icon={Milk} tone="chart-3" onClick={() => go("leite")} hint={<Delta value={variacao(cur?.leite ?? 0, prev?.leite ?? 0)} label="vs mês anterior" />} />
+      <Metric label="Produção de leite" value={v(`${compact(cur?.leite ?? 0)} L`)} icon={Milk} tone="chart-3" onClick={() => go("producao")} hint={<Delta value={variacao(cur?.leite ?? 0, prev?.leite ?? 0)} label="vs mês anterior" />} />
     </div>
 
     <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
