@@ -1488,6 +1488,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_conta_detalhe: { Args: { _user_id: string }; Returns: Json }
       admin_contas: {
         Args: never
         Returns: {
@@ -1507,6 +1508,13 @@ export type Database = {
         Args: { _admin?: boolean; _bloqueado?: boolean; _user_id: string }
         Returns: undefined
       }
+      admin_definir_perfil: {
+        Args: { _payload: Json; _user_id: string }
+        Returns: undefined
+      }
+      admin_excluir_conta: { Args: { _user_id: string }; Returns: Json }
+      admin_metricas: { Args: never; Returns: Json }
+      admin_saude: { Args: never; Returns: Json }
       admin_sistema: { Args: never; Returns: Json }
       cancelar_plano_demonstracao: {
         Args: { _motivo?: string; _propriedade_id: string }
