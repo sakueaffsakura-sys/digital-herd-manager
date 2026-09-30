@@ -195,7 +195,7 @@ function TempoRealTab() {
   const saude = !atual ? "…" : atual.latencia < 400 && (ultima?.bloqueios ?? 0) === 0 ? "Ótimo" : atual.latencia < 1200 ? "Atenção" : "Lento";
   const corSaude = saude === "Ótimo" ? "text-primary" : saude === "Atenção" ? "text-warning" : "text-destructive";
   const uso = ultima ? Math.round((100 * ultima.conexoes_total) / ultima.conexoes_max) : 0;
-  const eixo = { tick: { fontSize: 10 }, stroke: "var(--muted-foreground)" };
+  const eixo = { tick: { fontSize: 10, fill: "var(--muted-foreground)" }, axisLine: false, tickLine: false };
 
   return (
     <div className="space-y-4">
