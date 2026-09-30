@@ -110,9 +110,9 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
       <Metric label="Bezerros em evolução" value={v(n("bezerros").toLocaleString("pt-BR"))} icon={Baby} tone="chart-3" onClick={() => go("bezerros")} />
       <Metric label="Vacinações em dia" value={v(n("vacinacoes_em_dia").toLocaleString("pt-BR"))} icon={Syringe} tone="chart-4" onClick={() => go("vacinacao")} hint={data?.vencidas ? <span className="text-[11px] font-semibold text-destructive">{data.vencidas} vencida(s)</span> : <span className="text-[11px] text-muted-foreground">nenhuma vencida</span>} />
       <Metric label="Inseminações" value={v(n("inseminacoes").toLocaleString("pt-BR"))} icon={FlaskConical} tone="chart-2" onClick={() => go("inseminacao")} hint={<span className="text-[11px] text-muted-foreground">{data?.partos ?? 0} parto(s) em 30 dias</span>} />
-      <Metric label="Receitas no mês" value={v(money(cur?.receitas))} icon={TrendingUp} onClick={() => go("lucros")} hint={<Delta value={variacao(cur?.receitas ?? 0, prev?.receitas ?? 0)} label="vs mês anterior" />} />
-      <Metric label="Despesas no mês" value={v(money(cur?.despesas))} icon={TrendingDown} tone="destructive" onClick={() => go("lucros")} hint={<Delta invert value={variacao(cur?.despesas ?? 0, prev?.despesas ?? 0)} label="vs mês anterior" />} />
-      <Metric label="Investimentos no mês" value={v(money(n("investimentos_mes")))} icon={Wallet} tone="chart-4" onClick={() => go("lucros")} />
+      <Metric label="Receitas no mês" value={v(money(cur?.receitas))} icon={TrendingUp} onClick={() => go("financeiro")} hint={<Delta value={variacao(cur?.receitas ?? 0, prev?.receitas ?? 0)} label="vs mês anterior" />} />
+      <Metric label="Despesas no mês" value={v(money(cur?.despesas))} icon={TrendingDown} tone="destructive" onClick={() => go("financeiro")} hint={<Delta invert value={variacao(cur?.despesas ?? 0, prev?.despesas ?? 0)} label="vs mês anterior" />} />
+      <Metric label="Investimentos no mês" value={v(money(n("investimentos_mes")))} icon={Wallet} tone="chart-4" onClick={() => go("financeiro")} />
       <Metric label="Produção de leite" value={v(`${compact(cur?.leite ?? 0)} L`)} icon={Milk} tone="chart-3" onClick={() => go("producao")} hint={<Delta value={variacao(cur?.leite ?? 0, prev?.leite ?? 0)} label="vs mês anterior" />} />
     </div>
 
