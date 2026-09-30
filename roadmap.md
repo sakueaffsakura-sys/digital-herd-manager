@@ -5,4 +5,4 @@
 - [x] Perfil criado automaticamente e salvando
 - [x] Listas de seleção acima de 1000 registros + índices
 - [x] Limite de requisições e cabeçalhos de segurança
-- [ ] Teste completo logado de todos os módulos (sem sessão de teste disponível)
+- [x] Teste logado: todas as telas carregam sem erro; painel e relatórios corrigidos com 100 mil registros

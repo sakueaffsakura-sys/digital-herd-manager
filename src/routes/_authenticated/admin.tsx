@@ -86,7 +86,7 @@ function AdminPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Novos cadastros (30 dias)">
-          <div className="h-56"><ResponsiveContainer><BarChart data={s?.cadastros_30d ?? []}><CartesianGrid strokeOpacity={0.1} /><XAxis dataKey="dia" tick={{ fontSize: 10 }} /><YAxis allowDecimals={false} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="qtd" fill="hsl(var(--primary))" radius={4} /></BarChart></ResponsiveContainer></div>
+          <div className="h-56"><ResponsiveContainer><BarChart data={s?.cadastros_30d ?? []}><CartesianGrid strokeOpacity={0.1} /><XAxis dataKey="dia" tick={{ fontSize: 10 }} /><YAxis allowDecimals={false} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="qtd" fill="var(--primary)" radius={4} /></BarChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Espaço por tabela">
           <div className="max-h-56 overflow-auto text-sm">{(s?.tabelas ?? []).map((t) => <div key={t.tabela} className="flex justify-between border-b border-border/50 py-1.5"><span>{t.tabela}</span><span className="text-muted-foreground">{t.linhas.toLocaleString("pt-BR")} linhas · {bytes(t.bytes)}</span></div>)}</div>
