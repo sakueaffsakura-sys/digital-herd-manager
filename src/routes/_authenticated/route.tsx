@@ -46,7 +46,7 @@ function AreaLogada() {
   useEffect(() => {
     const ping = () => {
       if (document.visibilityState !== "visible") return;
-      void supabase.from("presenca_usuarios" as never).upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current } as never);
+      void supabase.from("presenca_usuarios" as never).upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current } as never).then(() => undefined);
     };
     ping();
     const id = setInterval(ping, 60000);
