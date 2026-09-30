@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
-import { Activity, ArrowLeft, BarChart3, Database, HardDrive, Search, ShieldCheck, ShieldX, Trash2, Users, Zap } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Activity, ArrowLeft, BarChart3, Database, Gauge, HardDrive, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,7 +72,7 @@ const mesCurto = (s: string) => new Date(s).toLocaleDateString("pt-BR", { month:
 
 function AdminPage() {
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"contas" | "metricas" | "desempenho">("contas");
+  const [tab, setTab] = useState<Aba>("tempo");
   const [busca, setBusca] = useState("");
   const [latencia, setLatencia] = useState<number | null>(null);
   const [detalheId, setDetalheId] = useState<string | null>(null);
@@ -99,24 +99,26 @@ function AdminPage() {
   }, [contas.data, busca]);
 
   if (isAdmin.isPending) return <Shell><p className="text-muted-foreground">Verificando acesso…</p></Shell>;
-  if (!isAdmin.data) return <Shell><div className="rounded-lg border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
+  if (!isAdmin.data) return <Shell><div className="rounded-xl border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
 
   const s = sistema.data;
+  const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."] } as const;
   return (
-    <Shell>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card icon={Users} label="Contas" value={s?.usuarios ?? "…"} sub={`${s?.novos_7d ?? 0} novas / ${s?.ativos_7d ?? 0} ativas em 7 dias`} />
-        <Card icon={Database} label="Banco de dados" value={s ? bytes(s.banco_bytes) : "…"} sub={`${s?.propriedades ?? 0} propriedades`} />
-        <Card icon={HardDrive} label="Arquivos" value={s ? bytes(s.armazenamento_bytes) : "…"} sub={`${s?.arquivos ?? 0} arquivos`} />
-        <Card icon={Zap} label="Velocidade" value={latencia != null ? `${latencia} ms` : "…"} sub={`Consulta no banco: ${s?.ping_ms ?? "…"} ms`} />
+    <Shell tab={tab} setTab={setTab}>
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">{titulos[tab][0]}</h2>
+        <p className="text-sm text-muted-foreground">{titulos[tab][1]}</p>
       </div>
+      {tab !== "tempo" && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Card icon={Users} label="Contas" value={s?.usuarios ?? "…"} sub={`${s?.novos_7d ?? 0} novas · ${s?.ativos_7d ?? 0} ativas em 7 dias`} />
+          <Card icon={Database} label="Banco de dados" value={s ? bytes(s.banco_bytes) : "…"} sub={`${s?.propriedades ?? 0} propriedades`} />
+          <Card icon={HardDrive} label="Arquivos" value={s ? bytes(s.armazenamento_bytes) : "…"} sub={`${s?.arquivos ?? 0} arquivos`} />
+          <Card icon={Zap} label="Velocidade" value={latencia != null ? `${latencia} ms` : "…"} sub={`Consulta no banco: ${s?.ping_ms ?? "…"} ms`} />
+        </div>
+      )}
 
-      <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
-        {([["contas", "Contas"], ["metricas", "Métricas"], ["desempenho", "Desempenho"]] as const).map(([k, label]) => (
-          <button key={k} type="button" onClick={() => setTab(k)} className={`h-9 flex-1 rounded-md px-4 text-sm font-medium transition-colors sm:flex-none ${tab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
-        ))}
-      </div>
-
+      {tab === "tempo" && <TempoRealTab />}
       {tab === "contas" && <ContasTab filtradas={filtradas} contas={contas} busca={busca} setBusca={setBusca} acao={acao} onDetalhe={setDetalheId} />}
       {tab === "metricas" && <MetricasTab />}
       {tab === "desempenho" && <DesempenhoTab sistema={s} latencia={latencia} />}
@@ -124,6 +126,126 @@ function AdminPage() {
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
   );
+}
+
+type Amostra = {
+  ts: number; commits: number; rollbacks: number; lidas: number; inseridas: number; atualizadas: number; removidas: number;
+  blks_hit: number; blks_read: number; deadlocks: number; conexoes_ativas: number; conexoes_ociosas: number; conexoes_total: number;
+  conexoes_max: number; bloqueios: number; consulta_mais_longa_s: number; banco_bytes: number; usuarios_online: number; ping_ms: number;
+};
+type Ponto = { hora: string; latencia: number; banco: number; tps: number; leituras: number; escritas: number; conexoes: number; cache: number };
+
+function TempoRealTab() {
+  const [pausado, setPausado] = useState(false);
+  const [serie, setSerie] = useState<Ponto[]>([]);
+  const [ultima, setUltima] = useState<Amostra | null>(null);
+  const [erros, setErros] = useState(0);
+  const [nav, setNav] = useState<{ carregamento: number; ttfb: number; memoria: number | null } | null>(null);
+  const [fps, setFps] = useState<number | null>(null);
+  const [online, setOnline] = useState(true);
+  const anterior = useRef<Amostra | null>(null);
+
+  useEffect(() => {
+    const n = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+    if (n) setNav({ carregamento: Math.round(n.loadEventEnd || n.domContentLoadedEventEnd), ttfb: Math.round(n.responseStart - n.requestStart), memoria: mem ? mem.usedJSHeapSize : null });
+    let frames = 0, t0 = performance.now(), raf = 0;
+    const loop = (t: number) => { frames++; if (t - t0 >= 1000) { setFps(Math.round((frames * 1000) / (t - t0))); frames = 0; t0 = t; } raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    const on = () => setOnline(navigator.onLine);
+    window.addEventListener("online", on); window.addEventListener("offline", on);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("online", on); window.removeEventListener("offline", on); };
+  }, []);
+
+  useEffect(() => {
+    if (pausado) return;
+    let vivo = true;
+    const coletar = async () => {
+      const t = performance.now();
+      const r = await rpc("admin_tempo_real");
+      const lat = Math.round(performance.now() - t);
+      if (!vivo) return;
+      if (r.error) { setErros((e) => e + 1); return; }
+      const a = r.data as Amostra;
+      const p = anterior.current;
+      const dt = p ? Math.max(0.5, a.ts - p.ts) : 1;
+      const dHit = p ? a.blks_hit - p.blks_hit : 0, dRead = p ? a.blks_read - p.blks_read : 0;
+      const ponto: Ponto = {
+        hora: new Date().toLocaleTimeString("pt-BR"),
+        latencia: lat, banco: Number(a.ping_ms),
+        tps: p ? Math.max(0, Math.round((a.commits + a.rollbacks - p.commits - p.rollbacks) / dt)) : 0,
+        leituras: p ? Math.max(0, Math.round((a.lidas - p.lidas) / dt)) : 0,
+        escritas: p ? Math.max(0, Math.round((a.inseridas + a.atualizadas + a.removidas - p.inseridas - p.atualizadas - p.removidas) / dt)) : 0,
+        conexoes: a.conexoes_ativas,
+        cache: dHit + dRead > 0 ? Math.round((1000 * dHit) / (dHit + dRead)) / 10 : 100,
+      };
+      anterior.current = a;
+      setUltima(a);
+      setSerie((s) => [...s.slice(-59), ponto]);
+    };
+    coletar();
+    const id = setInterval(coletar, 3000);
+    return () => { vivo = false; clearInterval(id); };
+  }, [pausado]);
+
+  const atual = serie[serie.length - 1];
+  const media = serie.length ? Math.round(serie.reduce((s, p) => s + p.latencia, 0) / serie.length) : null;
+  const pico = serie.length ? Math.max(...serie.map((p) => p.latencia)) : null;
+  const saude = !atual ? "…" : atual.latencia < 400 && (ultima?.bloqueios ?? 0) === 0 ? "Ótimo" : atual.latencia < 1200 ? "Atenção" : "Lento";
+  const corSaude = saude === "Ótimo" ? "text-primary" : saude === "Atenção" ? "text-warning" : "text-destructive";
+  const uso = ultima ? Math.round((100 * ultima.conexoes_total) / ultima.conexoes_max) : 0;
+  const eixo = { tick: { fontSize: 10 }, stroke: "var(--muted-foreground)" };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
+        <span className="relative flex size-2.5">{!pausado && <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />}<span className={`relative inline-flex size-2.5 rounded-full ${pausado ? "bg-muted-foreground" : "bg-primary"}`} /></span>
+        <span className="text-sm font-medium">{pausado ? "Pausado" : "Ao vivo"}</span>
+        <span className="text-xs text-muted-foreground">{atual ? `Última leitura ${atual.hora}` : "Coletando…"} · {serie.length} leituras{erros ? ` · ${erros} falhas` : ""}</span>
+        <span className={`ml-auto text-sm font-semibold ${corSaude}`}>Situação: {saude}</span>
+        <Button size="sm" variant="outline" onClick={() => setPausado((p) => !p)}>{pausado ? <><Play />Retomar</> : <><Pause />Pausar</>}</Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card icon={Zap} label="Resposta do servidor" value={atual ? `${atual.latencia} ms` : "…"} sub={`Média ${media ?? "…"} ms · pico ${pico ?? "…"} ms`} />
+        <Card icon={Activity} label="Operações por segundo" value={atual ? atual.tps.toLocaleString("pt-BR") : "…"} sub={`${atual?.leituras.toLocaleString("pt-BR") ?? 0} leituras · ${atual?.escritas.toLocaleString("pt-BR") ?? 0} gravações /s`} />
+        <Card icon={Users} label="Usuários online" value={ultima?.usuarios_online ?? "…"} sub="Entraram nos últimos 15 min" />
+        <Card icon={Database} label="Conexões" value={ultima ? `${ultima.conexoes_ativas} / ${ultima.conexoes_total}` : "…"} sub={`ativas / abertas · ${uso}% da capacidade`} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel title="Tempo de resposta (ms)">
+          <div className="h-56"><ResponsiveContainer><AreaChart data={serie}><CartesianGrid strokeOpacity={0.1} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis {...eixo} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 11 }} /><Area isAnimationActive={false} type="monotone" dataKey="latencia" name="Site → servidor" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.18} /><Area isAnimationActive={false} type="monotone" dataKey="banco" name="Dentro do banco" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.12} /></AreaChart></ResponsiveContainer></div>
+        </Panel>
+        <Panel title="Leituras e gravações por segundo">
+          <div className="h-56"><ResponsiveContainer><LineChart data={serie}><CartesianGrid strokeOpacity={0.1} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis {...eixo} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 11 }} /><Line isAnimationActive={false} type="monotone" dataKey="leituras" name="Leituras" stroke="var(--primary)" strokeWidth={2} dot={false} /><Line isAnimationActive={false} type="monotone" dataKey="escritas" name="Gravações" stroke="var(--chart-4)" strokeWidth={2} dot={false} /><Line isAnimationActive={false} type="monotone" dataKey="tps" name="Transações" stroke="var(--chart-2)" strokeWidth={1.5} dot={false} /></LineChart></ResponsiveContainer></div>
+        </Panel>
+        <Panel title="Conexões ativas">
+          <div className="h-48"><ResponsiveContainer><BarChart data={serie}><CartesianGrid strokeOpacity={0.1} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis allowDecimals={false} {...eixo} /><Tooltip contentStyle={tip} /><Bar isAnimationActive={false} dataKey="conexoes" name="Conexões" fill="var(--primary)" radius={3} /></BarChart></ResponsiveContainer></div>
+        </Panel>
+        <Panel title="Saúde agora">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <Info label="Acerto de cache" value={atual ? `${atual.cache}%` : "…"} ok={(atual?.cache ?? 100) >= 95} />
+            <Info label="Consultas travadas" value={ultima?.bloqueios ?? "…"} ok={(ultima?.bloqueios ?? 0) === 0} />
+            <Info label="Consulta mais longa" value={ultima ? `${Number(ultima.consulta_mais_longa_s).toFixed(1)} s` : "…"} ok={(ultima?.consulta_mais_longa_s ?? 0) < 5} />
+            <Info label="Deadlocks (total)" value={ultima?.deadlocks ?? "…"} ok={(ultima?.deadlocks ?? 0) === 0} />
+            <Info label="Tamanho do banco" value={ultima ? bytes(ultima.banco_bytes) : "…"} ok />
+            <Info label="Conexão da internet" value={online ? "Online" : "Offline"} ok={online} />
+            <Info label="Carregamento desta página" value={nav ? `${nav.carregamento} ms` : "…"} ok={(nav?.carregamento ?? 0) < 3000} />
+            <Info label="Fluidez da tela" value={fps != null ? `${fps} FPS` : "…"} ok={(fps ?? 60) >= 45} />
+            {nav?.memoria != null && <Info label="Memória usada no navegador" value={bytes(nav.memoria)} ok />}
+            <Info label="Primeiro byte (TTFB)" value={nav ? `${nav.ttfb} ms` : "…"} ok={(nav?.ttfb ?? 0) < 800} />
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+const tip = { background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
+
+function Info({ label, value, ok }: { label: string; value: React.ReactNode; ok: boolean }) {
+  return <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"><span className="text-xs text-muted-foreground">{label}</span><span className={`font-semibold ${ok ? "text-foreground" : "text-destructive"}`}>{value}</span></div>;
 }
 
 function ContasTab({ filtradas, contas, busca, setBusca, acao, onDetalhe }: {
