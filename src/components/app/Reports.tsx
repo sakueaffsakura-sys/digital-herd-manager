@@ -1,118 +1,162 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Download, Lock } from "lucide-react";
+import { BarChart3, CalendarRange, ChevronLeft, ChevronRight, Download, Lock, Milk, PiggyBank, ShoppingCart, Baby, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Empty, Metric, PageTitle, Panel, dateNow, money, type Row } from "./shared";
+import { Empty, Metric, PageTitle, Panel, dateNow, money, pretty, type Row } from "./shared";
 import { usePlan } from "./account";
+import { fetchAllRows } from "@/lib/fetchAll";
 
-type Indicadores = Record<string, number | null>;
+type ReportType = "geral" | "financeiro" | "leite" | "rebanho" | "comercial";
+const TYPES: { id: ReportType; label: string; icon: typeof BarChart3 }[] = [
+  { id: "geral", label: "Visão geral", icon: LayoutGrid },
+  { id: "financeiro", label: "Financeiro", icon: PiggyBank },
+  { id: "leite", label: "Produção de leite", icon: Milk },
+  { id: "rebanho", label: "Nascimentos", icon: Baby },
+  { id: "comercial", label: "Compra e venda", icon: ShoppingCart },
+];
+const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const STORE = "pd-relatorios-filtro";
+const tip = { background: "var(--popover)", border: "1px solid var(--border)" };
+const axis = { fill: "var(--muted-foreground)", fontSize: 10 };
+const fmtDate = (d: unknown) => (d ? String(d).slice(0, 10).split("-").reverse().join("/") : "—");
+
+type Filter = { type: ReportType; year: number; month: number }; // month 0 = ano inteiro
+
+function loadFilter(): Filter {
+  const now = dateNow();
+  const base: Filter = { type: "geral", year: Number(now.slice(0, 4)), month: Number(now.slice(5, 7)) };
+  if (typeof window === "undefined") return base;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(STORE) ?? "null");
+    if (saved && TYPES.some((t) => t.id === saved.type) && saved.year > 1990 && saved.month >= 0 && saved.month <= 12) return saved;
+  } catch { /* ignore */ }
+  return base;
+}
 
 export default function Reports({ propertyId }: { propertyId: string }) {
   const plan = usePlan(propertyId);
   const premium = plan.data?.premium_ativo ?? false;
-  const currentMonth = dateNow().slice(0, 7);
-  const [period, setPeriod] = useState<"monthly" | "annual">("monthly");
-  const [month, setMonth] = useState(currentMonth);
-  const [year, setYear] = useState(currentMonth.slice(0, 4));
+  const [f, setF] = useState<Filter>(() => ({ type: "geral", year: Number(dateNow().slice(0, 4)), month: Number(dateNow().slice(5, 7)) }));
+  useEffect(() => setF(loadFilter()), []);
+  useEffect(() => { sessionStorage.setItem(STORE, JSON.stringify(f)); }, [f]);
 
   const range = useMemo(() => {
-    if (period === "monthly") {
-      const [y, m] = month.split("-").map(Number);
-      const lastDay = new Date(y, m, 0).getDate();
-      return { de: `${month}-01`, ate: `${month}-${String(lastDay).padStart(2, "0")}` };
-    }
-    return { de: `${year}-01-01`, ate: `${year}-12-31` };
-  }, [period, month, year]);
+    if (f.month === 0) return { de: `${f.year}-01-01`, ate: `${f.year}-12-31` };
+    const mm = String(f.month).padStart(2, "0");
+    const last = new Date(f.year, f.month, 0).getDate();
+    return { de: `${f.year}-${mm}-01`, ate: `${f.year}-${mm}-${String(last).padStart(2, "0")}` };
+  }, [f.year, f.month]);
+  const label = f.month === 0 ? `Ano de ${f.year}` : `${MONTHS[f.month - 1]} de ${f.year}`;
+  const thisYear = Number(dateNow().slice(0, 4));
+  const years = Array.from({ length: 11 }, (_, i) => thisYear - i);
+
+  const shift = (d: number) => setF((p) => {
+    if (p.month === 0) return { ...p, year: p.year + d };
+    let m = p.month + d, y = p.year;
+    if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+    return { ...p, month: m, year: y };
+  });
 
   const q = useQuery({
-    queryKey: ["reports", propertyId, range.de, range.ate],
+    queryKey: ["reports", propertyId, f.type, range.de, range.ate],
     queryFn: async () => {
-      const [indicators, fin, milk, categories, lots] = await Promise.all([
-        supabase.rpc("relatorio_indicadores", { _propriedade_id: propertyId, _de: range.de, _ate: range.ate }),
-        supabase.from("v_financeiro_mensal").select("*").eq("propriedade_id", propertyId).order("mes"),
-        supabase.from("v_producao_mensal").select("*").eq("propriedade_id", propertyId).order("mes"),
-        supabase.from("v_financeiro_por_categoria").select("*").eq("propriedade_id", propertyId).order("total", { ascending: false }),
-        supabase.from("v_producao_por_lote").select("*").eq("propriedade_id", propertyId).order("total_litros", { ascending: false }),
-      ]);
-      const error = indicators.error || fin.error || milk.error || categories.error || lots.error;
-      if (error) throw error;
-      return {
-        indicators: (indicators.data ?? {}) as unknown as Indicadores,
-        fin: fin.data ?? [],
-        milk: milk.data ?? [],
-        categories: categories.data ?? [],
-        lots: lots.data ?? [],
-      };
+      const { de, ate } = range;
+      const inRange = <T,>(table: string, sel: string, col = "data") =>
+        fetchAllRows<T>((a, b) => (supabase.from(table as "vendas").select(sel) as any).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).range(a, b));
+      const out: Record<string, unknown> = {};
+      if (f.type === "geral") {
+        const r = await supabase.rpc("relatorio_indicadores", { _propriedade_id: propertyId, _de: de, _ate: ate });
+        if (r.error) throw r.error;
+        out.ind = r.data ?? {};
+        out.fin = await inRange<Row>("movimentacoes_financeiras", "tipo,valor,data");
+      }
+      if (f.type === "financeiro") out.fin = await inRange<Row>("movimentacoes_financeiras", "id,tipo,categoria,descricao,valor,data");
+      if (f.type === "leite") out.milk = await inRange<Row>("producao_leite", "id,data,litros,valor_total,animais(numero_brinco,nome),lotes(nome)");
+      if (f.type === "rebanho") out.births = await inRange<Row>("nascimentos", "id,data_nascimento,sexo,vaca:animais!nascimentos_vaca_id_fkey(numero_brinco,nome),bezerro:animais!nascimentos_bezerro_id_fkey(numero_brinco,nome),lotes(nome)", "data_nascimento");
+      if (f.type === "comercial") {
+        const [c, v] = await Promise.all([inRange<Row>("compras", "id,data,produto_animal,quantidade,valor,fornecedor,categoria"), inRange<Row>("vendas", "id,data,item,quantidade,valor,comprador,categoria")]);
+        out.compras = c; out.vendas = v;
+      }
+      return out;
     },
   });
 
-  const years = useMemo(() => {
-    const values = new Set<string>([currentMonth.slice(0, 4)]);
-    q.data?.fin.forEach((r) => values.add(String(r.mes).slice(0, 4)));
-    q.data?.milk.forEach((r) => values.add(String(r.mes).slice(0, 4)));
-    return [...values].sort().reverse();
-  }, [q.data, currentMonth]);
-
-  const indicator = q.data?.indicators ?? {};
-  const inPeriod = (mes: string | null) => mes != null && String(mes) >= range.de.slice(0, 7) && String(mes) <= range.ate.slice(0, 7);
-  const fin = q.data?.fin.filter((r) => inPeriod(String(r.mes))) ?? [];
-  const milk = q.data?.milk.filter((r) => inPeriod(String(r.mes))) ?? [];
-  const categories = q.data?.categories.filter((r) => inPeriod(String(r.mes))) ?? [];
-  const lots = q.data?.lots.filter((r) => inPeriod(String(r.mes))) ?? [];
-
-  const liters = Number(indicator["litros"] ?? 0);
-  const income = Number(indicator["receitas"] ?? 0);
-  const expenses = Number(indicator["despesas"] ?? 0) + Number(indicator["investimentos"] ?? 0);
-
-  const categoryMap = useMemo(() => {
+  const d = q.data ?? {};
+  const rows = (k: string) => ((d[k] as Row[]) ?? []).filter((r) => { const x = String(r.data ?? r.data_nascimento ?? "").slice(0, 10); return x >= range.de && x <= range.ate; });
+  const sum = (list: Row[], k: string) => list.reduce((s, r) => s + Number(r[k] ?? 0), 0);
+  const bucket = (list: Row[], valKey: string, dateKey = "data") => {
     const map = new Map<string, number>();
-    categories.forEach((r) => {
-      const key = `${String(r.categoria ?? "sem categoria")} (${String(r.tipo ?? "")})`;
-      map.set(key, (map.get(key) ?? 0) + Number(r.total ?? 0));
-    });
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, total]) => ({ name, total }));
-  }, [categories]);
-
-  const exportCSV = () => {
-    if (!premium) {
-      toast.error("A exportação de dados é um recurso do plano Premium.");
-      return;
-    }
-    const rows = [
-      ["indicador", "valor"],
-      ["animais_cadastrados", indicator["animais_cadastrados"] ?? ""],
-      ["nascidos", indicator["nascidos"] ?? ""],
-      ["litros", indicator["litros"] ?? ""],
-      ["receitas", indicator["receitas"] ?? ""],
-      ["despesas", indicator["despesas"] ?? ""],
-      ["investimentos", indicator["investimentos"] ?? ""],
-      ["vendas_valor", indicator["vendas_valor"] ?? ""],
-      ["compras_valor", indicator["compras_valor"] ?? ""],
-      ...fin.map((r) => ["fin", String(r.mes), r.receitas ?? 0, r.despesas ?? 0]),
-    ];
-    const csv = rows.map((r) => r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(";")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `relatorio-${range.de}_${range.ate}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    list.forEach((r) => { const x = String(r[dateKey]); const key = f.month === 0 ? MONTHS[Number(x.slice(5, 7)) - 1].slice(0, 3) : x.slice(8, 10); map.set(key, (map.get(key) ?? 0) + Number(r[valKey] ?? 1)); });
+    return [...map.entries()].map(([name, total]) => ({ name, total }));
   };
 
-  return <div className="space-y-5"><PageTitle icon={BarChart3} title="Relatórios" description="Indicadores calculados no banco por período." action={<div className="flex flex-wrap items-center gap-2">{!premium&&<span className="inline-flex items-center gap-1 rounded-full bg-[#f59e0b]/15 px-2 py-1 text-[10px] font-bold uppercase text-[#f59e0b]"><Lock className="size-3"/>Premium</span>}<Button variant="outline" onClick={exportCSV} title={premium?"Exportar dados em CSV":"Disponível no plano Premium"}><Download />Exportar CSV</Button></div>} /><div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-end"><div className="flex gap-2"><Button variant={period === "monthly" ? "default" : "outline"} onClick={() => setPeriod("monthly")}>Mensal</Button><Button variant={period === "annual" ? "default" : "outline"} onClick={() => setPeriod("annual")}>Anual</Button></div>{period === "monthly" ? <div className="sm:ml-auto"><Label htmlFor="report-month">Mês</Label><Input id="report-month" type="month" value={month} max={currentMonth} onChange={(event) => setMonth(event.target.value)} className="mt-1 w-full sm:w-48" /></div> : <div className="sm:ml-auto"><Label>Ano</Label><Select value={year} onValueChange={setYear}><SelectTrigger className="mt-1 w-full sm:w-40"><SelectValue /></SelectTrigger><SelectContent>{years.map((value) => <SelectItem value={value} key={value}>{value}</SelectItem>)}</SelectContent></Select></div>}</div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"><Metric label="Animais cadastrados" value={q.isLoading ? "…" : String(indicator["animais_cadastrados"] ?? 0)} /><Metric label="Nascimentos" value={q.isLoading ? "…" : String(indicator["nascidos"] ?? 0)} /><Metric label="Produção" value={q.isLoading ? "…" : `${liters.toLocaleString("pt-BR")} L`} /><Metric label="Receitas" value={q.isLoading ? "…" : money(income)} /><Metric label="Resultado" value={q.isLoading ? "…" : money(income - expenses)} /></div><div className="grid gap-5 xl:grid-cols-2"><Panel title="Resultado financeiro" subtitle={period === "monthly" ? "Mês selecionado" : "Meses do ano selecionado"}>{fin.length ? <div className="h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={[...fin].reverse()}><CartesianGrid stroke="var(--border)" vertical={false} /><XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} /><YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} /><Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)" }} /><Bar dataKey="receitas" fill="var(--chart-1)" radius={[4, 4, 0, 0]} /><Bar dataKey="despesas" fill="var(--destructive)" radius={[4, 4, 0, 0]} /><Bar dataKey="investimentos" fill="var(--chart-4)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div> : <Empty message="Sem lançamentos no período." />}</Panel><Panel title="Financeiro por categoria" subtitle="Maiores valores do período">{categoryMap.length ? <div className="h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={categoryMap} layout="vertical" margin={{ left: 8, right: 8 }}><CartesianGrid stroke="var(--border)" horizontal={false} /><XAxis type="number" hide /><YAxis type="category" dataKey="name" width={160} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} axisLine={false} /><Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)" }} /><Bar dataKey="total" fill="var(--chart-2)" radius={[0, 4, 4, 0]} /></BarChart></ResponsiveContainer></div> : <Empty message="Sem categorias no período." />}</Panel></div><div className="grid gap-5 xl:grid-cols-2"><Panel title="Produção de leite no período" subtitle="Litros por mês">{milk.length ? <div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={[...milk].reverse()}><CartesianGrid stroke="var(--border)" vertical={false} /><XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} /><YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} /><Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)" }} /><Bar dataKey="total_litros" fill="var(--chart-3)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div> : <Empty message="Sem produção no período." />}</Panel><Panel title="Produção por lote" subtitle="Litros e valor no período">{lots.length ? <div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={lots} layout="vertical" margin={{ left: 8, right: 8 }}><CartesianGrid stroke="var(--border)" horizontal={false} /><XAxis type="number" hide /><YAxis type="category" dataKey="lote_nome" width={140} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} axisLine={false} /><Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)" }} /><Bar dataKey="total_litros" fill="var(--chart-3)" radius={[0, 4, 4, 0]} /></BarChart></ResponsiveContainer></div> : <Empty message="Sem produção por lote no período." />}</Panel></div></div>;
+  const fin = rows("fin");
+  const byTipo = (t: string) => sum(fin.filter((r) => r.tipo === t), "valor");
+  const receitas = byTipo("receita"), despesas = byTipo("despesa"), invest = byTipo("investimento");
+
+  const exportCSV = (): void => {
+    if (!premium) { toast.error("A exportação de dados é um recurso do plano Premium."); return; }
+    const list: Row[] = f.type === "leite" ? rows("milk") : f.type === "rebanho" ? rows("births") : f.type === "comercial" ? [...rows("compras").map((r) => ({ tipo: "compra", ...r })), ...rows("vendas").map((r) => ({ tipo: "venda", ...r }))] : fin;
+    if (!list.length) { toast.error("Não há dados no período selecionado."); return; }
+    const keys = Object.keys(list[0]).filter((k) => typeof list[0][k] !== "object");
+    const csv = [keys, ...list.map((r) => keys.map((k) => r[k] ?? ""))].map((r) => r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(";")).join("\n");
+    const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = `relatorio-${f.type}-${range.de}_${range.ate}.csv`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const noData = (msg: string) => <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center"><CalendarRange className="mx-auto mb-3 size-8 text-muted-foreground" /><p className="font-semibold">Nenhum registro em {label}</p><p className="mt-1 text-sm text-muted-foreground">{msg} Escolha outro período ou tipo de relatório.</p></div>;
+  const chart = (data: { name: string; total: number }[], color: string) => <div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={data}><CartesianGrid stroke="var(--border)" vertical={false} /><XAxis dataKey="name" tick={axis} /><YAxis tick={axis} /><Tooltip contentStyle={tip} /><Bar dataKey="total" fill={color} radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>;
+  const table = (cols: [string, (r: Row) => string][], list: Row[]) => <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-sm"><thead><tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">{cols.map(([h]) => <th key={h} className="px-3 py-2 font-semibold">{h}</th>)}</tr></thead><tbody>{list.slice(0, 300).map((r, i) => <tr key={String(r.id ?? i)} className="border-b border-border/50 hover:bg-muted/30">{cols.map(([h, fn]) => <td key={h} className="px-3 py-2">{fn(r)}</td>)}</tr>)}</tbody></table>{list.length > 300 && <p className="p-3 text-xs text-muted-foreground">Mostrando 300 de {list.length} registros. Exporte o CSV para ver todos.</p>}</div>;
+
+  const body = () => {
+    if (q.isLoading) return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 animate-pulse rounded-lg bg-muted/40" />)}</div>;
+    if (q.error) return <Empty message="Não foi possível carregar o relatório. Tente novamente." />;
+    if (f.type === "geral") {
+      const ind = (d.ind ?? {}) as Record<string, number | null>;
+      const has = fin.length || Object.values(ind).some((v) => Number(v) > 0);
+      if (!has) return noData("Não há lançamentos, nascimentos ou produção neste período.");
+      return <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Nascimentos" value={String(ind.nascidos ?? 0)} /><Metric label="Produção de leite" value={`${Number(ind.litros ?? 0).toLocaleString("pt-BR")} L`} /><Metric label="Vendas" value={money(ind.vendas_valor)} /><Metric label="Compras" value={money(ind.compras_valor)} /><Metric label="Receitas" value={money(receitas)} /><Metric label="Despesas" value={money(despesas)} /><Metric label="Investimentos" value={money(invest)} /><Metric label="Lucro" value={money(receitas - despesas - invest)} /></div><Panel title="Receitas x despesas" subtitle={label}>{fin.length ? <div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={[{ name: "Receitas", total: receitas }, { name: "Despesas", total: despesas }, { name: "Investimentos", total: invest }]}><CartesianGrid stroke="var(--border)" vertical={false} /><XAxis dataKey="name" tick={axis} /><YAxis tick={axis} /><Tooltip contentStyle={tip} formatter={(v) => money(v)} /><Bar dataKey="total" fill="var(--chart-1)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div> : <Empty message="Sem lançamentos financeiros no período." />}</Panel></>;
+    }
+    if (f.type === "financeiro") {
+      if (!fin.length) return noData("Não há receitas, despesas ou investimentos lançados.");
+      const cat = new Map<string, number>(); fin.forEach((r) => { const k = `${pretty(r.categoria)} (${r.tipo})`; cat.set(k, (cat.get(k) ?? 0) + Number(r.valor)); });
+      return <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Receitas" value={money(receitas)} /><Metric label="Despesas" value={money(despesas)} /><Metric label="Investimentos" value={money(invest)} /><Metric label="Lucro" value={money(receitas - despesas - invest)} /></div><div className="grid gap-5 xl:grid-cols-2"><Panel title="Por categoria" subtitle={label}><div className="h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={[...cat].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, total]) => ({ name, total }))} layout="vertical"><CartesianGrid stroke="var(--border)" horizontal={false} /><XAxis type="number" hide /><YAxis type="category" dataKey="name" width={150} tick={axis} axisLine={false} /><Tooltip contentStyle={tip} formatter={(v) => money(v)} /><Bar dataKey="total" fill="var(--chart-2)" radius={[0, 4, 4, 0]} /></BarChart></ResponsiveContainer></div></Panel><Panel title={f.month ? "Movimento por dia" : "Movimento por mês"} subtitle="Soma dos lançamentos">{chart(bucket(fin, "valor"), "var(--chart-1)")}</Panel></div><Panel title="Lançamentos" subtitle={`${fin.length} registros`}>{table([["Data", (r) => fmtDate(r.data)], ["Tipo", (r) => pretty(r.tipo)], ["Categoria", (r) => pretty(r.categoria)], ["Descrição", (r) => pretty(r.descricao)], ["Valor", (r) => money(r.valor)]], fin)}</Panel></>;
+    }
+    if (f.type === "leite") {
+      const milk = rows("milk");
+      if (!milk.length) return noData("Não há produção de leite registrada.");
+      const litros = sum(milk, "litros"); const dias = new Set(milk.map((r) => r.data)).size;
+      const lot = new Map<string, number>(); milk.forEach((r) => { const k = String((r.lotes as Row | null)?.nome ?? "Sem lote"); lot.set(k, (lot.get(k) ?? 0) + Number(r.litros)); });
+      return <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Total de litros" value={`${litros.toLocaleString("pt-BR")} L`} /><Metric label="Média diária" value={`${(litros / Math.max(dias, 1)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} L`} /><Metric label="Valor total" value={money(sum(milk, "valor_total"))} /><Metric label="Registros" value={milk.length} /></div><div className="grid gap-5 xl:grid-cols-2"><Panel title={f.month ? "Litros por dia" : "Litros por mês"} subtitle={label}>{chart(bucket(milk, "litros"), "var(--chart-3)")}</Panel><Panel title="Por lote" subtitle="Litros no período">{chart([...lot].map(([name, total]) => ({ name, total })), "var(--chart-2)")}</Panel></div><Panel title="Registros de produção" subtitle={`${milk.length} registros`}>{table([["Data", (r) => fmtDate(r.data)], ["Animal", (r) => { const a = r.animais as Row | null; return a ? `${a.numero_brinco}${a.nome ? " · " + a.nome : ""}` : "—"; }], ["Lote", (r) => pretty((r.lotes as Row | null)?.nome)], ["Litros", (r) => `${Number(r.litros).toLocaleString("pt-BR")} L`], ["Valor", (r) => money(r.valor_total)]], milk)}</Panel></>;
+    }
+    if (f.type === "rebanho") {
+      const b = rows("births");
+      if (!b.length) return noData("Não há nascimentos registrados.");
+      const an = (x: unknown) => { const a = x as Row | null; return a ? `${a.numero_brinco}${a.nome ? " · " + a.nome : ""}` : "—"; };
+      return <><div className="grid gap-4 sm:grid-cols-3"><Metric label="Nascimentos" value={b.length} /><Metric label="Machos" value={b.filter((r) => r.sexo === "M").length} /><Metric label="Fêmeas" value={b.filter((r) => r.sexo === "F").length} /></div><Panel title={f.month ? "Nascimentos por dia" : "Nascimentos por mês"} subtitle={label}>{chart(bucket(b, "_", "data_nascimento"), "var(--chart-1)")}</Panel><Panel title="Nascimentos" subtitle={`${b.length} registros`}>{table([["Data", (r) => fmtDate(r.data_nascimento)], ["Vaca", (r) => an(r.vaca)], ["Bezerro", (r) => an(r.bezerro)], ["Sexo", (r) => (r.sexo === "M" ? "Macho" : "Fêmea")], ["Lote", (r) => pretty((r.lotes as Row | null)?.nome)]], b)}</Panel></>;
+    }
+    const c = rows("compras"), v = rows("vendas");
+    if (!c.length && !v.length) return noData("Não há compras ou vendas registradas.");
+    return <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Vendas" value={money(sum(v, "valor"))} /><Metric label="Compras" value={money(sum(c, "valor"))} /><Metric label="Saldo" value={money(sum(v, "valor") - sum(c, "valor"))} /><Metric label="Operações" value={c.length + v.length} /></div><div className="grid gap-5 xl:grid-cols-2"><Panel title="Vendas" subtitle={`${v.length} registros`}>{v.length ? table([["Data", (r) => fmtDate(r.data)], ["Item", (r) => pretty(r.item)], ["Qtd.", (r) => String(r.quantidade)], ["Comprador", (r) => pretty(r.comprador)], ["Valor", (r) => money(r.valor)]], v) : <Empty message="Sem vendas no período." />}</Panel><Panel title="Compras" subtitle={`${c.length} registros`}>{c.length ? table([["Data", (r) => fmtDate(r.data)], ["Produto", (r) => pretty(r.produto_animal)], ["Qtd.", (r) => String(r.quantidade)], ["Fornecedor", (r) => pretty(r.fornecedor)], ["Valor", (r) => money(r.valor)]], c) : <Empty message="Sem compras no período." />}</Panel></div></>;
+  };
+
+  return <div className="space-y-5">
+    <PageTitle icon={BarChart3} title="Relatórios" description="Escolha o relatório e o período. Só aparecem registros do período escolhido." action={<div className="flex flex-wrap items-center gap-2">{!premium && <span className="inline-flex items-center gap-1 rounded-full bg-[#f59e0b]/15 px-2 py-1 text-[10px] font-bold uppercase text-[#f59e0b]"><Lock className="size-3" />Premium</span>}<Button variant="outline" onClick={exportCSV}><Download />Exportar CSV</Button></div>} />
+    <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+      <div><p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">1. Tipo de relatório</p><div className="flex flex-wrap gap-2">{TYPES.map((t) => <Button key={t.id} size="sm" variant={f.type === t.id ? "default" : "outline"} onClick={() => setF((p) => ({ ...p, type: t.id }))}><t.icon />{t.label}</Button>)}</div></div>
+      <div><p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">2. Período</p><div className="flex flex-wrap items-center gap-2">
+        <Button size="icon" variant="outline" onClick={() => shift(-1)} aria-label="Período anterior"><ChevronLeft /></Button>
+        <Select value={String(f.month)} onValueChange={(m) => setF((p) => ({ ...p, month: Number(m) }))}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">Ano inteiro</SelectItem>{MONTHS.map((m, i) => <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent></Select>
+        <Select value={String(f.year)} onValueChange={(y) => setF((p) => ({ ...p, year: Number(y) }))}><SelectTrigger className="w-28"><SelectValue /></SelectTrigger><SelectContent>{(years.includes(f.year) ? years : [f.year, ...years]).map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent></Select>
+        <Button size="icon" variant="outline" onClick={() => shift(1)} aria-label="Próximo período"><ChevronRight /></Button>
+        <Button size="sm" variant="ghost" onClick={() => setF((p) => ({ ...p, year: thisYear, month: Number(dateNow().slice(5, 7)) }))}>Mês atual</Button>
+        <span className="ml-auto rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">{TYPES.find((t) => t.id === f.type)?.label} · {label}</span>
+      </div></div>
+    </div>
+    {body()}
+  </div>;
 }
