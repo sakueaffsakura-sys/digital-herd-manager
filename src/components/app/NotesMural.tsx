@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetchAll";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -67,7 +68,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
     queryKey: ["form-refs", propertyId],
     queryFn: async () => {
       const [animals, lots] = await Promise.all([
-        supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId),
+        fetchAllRows((a, b) => supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).order("numero_brinco").range(a, b)).then((data) => ({ data, error: null })),
         supabase.from("lotes").select("id,nome").eq("propriedade_id", propertyId),
       ]);
       const error = animals.error || lots.error;
