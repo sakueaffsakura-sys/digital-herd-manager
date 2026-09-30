@@ -1516,6 +1516,7 @@ export type Database = {
       admin_metricas: { Args: never; Returns: Json }
       admin_saude: { Args: never; Returns: Json }
       admin_sistema: { Args: never; Returns: Json }
+      admin_tempo_real: { Args: never; Returns: Json }
       cancelar_plano_demonstracao: {
         Args: { _motivo?: string; _propriedade_id: string }
         Returns: Json
