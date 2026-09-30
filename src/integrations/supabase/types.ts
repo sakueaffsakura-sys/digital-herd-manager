@@ -822,6 +822,24 @@ export type Database = {
           },
         ]
       }
+      presenca_usuarios: {
+        Row: {
+          pagina: string | null
+          user_id: string
+          visto_em: string
+        }
+        Insert: {
+          pagina?: string | null
+          user_id: string
+          visto_em?: string
+        }
+        Update: {
+          pagina?: string | null
+          user_id?: string
+          visto_em?: string
+        }
+        Relationships: []
+      }
       producao_leite: {
         Row: {
           animal_id: string

@@ -132,7 +132,7 @@ function AdminPage() {
 type Amostra = {
   ts: number; commits: number; rollbacks: number; lidas: number; inseridas: number; atualizadas: number; removidas: number;
   blks_hit: number; blks_read: number; deadlocks: number; conexoes_ativas: number; conexoes_ociosas: number; conexoes_total: number;
-  conexoes_max: number; bloqueios: number; consulta_mais_longa_s: number; banco_bytes: number; usuarios_online: number; ping_ms: number;
+  conexoes_max: number; bloqueios: number; consulta_mais_longa_s: number; banco_bytes: number; usuarios_online: number; usuarios_hora: number; sessoes_abertas: number; online_lista: { email: string; pagina: string | null; visto_em: string }[]; ping_ms: number;
 };
 type Ponto = { hora: string; latencia: number; banco: number; tps: number; leituras: number; escritas: number; conexoes: number; cache: number };
 
@@ -182,7 +182,7 @@ function TempoRealTab() {
       };
       anterior.current = a;
       setUltima(a);
-      setSerie((s) => [...s.slice(-59), ponto]);
+      if (p) setSerie((s) => [...s.slice(-59), ponto]);
     };
     coletar();
     const id = setInterval(coletar, 3000);
@@ -209,8 +209,8 @@ function TempoRealTab() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card icon={Zap} label="Resposta do servidor" value={atual ? `${atual.latencia} ms` : "…"} sub={`Média ${media ?? "…"} ms · pico ${pico ?? "…"} ms`} />
-        <Card icon={Activity} label="Operações por segundo" value={atual ? atual.tps.toLocaleString("pt-BR") : "…"} sub={`${atual?.leituras.toLocaleString("pt-BR") ?? 0} leituras · ${atual?.escritas.toLocaleString("pt-BR") ?? 0} gravações /s`} />
-        <Card icon={Users} label="Usuários online" value={ultima?.usuarios_online ?? "…"} sub="Entraram nos últimos 15 min" />
+        <Card icon={Activity} label="Transações por segundo" value={atual ? atual.tps.toLocaleString("pt-BR") : "…"} sub={`${atual?.leituras.toLocaleString("pt-BR") ?? 0} linhas lidas · ${atual?.escritas.toLocaleString("pt-BR") ?? 0} gravadas /s`} />
+        <Card icon={Users} label="Usuários online agora" value={ultima?.usuarios_online ?? "…"} sub={`${ultima?.usuarios_hora ?? 0} na última hora · ${ultima?.sessoes_abertas ?? 0} sessões abertas`} />
         <Card icon={Database} label="Conexões" value={ultima ? `${ultima.conexoes_ativas} / ${ultima.conexoes_total}` : "…"} sub={`ativas / abertas · ${uso}% da capacidade`} />
       </div>
 
@@ -224,18 +224,22 @@ function TempoRealTab() {
         <Panel title="Conexões ativas">
           <div className="h-48"><ResponsiveContainer><BarChart data={serie}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis allowDecimals={false} {...eixo} /><Tooltip contentStyle={tip} /><Bar isAnimationActive={false} dataKey="conexoes" name="Conexões" fill="var(--primary)" radius={3} /></BarChart></ResponsiveContainer></div>
         </Panel>
-        <Panel title="Saúde agora">
-          <div className="grid grid-cols-2 gap-2 text-sm">
+        <Panel title={`Quem está online agora (${ultima?.usuarios_online ?? 0})`}>
+          {!ultima ? <p className="text-sm text-muted-foreground">Coletando…</p> : ultima.online_lista.length === 0 ? <p className="text-sm text-muted-foreground">Ninguém com o sistema aberto nos últimos 2 minutos.</p> :
+            <div className="max-h-48 space-y-1 overflow-auto">{ultima.online_lista.map((u) => <div key={u.email} className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm"><span className="size-2 shrink-0 rounded-full bg-primary" /><span className="truncate">{u.email}</span><span className="ml-auto shrink-0 text-xs text-muted-foreground">{u.pagina ?? "—"} · {new Date(u.visto_em).toLocaleTimeString("pt-BR")}</span></div>)}</div>}
+        </Panel>
+        <Panel title="Saúde agora" className="lg:col-span-2">
+          <div className="grid grid-cols-2 gap-2 text-sm lg:grid-cols-5">
             <Info label="Acerto de cache" value={atual ? `${atual.cache}%` : "…"} ok={(atual?.cache ?? 100) >= 95} />
             <Info label="Consultas travadas" value={ultima?.bloqueios ?? "…"} ok={(ultima?.bloqueios ?? 0) === 0} />
             <Info label="Consulta mais longa" value={ultima ? `${Number(ultima.consulta_mais_longa_s).toFixed(1)} s` : "…"} ok={(ultima?.consulta_mais_longa_s ?? 0) < 5} />
             <Info label="Deadlocks (total)" value={ultima?.deadlocks ?? "…"} ok={(ultima?.deadlocks ?? 0) === 0} />
             <Info label="Tamanho do banco" value={ultima ? bytes(ultima.banco_bytes) : "…"} ok />
-            <Info label="Conexão da internet" value={online ? "Online" : "Offline"} ok={online} />
-            <Info label="Carregamento desta página" value={nav ? `${nav.carregamento} ms` : "…"} ok={(nav?.carregamento ?? 0) < 3000} />
-            <Info label="Fluidez da tela" value={fps != null ? `${fps} FPS` : "…"} ok={(fps ?? 60) >= 45} />
-            {nav?.memoria != null && <Info label="Memória usada no navegador" value={bytes(nav.memoria)} ok />}
-            <Info label="Primeiro byte (TTFB)" value={nav ? `${nav.ttfb} ms` : "…"} ok={(nav?.ttfb ?? 0) < 800} />
+            <Info label="Sua internet" value={online ? "Online" : "Offline"} ok={online} />
+            <Info label="Carregamento (seu navegador)" value={nav ? `${nav.carregamento} ms` : "…"} ok={(nav?.carregamento ?? 0) < 3000} />
+            <Info label="Fluidez (sua tela)" value={fps != null ? `${fps} FPS` : "…"} ok={(fps ?? 60) >= 45} />
+            {nav?.memoria != null && <Info label="Memória (seu navegador)" value={bytes(nav.memoria)} ok />}
+            <Info label="1º byte do servidor" value={nav ? `${nav.ttfb} ms` : "…"} ok={(nav?.ttfb ?? 0) < 800} />
           </div>
         </Panel>
       </div>

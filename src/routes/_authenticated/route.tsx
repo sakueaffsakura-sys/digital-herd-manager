@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,5 +35,23 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user };
   },
-  component: () => <Outlet />,
+  component: AreaLogada,
 });
+
+function AreaLogada() {
+  const { user } = Route.useRouteContext();
+  const pagina = useRouterState({ select: (s) => s.location.pathname });
+  const paginaRef = useRef(pagina);
+  paginaRef.current = pagina;
+  useEffect(() => {
+    const ping = () => {
+      if (document.visibilityState !== "visible") return;
+      void supabase.from("presenca_usuarios" as never).upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current } as never).then(() => undefined);
+    };
+    ping();
+    const id = setInterval(ping, 60000);
+    document.addEventListener("visibilitychange", ping);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", ping); };
+  }, [user.id]);
+  return <Outlet />;
+}
