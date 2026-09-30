@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertTriangle, Baby, CalendarClock, FlaskConical, Milk, Plus, Syringe, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, Baby, CalendarClock, FlaskConical, Milk, Plus, Syringe, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -129,4 +129,3 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
   </div>;
 }
 
-export { Activity };
