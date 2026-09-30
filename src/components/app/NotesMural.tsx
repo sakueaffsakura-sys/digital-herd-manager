@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetchAll";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -67,7 +68,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
     queryKey: ["form-refs", propertyId],
     queryFn: async () => {
       const [animals, lots] = await Promise.all([
-        supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId),
+        fetchAllRows((a, b) => supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).order("numero_brinco").range(a, b)).then((data) => ({ data, error: null })),
         supabase.from("lotes").select("id,nome").eq("propriedade_id", propertyId),
       ]);
       const error = animals.error || lots.error;
@@ -106,8 +107,8 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
     mutationFn: async (payload: Row) => {
       const body: Row = { ...payload, propriedade_id: propertyId };
       const response = editing
-        ? await supabase.from("anotacoes_producao").update(body).eq("id", String(editing["id"]))
-        : await supabase.from("anotacoes_producao").insert(body);
+        ? await supabase.from("anotacoes_producao").update(body as any).eq("id", String(editing["id"]))
+        : await supabase.from("anotacoes_producao").insert(body as any);
       if (response.error) throw response.error;
     },
     onSuccess: () => {
@@ -209,14 +210,14 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
 
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">{String(row["observacao"] ?? "")}</p>
 
-                {(row["comportamento"] || row["alimentacao"]) && (
+                {!!(row["comportamento"] || row["alimentacao"]) && (
                   <div className="flex flex-wrap gap-1.5">
-                    {row["comportamento"] && (
+                    {!!row["comportamento"] && (
                       <span className="rounded-full bg-chart-4/15 px-2 py-0.5 text-[10px] font-semibold text-chart-4">
                         Comportamento: {pretty(row["comportamento"])}
                       </span>
                     )}
-                    {row["alimentacao"] && (
+                    {!!row["alimentacao"] && (
                       <span className="rounded-full bg-chart-3/15 px-2 py-0.5 text-[10px] font-semibold text-chart-3">
                         Alimentação: {pretty(row["alimentacao"])}
                       </span>
@@ -224,7 +225,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
                   </div>
                 )}
 
-                {row["informacoes_adicionais"] && (
+                {!!row["informacoes_adicionais"] && (
                   <p className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
                     {String(row["informacoes_adicionais"])}
                   </p>

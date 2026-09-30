@@ -1,7 +1,40 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { allowRequest, clientIp } from "./lib/rate-limit";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
+
+// Proteção contra abuso: limite por IP, tamanho máximo de envio e cabeçalhos de segurança.
+const protectionMiddleware = createMiddleware().server(async ({ next, request }) => {
+  const ip = clientIp(request);
+  const url = new URL(request.url);
+  const isFn = url.pathname.startsWith("/_serverFn") || url.pathname.startsWith("/api/");
+  const ok = isFn ? allowRequest(`fn:${ip}`, 120, 60_000, 120_000) : allowRequest(`pg:${ip}`, 300, 60_000);
+  if (!ok) {
+    return new Response("Muitas requisições. Tente novamente em instantes.", {
+      status: 429,
+      headers: { "retry-after": "120", "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+  const len = Number(request.headers.get("content-length") ?? 0);
+  if (len > MAX_BODY_BYTES) return new Response("Envio muito grande.", { status: 413 });
+
+  const result = await next();
+  const res = (result as { response?: Response }).response;
+  if (res?.headers) {
+    try {
+      res.headers.set("X-Content-Type-Options", "nosniff");
+      res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+      res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+      res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    } catch {
+      /* cabeçalhos imutáveis */
+    }
+  }
+  return result;
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -18,14 +51,11 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
-// Start installs this automatically when src/start.ts is absent; defining the
-// file opts out, so re-add it explicitly to keep server functions protected
-// from cross-site requests.
 const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [protectionMiddleware, errorMiddleware, csrfMiddleware],
 }));

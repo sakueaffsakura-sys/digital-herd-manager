@@ -1,8 +1,8 @@
 # Roadmap
-
-- [ ] Validar e corrigir os cadastros encadeados no banco real
-- [x] Completar detalhes e histórico unificado de cada animal
-- [x] Completar tipos de vacina e anotações de produção
-- [x] Completar filtros mensal/anual dos relatórios
-- [ ] Validar edição, exclusão, painel e relatórios após mudanças
-- [ ] Validar desktop e celular sem cortes ou erros
+- [x] Área Admin (contas, espaço, desempenho, bloquear/promover)
+- [x] Partes do banco que faltavam (perfil, fotos, relatórios, diagnóstico, importações)
+- [x] Cadastro sem verificação de e-mail
+- [x] Perfil criado automaticamente e salvando
+- [x] Listas de seleção acima de 1000 registros + índices
+- [x] Limite de requisições e cabeçalhos de segurança
+- [ ] Teste completo logado de todos os módulos (sem sessão de teste disponível)
