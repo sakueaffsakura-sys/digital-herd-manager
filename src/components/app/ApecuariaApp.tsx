@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Activity, BarChart3, Bell, CircleDollarSign,
-  FlaskConical, Gauge, HeartPulse, LayoutDashboard, LogOut,
+  FlaskConical, Gauge, HeartPulse, Info, LayoutDashboard, LogOut,
   Eye, Menu, Milk, Plus, Search, Settings, ShoppingCart,
   ShieldCheck, Syringe, TrendingUp, Upload, UserRound, Warehouse, X,
 } from "lucide-react";
