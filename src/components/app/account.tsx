@@ -335,7 +335,7 @@ export function usePlan(propertyId: string | null) {
       }
       return {
         ...PLANO_GRATUITO,
-        ...(data ?? {}),
+        ...((data as object) ?? {}),
       } as PlanView;
     },
   });
@@ -383,8 +383,8 @@ export function useSetPlanDemo(propertyId: string) {
         _propriedade_id: propertyId,
         _plano: args.plano,
         _status: args.status,
-        _data_expiracao: args.dataExpiracao ?? null,
-        _motivo: args.motivo ?? null,
+        _data_expiracao: args.dataExpiracao ?? undefined,
+        _motivo: args.motivo ?? undefined,
       });
       if (error) throw error;
       return data;
@@ -403,7 +403,7 @@ export function useCancelPlanDemo(propertyId: string) {
     mutationFn: async (motivo?: string) => {
       const { data, error } = await supabase.rpc("cancelar_plano_demonstracao", {
         _propriedade_id: propertyId,
-        _motivo: motivo ?? null,
+        _motivo: motivo ?? undefined,
       });
       if (error) throw error;
       return data;
@@ -1048,7 +1048,7 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
 
   const cancelPlan = () => {
     setConfirmCancel(false);
-    cancelDemo.mutate(motivo.trim() || null, {
+    cancelDemo.mutate(motivo.trim() || undefined, {
       onSuccess: () => toast.success("Demonstração cancelada."),
       onError: (e) => toast.error(friendlyError(e)),
     });

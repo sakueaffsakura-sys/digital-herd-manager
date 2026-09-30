@@ -138,7 +138,7 @@ export default function ImportDialog({
         const { __linha: _line, ...rest } = r as Row & { __linha?: unknown };
         return rest;
       });
-      const { data: inserted, error } = await (supabase.from(config.table as string) as any).insert(payload).select("id");
+      const { data: inserted, error } = await (supabase.from(config.table as any) as any).insert(payload).select("id");
       if (!error) {
         aceitas += inserted?.length ?? rows.length;
         for (const row of rows) seen.add(naturalKeyForTable(config.table, row));
