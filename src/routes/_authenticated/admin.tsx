@@ -155,7 +155,7 @@ function MetricasTab() {
   const cadastros = useMemo(() => (m?.cadastros_90d ?? []).map((d) => ({ ...d, label: diaCurto(d.dia) })), [m]);
   const acessos = useMemo(() => (m?.acessos_30d ?? []).map((d) => ({ ...d, label: diaCurto(d.dia) })), [m]);
   const registros = useMemo(() => {
-    type Linha = { label: string } & Record<string, number>;
+    type Linha = { label: string; [k: string]: string | number };
     const mapa = new Map<string, Linha>();
     for (const r of m?.registros_dia ?? []) {
       const linha: Linha = mapa.get(r.dia) ?? { label: diaCurto(r.dia) };
