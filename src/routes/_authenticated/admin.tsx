@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Área Admin | Apecuária Digital" },
+      { title: "Área Admin | Pecuária Digital" },
       { name: "description", content: "Painel administrativo: contas, espaço usado e desempenho do sistema." },
-      { property: "og:title", content: "Área Admin | Apecuária Digital" },
+      { property: "og:title", content: "Área Admin | Pecuária Digital" },
       { property: "og:description", content: "Contas, armazenamento e desempenho do sistema." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

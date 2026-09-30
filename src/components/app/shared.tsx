@@ -42,7 +42,7 @@ export const friendlyError = (error: unknown) => {
 };
 
 export function PageTitle({ icon: Icon, title, description, action }: { icon: typeof Beef; title: string; description: string; action?: ReactNode }) {
-  return <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="mb-2 flex items-center gap-2 text-primary"><Icon className="size-5" /><span className="text-xs font-bold uppercase">Apecuária Digital</span></div><h1 className="text-3xl font-bold">{title}</h1><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>{action}</div>;
+  return <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="mb-2 flex items-center gap-2 text-primary"><Icon className="size-5" /><span className="text-xs font-bold uppercase">Pecuária Digital</span></div><h1 className="text-3xl font-bold">{title}</h1><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>{action}</div>;
 }
 
 export function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
