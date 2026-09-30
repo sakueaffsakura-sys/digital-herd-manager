@@ -478,12 +478,54 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
-  return <main className="dark min-h-screen bg-background p-4 text-foreground sm:p-8"><div className="mx-auto max-w-7xl space-y-5"><div className="flex items-center gap-3"><Button asChild variant="ghost" size="icon"><Link to="/app/$section" params={{ section: "inicio" }} aria-label="Voltar"><ArrowLeft /></Link></Button><div><h1 className="text-2xl font-bold">Área Admin</h1><p className="text-sm text-muted-foreground">Contas, métricas e desempenho do sistema.</p></div></div>{children}</div></main>;
+type Aba = "tempo" | "contas" | "metricas" | "desempenho";
+const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
+  { k: "tempo", label: "Tempo real", icon: Radio },
+  { k: "contas", label: "Contas", icon: Users },
+  { k: "metricas", label: "Métricas", icon: BarChart3 },
+  { k: "desempenho", label: "Desempenho", icon: Gauge },
+];
+
+function Shell({ children, tab, setTab }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void }) {
+  return (
+    <main className="dark min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
+        <aside className="border-b border-border bg-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r">
+          <div className="flex items-center gap-2 p-4">
+            <Button asChild variant="ghost" size="icon"><Link to="/app/$section" params={{ section: "inicio" }} aria-label="Voltar ao sistema"><ArrowLeft /></Link></Button>
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary"><ShieldCheck className="size-4" /></span>
+              <div><p className="text-sm font-bold leading-tight">Área Admin</p><p className="text-[11px] text-muted-foreground">Pecuária Digital</p></div>
+            </div>
+          </div>
+          {setTab && (
+            <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible">
+              {ABAS.map(({ k, label, icon: Icon }) => (
+                <button key={k} type="button" onClick={() => setTab(k)}
+                  className={`flex h-10 shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-colors ${tab === k ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"}`}>
+                  <Icon className="size-4" />{label}
+                  {k === "tempo" && <span className="ml-auto size-1.5 rounded-full bg-primary" />}
+                </button>
+              ))}
+            </nav>
+          )}
+          <p className="hidden px-6 pt-4 text-[11px] text-muted-foreground lg:block">Visível apenas para administradores do sistema.</p>
+        </aside>
+        <div className="min-w-0 flex-1 space-y-5 p-4 sm:p-8">{children}</div>
+      </div>
+    </main>
+  );
 }
 function Card({ icon: Icon, label, value, sub }: { icon: typeof Users; label: string; value: React.ReactNode; sub: string }) {
-  return <div className="rounded-lg border border-border bg-card p-4"><div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="size-4 text-primary" />{label}</div><div className="mt-2 text-2xl font-bold">{value}</div><div className="mt-1 text-xs text-muted-foreground">{sub}</div></div>;
+  return (
+    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+      <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 transition-colors group-hover:bg-primary/10" />
+      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><span className="grid size-7 place-items-center rounded-md bg-primary/12 text-primary"><Icon className="size-3.5" /></span>{label}</div>
+      <div className="mt-3 text-2xl font-bold tabular-nums tracking-tight">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{sub}</div>
+    </div>
+  );
 }
 function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
-  return <section className={`rounded-lg border border-border bg-card p-4 ${className ?? ""}`}><h2 className="mb-3 font-semibold">{title}</h2>{children}</section>;
+  return <section className={`rounded-xl border border-border bg-card p-5 ${className ?? ""}`}><h3 className="mb-4 text-sm font-semibold">{title}</h3>{children}</section>;
 }
