@@ -50,6 +50,13 @@ const nav = [
   ["diagnostico", "Diagnóstico", Gauge], ["perfil", "Perfil", UserRound],
 ] as const;
 
+const navGroups = [
+  { label: "Visão geral", items: nav.slice(0, 1) },
+  { label: "Rebanho e manejo", items: nav.slice(1, 7) },
+  { label: "Produção e negócios", items: nav.slice(7, 11) },
+  { label: "Sistema", items: nav.slice(11) },
+];
+
 const modules: Record<string, Module> = {
   rebanho: { title: "Meu Rebanho", singular: "animal", table: "animais", icon: HerdIcon, description: "Cadastro completo e histórico do rebanho.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
     {key:"numero_brinco",label:"Número do brinco",required:true},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo",type:"select",required:true,options:[{value:"F",label:"Fêmea"},{value:"M",label:"Macho"}]},{key:"raca",label:"Raça"},{key:"data_nascimento",label:"Data de nascimento",type:"date"},{key:"lote_id",label:"Lote",type:"lote"},{key:"mae_id",label:"Mãe",type:"animal",sex:"F"},{key:"pai_id",label:"Pai",type:"animal",sex:"M"},{key:"situacao",label:"Situação",type:"select",required:true,options:["ativo","vendido","perdido","falecido","transferido"].map(v=>({value:v,label:v}))},{key:"observacoes",label:"Observações",type:"textarea"}
@@ -87,13 +94,32 @@ export function ApecuariaApp() {
   const signOut=async()=>{ await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({to:"/",replace:true}); };
 
   return <div className="dark min-h-screen bg-background text-foreground">
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[268px] flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
-      <div className="flex h-[76px] items-center gap-3 border-b border-sidebar-border px-5"><img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-11 w-auto max-w-[190px] object-contain" /><Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X/></Button></div>
-      <nav className="flex-1 overflow-y-auto px-3 py-5"><p className="mb-2 px-3 text-[10px] font-bold uppercase text-muted-foreground">Gestão da propriedade</p>{nav.map(([key,label,Icon])=><Button key={key} data-tour={`nav-${key}`} variant="ghost" onClick={()=>go(key)} className={`mb-1 h-10 w-full justify-start px-3 ${section===key?"bg-sidebar-accent text-primary":"text-sidebar-foreground/70"}`}><Icon/>{label}</Button>)}</nav>
-      <div className="border-t border-sidebar-border p-3">{isAdminQuery.data&&<Button variant="ghost" className="mb-1 w-full justify-start text-primary" onClick={()=>navigate({to:"/admin"})}><ShieldCheck/>Área Admin</Button>}<Button variant="ghost" className="mb-1 w-full justify-start text-muted-foreground" onClick={()=>setAboutOpen(true)}><Info/>Sobre</Button><Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={signOut}><LogOut/>Sair</Button></div>
+    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col border-r border-sidebar-border bg-sidebar shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
+      <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
+        <img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-12 w-auto max-w-[190px] object-contain" />
+        <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X/></Button>
+      </div>
+      <nav aria-label="Gestão da propriedade" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
+        {navGroups.map(group => <div key={group.label}>
+          <p className="mb-2 px-4 text-[10px] font-bold uppercase text-sidebar-foreground/45">{group.label}</p>
+          <div className="space-y-0.5">{group.items.map(([key,label,Icon]) => {
+            const active = section === key;
+            return <Button key={key} data-tour={`nav-${key}`} variant="ghost" aria-current={active ? "page" : undefined} onClick={()=>go(key)} className={`group relative h-10 w-full justify-start gap-3 overflow-hidden rounded-md px-3 text-[13px] font-medium transition-colors ${active ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm shadow-background/20 ring-1 ring-inset ring-sidebar-primary/20 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"}`}>
+              {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-r bg-sidebar-primary" />}
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-md ${active ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-primary"}`}><Icon className="size-4" /></span>
+              <span className="min-w-0 truncate text-left">{label}</span>
+            </Button>;
+          })}</div>
+        </div>)}
+      </nav>
+      <div className="shrink-0 border-t border-sidebar-border bg-sidebar-accent/20 px-3 py-3">
+        {isAdminQuery.data&&<Button variant="ghost" className="mb-0.5 h-9 w-full justify-start gap-3 px-3 text-sidebar-primary hover:bg-sidebar-accent/60 hover:text-sidebar-primary" onClick={()=>navigate({to:"/admin"})}><ShieldCheck/>Área Admin</Button>}
+        <Button variant="ghost" className="mb-0.5 h-9 w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground" onClick={()=>setAboutOpen(true)}><Info/>Sobre</Button>
+        <Button variant="ghost" className="h-9 w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut/>Sair</Button>
+      </div>
     </aside>
     {mobileOpen&&<div className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden" onClick={()=>setMobileOpen(false)}/>}
-    <div className="lg:pl-[268px]">
+    <div className="lg:pl-[284px]">
       <header className="sticky top-0 z-20 flex h-[76px] items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-6"><Button variant="ghost" size="icon" className="lg:hidden" onClick={()=>setMobileOpen(true)} aria-label="Abrir menu"><Menu/></Button><div data-tour="busca" className="relative hidden max-w-xl flex-1 sm:block"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="h-10 bg-muted/50 pl-10" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Pesquisar em toda a propriedade..."/></div><div className="ml-auto flex items-center gap-2"><Select value={propertyId??""} onValueChange={setPropertyId}><SelectTrigger data-tour="propriedade" className="w-[180px] bg-card"><SelectValue placeholder="Selecionar propriedade"/></SelectTrigger><SelectContent>{propertiesQuery.data?.map(p=><SelectItem value={p.id} key={p.id}>{p.nome}</SelectItem>)}</SelectContent></Select><Button variant="ghost" size="icon" aria-label="Notificações"><Bell/></Button><HeaderAccount userId={userQuery.data?.id} propertyId={propertyId} onClick={()=>go("perfil")}/></div></header>
 <main data-tour="conteudo" className="mx-auto max-w-[1600px] p-4 pb-28 sm:p-6 sm:pb-28">
          {section==="perfil" ? (userQuery.data?.id ? <ProfileArea key={section} section={section} userId={userQuery.data.id} email={userQuery.data.email} propertyId={propertyId!} property={currentProperty} onPropertyUpdated={()=>queryClient.invalidateQueries({queryKey:["properties"]})}/> : <EmptySection go={()=>go("inicio")}/>) : !propertyId && section!=="configuracoes" ? <EmptyProperty onCreate={()=>setPropertyDialog(true)}/> : section==="inicio" ? <Suspense fallback={<SectionLoading/>}><Dashboard propertyId={propertyId!} propertyName={currentProperty?.nome??"Propriedade"} go={go}/></Suspense> : section==="relatorios" ? <Suspense fallback={<SectionLoading/>}><Reports propertyId={propertyId!}/></Suspense> : section==="diagnostico" ? <Suspense fallback={<SectionLoading/>}><Diagnostics propertyId={propertyId!}/></Suspense> : section==="comercial" ? <Commerce propertyId={propertyId!}/> : section==="vacinacao" ? <VaccinationArea propertyId={propertyId!} globalSearch={deferredSearch}/> : section==="producao" ? <ProductionArea propertyId={propertyId!} globalSearch={deferredSearch}/> : (section==="configuracoes"||section==="perfil-propriedade"||section==="assinatura") ? (userQuery.data?.id ? <ProfileArea key={section} section={section} userId={userQuery.data.id} email={userQuery.data.email} propertyId={propertyId!} property={currentProperty} onPropertyUpdated={()=>queryClient.invalidateQueries({queryKey:["properties"]})}/> : <EmptySection go={()=>go("inicio")}/>) : modules[section] ? <CrudModule config={modules[section]} propertyId={propertyId!} globalSearch={deferredSearch}/> : <EmptySection go={()=>go("inicio")}/>} 
