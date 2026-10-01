@@ -21,9 +21,10 @@ const BOAS_VINDAS = "yui-boas-vindas-v1";
 
 type Etapa = "chat" | "pergunta1" | "pergunta2";
 
-export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: (s: string) => void; abrirMenu: (aberto: boolean) => void }) {
-  const yuiAvatar = useYuiAvatar();
-  const { data: wallpaper } = useYuiWallpaper();
+export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: string; go: (s: string) => void; abrirMenu: (aberto: boolean) => void; isAdmin: boolean }) {
+  const yuiAvatar = useYuiAvatar(isAdmin);
+  const { data: wallpaperData } = useYuiWallpaper(isAdmin);
+  const wallpaper = isAdmin ? wallpaperData : null;
   const [aberto, setAberto] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("chat");
   const [tour, setTour] = useState(false);

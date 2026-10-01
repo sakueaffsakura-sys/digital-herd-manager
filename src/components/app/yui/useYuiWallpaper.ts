@@ -5,9 +5,10 @@ export const YUI_WALLPAPER_BUCKET = "yui-chat-wallpapers";
 export const YUI_WALLPAPER_KEY = "yui_chat_wallpaper";
 export const YUI_WALLPAPER_QUERY = ["config", YUI_WALLPAPER_KEY] as const;
 
-export function useYuiWallpaper() {
+export function useYuiWallpaper(enabled = true) {
   return useQuery({
     queryKey: YUI_WALLPAPER_QUERY,
+    enabled,
     staleTime: 40 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("configuracoes_sistema").select("valor").eq("chave", YUI_WALLPAPER_KEY).maybeSingle();
