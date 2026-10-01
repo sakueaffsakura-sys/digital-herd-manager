@@ -10,7 +10,7 @@ import { Conversation, ConversationContent, ConversationScrollButton } from "@/c
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import yuiAvatar from "@/assets/yui-avatar.png";
+import { useYuiAvatar } from "./useYuiAvatar";
 import { YuiTour } from "./YuiTour";
 
 const SUGESTOES = ["Como cadastro um animal?", "Como registro uma vacina?", "Como vejo o lucro do mês?", "Como registrar um nascimento?"];
@@ -19,6 +19,7 @@ const BOAS_VINDAS = "yui-boas-vindas-v1";
 type Etapa = "chat" | "pergunta1" | "pergunta2";
 
 export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: (s: string) => void; abrirMenu: (aberto: boolean) => void }) {
+  const yuiAvatar = useYuiAvatar();
   const [aberto, setAberto] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("chat");
   const [tour, setTour] = useState(false);
