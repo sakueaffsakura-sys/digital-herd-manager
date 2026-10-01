@@ -182,7 +182,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
                 <p className="mx-auto mt-1 max-w-[280px] text-sm text-muted-foreground">Pergunte qualquer coisa sobre o sistema. Eu explico passo a passo.</p>
                 <div className="mt-5 grid grid-cols-2 gap-2 text-left">
                   {SUGESTOES.map((s, i) => {
-                    const Icone = [HerdPlus, Syringe, TrendingUp, Baby][i] ?? MessageCircle;
+                    const Icone = [HerdPlus, Syringe, TrendingUp, CalfIcon][i] ?? MessageCircle;
                     return <button key={s} type="button" onClick={() => enviar(s)} className="group flex flex-col gap-2 rounded-xl border border-border bg-card/80 p-3 text-xs leading-snug backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/10">
                       <span className="grid size-7 place-items-center rounded-lg bg-primary/15 text-primary"><Icone className="size-4" /></span>
                       <span className="text-foreground">{s}</span>
@@ -194,10 +194,15 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
             {messages.map((m, idx) => {
               const texto = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
               const ultima = idx === messages.length - 1;
+              const anterior = messages[idx - 1];
+              const novoGrupo = !anterior || anterior.role !== m.role;
               return (
-                <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : ""}`}>
-                  {m.role === "assistant" && <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />}
+                <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : ""} ${novoGrupo ? "" : "-mt-3"}`}>
+                  {m.role === "assistant" && (novoGrupo
+                    ? <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />
+                    : <span className="size-7 shrink-0" />)}
                   <div className="group min-w-0 max-w-[85%]">
+                    {novoGrupo && <p className={`mb-1 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
                     <Message from={m.role} className="max-w-full">
                       <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "rounded-2xl rounded-tl-sm border border-border bg-card/85 px-3 py-2 backdrop-blur"}>
                         {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
