@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { acharAlvo, type TourStep } from "./tourSteps";
 import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
@@ -16,9 +17,23 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const [falando, setFalando] = useState(false);
   const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [exemplo, setExemplo] = useState("");
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = passos[idx];
   const ultimo = idx === passos.length - 1;
+
+  useEffect(() => {
+    if (!passo.demonstracaoAnotacao) return;
+    const frase = "Observação da ordenha: conferir a alimentação e acompanhar a produção no próximo registro.";
+    setExemplo("");
+    let i = 0;
+    const timer = window.setInterval(() => {
+      i = Math.min(i + 2, frase.length);
+      setExemplo(frase.slice(0, i));
+      if (i === frase.length) window.clearInterval(timer);
+    }, 35);
+    return () => window.clearInterval(timer);
+  }, [passo]);
 
   const sair = useCallback(() => { calar(); abrirMenu(false); onSair(); }, [abrirMenu, onSair]);
 
@@ -46,6 +61,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       // Gera a voz deste passo e dos próximos já em paralelo com a navegação (sem espera entre falas).
        if (comVoz) for (let k = idx; k < Math.min(idx + 3, passos.length); k++) prepararVoz(passos[k].fala);
       if (passo.section) { go(passo.section); await esperar(350); }
+      if (passo.demonstracaoAnotacao) { window.dispatchEvent(new Event("yui:show-notes")); await esperar(250); }
       const mobile = window.matchMedia("(max-width: 1023px)").matches;
       const precisaMenu = mobile && passo.alvo.includes("nav-");
       abrirMenu(precisaMenu);
@@ -64,7 +80,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       setCarregandoVoz(false);
       if (!vivo) return;
       setFalando(false);
-      if (terminou) {
+       if (terminou && !passo.demonstracaoAnotacao) {
         await esperar(350);
         if (vivo) { if (ultimo) sair(); else setIdx((i) => i + 1); }
       }
@@ -75,6 +91,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === "Escape") sair();
       if (e.key === "ArrowRight" && !ultimo) setIdx((i) => i + 1);
       if (e.key === "ArrowLeft" && idx > 0) setIdx((i) => i - 1);
@@ -122,6 +139,12 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
                 </ol>
               )}
               {passo.dica && <p className="mt-2 text-xs text-muted-foreground"><span className="font-semibold text-chart-4">Dica: </span>{passo.dica}</p>}
+               {passo.demonstracaoAnotacao && <div className="mt-3 space-y-2 rounded-md border border-primary/30 bg-background/70 p-3">
+                 <div className="flex items-center gap-2 text-xs font-semibold text-primary"><NotebookPen className="size-4" />Exemplo de anotação · não será salvo</div>
+                 <p className="text-xs text-muted-foreground">Data: {new Date().toLocaleDateString("pt-BR")} · Campo: Observação</p>
+                 <Textarea aria-label="Exemplo de observação" value={exemplo} onChange={(e) => setExemplo(e.target.value)} rows={2} className="resize-none bg-card text-sm" />
+                 <p className="text-xs text-muted-foreground">Experimente escrever aqui. Para criar uma anotação real depois, use o botão destacado e salve no formulário.</p>
+               </div>}
 
             </div>
           </div>
@@ -130,7 +153,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
             <Button size="sm" variant="outline" onClick={() => { setPausado((p) => !p); if (!pausado) calar(); }}>{pausado ? <><Play />Continuar</> : <><Pause />Pausar</>}</Button>
             {vozDisponivel() && <Button size="icon" variant="ghost" onClick={() => setComVoz((v) => !v)} aria-label={comVoz ? "Desligar voz" : "Ligar voz"}>{comVoz ? <Volume2 /> : <VolumeX />}</Button>}
             <div className="ml-auto flex gap-2">
-              {ultimo ? <Button size="sm" onClick={sair}>Concluir</Button> : <Button size="sm" onClick={() => setIdx((i) => i + 1)}>Avançar<ChevronRight /></Button>}
+             {ultimo ? <Button size="sm" onClick={sair}>Concluir</Button> : <Button size="sm" onClick={() => setIdx((i) => i + 1)}>{passo.demonstracaoAnotacao ? "Entendi" : "Avançar"}<ChevronRight /></Button>}
             </div>
           </div>
         </div>

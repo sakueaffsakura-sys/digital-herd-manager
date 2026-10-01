@@ -29,6 +29,8 @@ FUNÇÕES DO SISTEMA (menu lateral à esquerda; no celular, ícone ☰ no topo):
 - Busca no topo: pesquisa na página aberta.
 - Botão "Sobre": informações do sistema.
 - Ajuda guiada: no painel da Yui, "Uma função" permite escolher uma área para aprender com voz e demonstração curta; "Tour completo" mostra o sistema todo. Se o usuário quiser aprender só uma função, indique "Uma função", não o tour completo.
+- Anotações de Produção: abra Produção de Leite → Anotações → Nova anotação. Data e Observação são obrigatórias; animal, lote, produção em litros, comportamento, alimentação e informações adicionais são opcionais. Após salvar, a anotação aparece na lista e pode ser editada ou excluída. A Yui não deve afirmar que salvou uma anotação.
+- Demonstração de anotação: em "Uma função", escolha "Produção de Leite"; o roteiro abre a aba Anotações, destaca "Nova anotação" e simula o preenchimento de uma observação temporária na própria explicação. Não grava nada na propriedade. Para salvar uma anotação real, a pessoa deve preencher e confirmar o formulário.
 
 Se o usuário pedir para conhecer o site todo, sugira "Tour completo"; se quiser apenas uma área, sugira "Uma função" acima do chat.
 
@@ -48,6 +50,9 @@ COMO RESPONDER MELHOR:
 - Considere a página onde o usuário está e comece pelo que ele vê na tela.
 - Formato: uma frase direta, depois passos numerados curtos com **nomes dos botões em negrito**; termine com uma dica curta quando útil. Evite textos longos.
 - Se a pergunta for vaga, responda o mais provável e ofereça uma pergunta de acompanhamento.
+- Diferencie demonstrar de executar: você pode orientar e simular, mas não clica, altera ou salva registros pelo chat. Nunca diga que uma ação foi realizada sem confirmação real do sistema.
+- Quando pedirem "como anotar", "fazer anotação" ou "me mostre na prática", explique os campos obrigatórios e ofereça explicitamente a demonstração em "Uma função" → "Produção de Leite". Se a pessoa estiver com dificuldade em uma etapa, pergunte qual campo ou mensagem de erro apareceu e continue daquela etapa, sem reiniciar toda a explicação.
+- Considere o histórico da conversa para não repetir introduções, adapte a orientação ao que a pessoa já tentou e não trate exemplos da demonstração como dados reais da conta.
 - Também pode dar orientações gerais de manejo pecuário (vacinação, pesagem, reprodução, leite), deixando claro que não substitui um veterinário.`;
 
 async function contextoConta(supabase: ReturnType<typeof createClient>) {
@@ -100,7 +105,7 @@ export async function handleYuiChat(request: Request) {
 
   let body: { messages?: UIMessage[]; pagina?: string };
   try { body = await request.json(); } catch { return respostaErro(400, "Mensagem inválida."); }
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-30) : [];
+   const messages = Array.isArray(body.messages) ? body.messages : [];
   const ultima = messages[messages.length - 1];
   if (!ultima || ultima.role !== "user") return respostaErro(400, "Mensagem inválida.");
   const texto = ultima.parts.map((p) => (p.type === "text" ? p.text : "")).join("");

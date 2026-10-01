@@ -148,7 +148,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
         title="Anotações da Produção"
         description="Comportamento, alimentação e observações ligadas à produção."
         action={
-          <Button onClick={() => { setEditing(null); setOpen(true); }}>
+          <Button data-tour="notas-nova" onClick={() => { setEditing(null); setOpen(true); }}>
             <Plus />Nova anotação
           </Button>
         }
