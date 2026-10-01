@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, Wallet, Scale, Hash, BarChart3, CalendarRange, ChevronLeft, ChevronRight, Download, Lock, Milk, PiggyBank, ShoppingCart, Baby, LayoutGrid } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Scale, Hash, BarChart3, CalendarRange, ChevronLeft, ChevronRight, Download, Lock, Milk, PiggyBank, ShoppingCart, LayoutGrid } from "lucide-react";
+import { CalfIcon } from "./CalfIcon";
 import { toast } from "sonner";
 import { Legend, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
