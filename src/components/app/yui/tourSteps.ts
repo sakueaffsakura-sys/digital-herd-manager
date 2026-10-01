@@ -37,6 +37,22 @@ export const TOUR: TourStep[] = [
   { section: "inicio", alvo: "[data-tour='yui']", titulo: "Pronto!", fala: "Pronto, terminamos o passeio! Sempre que tiver dúvida, é só tocar em mim aqui no canto e escrever a sua pergunta. Eu estou aqui para ajudar. Bom trabalho na fazenda!" },
 ];
 
+// Recortes do roteiro existente: a ajuda de uma função não passa pelas outras páginas.
+export const TOPICOS_TOUR = [
+  { id: "inicio", nome: "Início e atalhos", passos: TOUR.filter((p) => p.section === "inicio" && p.titulo !== "Pronto!" && p.titulo !== "Menu lateral") },
+  { id: "rebanho", nome: "Meu Rebanho", passos: TOUR.filter((p) => p.section === "rebanho") },
+  { id: "bezerros", nome: "Evolução dos Bezerros", passos: TOUR.filter((p) => p.section === "bezerros") },
+  { id: "vacinacao", nome: "Vacinação", passos: TOUR.filter((p) => p.section === "vacinacao") },
+  { id: "inseminacao", nome: "Inseminação", passos: TOUR.filter((p) => p.section === "inseminacao") },
+  { id: "nascimentos", nome: "Nascimentos", passos: TOUR.filter((p) => p.section === "nascimentos") },
+  { id: "lotes", nome: "Lotes", passos: TOUR.filter((p) => p.section === "lotes") },
+  { id: "producao", nome: "Produção de Leite", passos: TOUR.filter((p) => p.section === "producao") },
+  { id: "relatorios", nome: "Relatórios", passos: TOUR.filter((p) => p.section === "relatorios") },
+  { id: "financeiro", nome: "Lucros e Investimentos", passos: TOUR.filter((p) => p.section === "financeiro") },
+  { id: "comercial", nome: "Compra e Venda", passos: TOUR.filter((p) => p.section === "comercial") },
+  { id: "perfil", nome: "Perfil e configurações", passos: TOUR.filter((p) => p.titulo === "Perfil e configurações" || p.titulo === "Trocar de propriedade") },
+] as const;
+
 export function acharAlvo(alvo: string): HTMLElement | null {
   if (alvo.startsWith("texto:")) {
     const t = alvo.slice(6).toLowerCase();
