@@ -38,6 +38,8 @@ export async function handleYuiVoz(request: Request) {
   } catch { return respostaErro(400, "Pedido inválido."); }
   if (!texto || texto.length > 1500) return respostaErro(400, "Texto inválido.");
 
+  // Controlador próprio: o cancelamento do navegador chega via stream.cancel(), sem rejeição solta.
+  const upstreamAbort = new AbortController();
   let upstream: Response;
   try {
     upstream = await fetch(`${GATEWAY}/v1/audio/speech`, {
@@ -52,7 +54,7 @@ export async function handleYuiVoz(request: Request) {
         },
         stream_format: "audio",
       }),
-      signal: request.signal,
+      signal: upstreamAbort.signal,
     });
   } catch (err) {
     if ((err as Error)?.name === "AbortError") return new Response(null, { status: 499 });
@@ -83,6 +85,7 @@ export async function handleYuiVoz(request: Request) {
     },
     cancel() {
       reader.cancel().catch(() => {});
+      upstreamAbort.abort();
     },
   });
 
