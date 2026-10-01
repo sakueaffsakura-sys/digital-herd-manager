@@ -12,6 +12,8 @@ import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, Pro
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { YuiTour } from "./YuiTour";
+import { TOUR } from "./tourSteps";
+import { prepararVoz } from "./voz";
 
 const SUGESTOES = ["Como cadastro um animal?", "Como registro uma vacina?", "Como vejo o lucro do mês?", "Como registrar um nascimento?"];
 const BOAS_VINDAS = "yui-boas-vindas-v1";
@@ -66,6 +68,12 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
     return () => clearTimeout(t);
   }, []);
   const fecharConvite = () => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); };
+
+  // Enquanto a pessoa confirma o tour, já prepara a voz das primeiras falas (sem espera no início).
+  useEffect(() => {
+    if (etapa === "chat") return;
+    TOUR.slice(0, 2).forEach((p) => prepararVoz(p.fala));
+  }, [etapa]);
 
   const ocupado = status === "submitted" || status === "streaming";
   const enviar = (texto: string) => {

@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 let geracao = 0;
 let audioAtual: HTMLAudioElement | null = null;
-let abortAtual: AbortController | null = null;
 
 export const vozDisponivel = () => typeof window !== "undefined";
 
@@ -64,30 +63,46 @@ function falarNavegador(texto: string, minha: number): Promise<boolean> {
 }
 
 // ---------- Voz realista de IA ----------
-async function falarIA(texto: string, minha: number): Promise<boolean> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token || minha !== geracao) return false;
+// Cache de áudios já gerados/em geração: permite pré-carregar os próximos passos
+// e eliminar a espera entre uma fala e outra.
+const cache = new Map<string, Promise<Blob | null>>();
 
-  const abort = new AbortController();
-  abortAtual = abort;
-  let resp: Response;
-  try {
-    resp = await fetch("/api/yui/voz", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify({ texto }),
-      signal: abort.signal,
-    });
-  } catch {
-    return false;
-  } finally {
-    if (abortAtual === abort) abortAtual = null;
-  }
-  if (!resp.ok || minha !== geracao) return false;
+function gerarAudio(texto: string): Promise<Blob | null> {
+  const existente = cache.get(texto);
+  if (existente) return existente;
+  const p = (async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return null;
+    try {
+      const resp = await fetch("/api/yui/voz", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({ texto }),
+      });
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      return blob.size ? blob : null;
+    } catch {
+      return null;
+    }
+  })();
+  cache.set(texto, p);
+  // Falhas não ficam no cache, para poder tentar de novo depois.
+  void p.then((b) => { if (!b) cache.delete(texto); });
+  if (cache.size > 40) cache.delete(cache.keys().next().value as string);
+  return p;
+}
 
-  const blob = await resp.blob();
-  if (minha !== geracao || !blob.size) return false;
+/** Começa a gerar a voz de um texto em segundo plano (sem tocar). */
+export function prepararVoz(texto: string) {
+  void gerarAudio(texto);
+}
+
+async function falarIA(texto: string, minha: number, aoComecar?: () => void): Promise<boolean> {
+  // Se a voz demorar demais, desiste e usa a voz do navegador para não travar o tour.
+  const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 9000))]);
+  if (minha !== geracao || !blob) return false;
 
   return new Promise((ok) => {
     const url = URL.createObjectURL(blob);
@@ -103,12 +118,12 @@ async function falarIA(texto: string, minha: number): Promise<boolean> {
     };
     audio.onended = () => fim(true);
     audio.onerror = () => fim(false);
-    audio.play().catch(() => fim(false));
+    audio.play().then(() => aoComecar?.()).catch(() => fim(false));
   });
 }
 
 /** Fala o texto; resolve true se terminou, false se foi cancelada. */
-export async function falar(texto: string, comVoz: boolean): Promise<boolean> {
+export async function falar(texto: string, comVoz: boolean, aoComecar?: () => void): Promise<boolean> {
   const minha = ++geracao;
   if (!comVoz) {
     return new Promise((ok) => setTimeout(() => ok(minha === geracao), Math.max(3500, texto.length * 55)));
@@ -117,14 +132,13 @@ export async function falar(texto: string, comVoz: boolean): Promise<boolean> {
   if (temSintese()) speechSynthesis.cancel();
 
   // Tenta a voz realista de IA; se falhar, usa a voz do navegador.
-  const falou = await falarIA(texto, minha);
+  const falou = await falarIA(texto, minha, aoComecar);
   if (falou || minha !== geracao) return falou;
+  aoComecar?.();
   return falarNavegador(texto, minha);
 }
 
 function calarAudio() {
-  abortAtual?.abort();
-  abortAtual = null;
   if (audioAtual) {
     audioAtual.pause();
     audioAtual = null;

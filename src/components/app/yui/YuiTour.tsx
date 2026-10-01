@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from "luc
 import { Button } from "@/components/ui/button";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { TOUR, acharAlvo } from "./tourSteps";
-import { calar, falar, vozDisponivel } from "./voz";
+import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
 
 type Rect = { top: number; left: number; width: number; height: number };
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -14,6 +14,7 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
   const [pausado, setPausado] = useState(false);
   const [comVoz, setComVoz] = useState(vozDisponivel());
   const [falando, setFalando] = useState(false);
+  const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = TOUR[idx]!;
@@ -42,13 +43,15 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
     (async () => {
       calar();
       setFalando(false);
-      if (passo.section) { go(passo.section); await esperar(650); }
+      // Gera a voz deste passo e dos próximos já em paralelo com a navegação (sem espera entre falas).
+      if (comVoz) for (let k = idx; k < Math.min(idx + 3, TOUR.length); k++) prepararVoz(TOUR[k]!.fala);
+      if (passo.section) { go(passo.section); await esperar(350); }
       const mobile = window.matchMedia("(max-width: 1023px)").matches;
       const precisaMenu = mobile && passo.alvo.includes("nav-");
       abrirMenu(precisaMenu);
-      if (precisaMenu) await esperar(350);
+      if (precisaMenu) await esperar(250);
       let el: HTMLElement | null = null;
-      for (let t = 0; t < 12 && vivo && !el; t++) { el = acharAlvo(passo.alvo); if (!el) await esperar(200); }
+      for (let t = 0; t < 15 && vivo && !el; t++) { el = acharAlvo(passo.alvo); if (!el) await esperar(120); }
       if (!vivo) return;
       el ??= acharAlvo("[data-tour='conteudo']");
       alvoRef.current = el;
@@ -56,11 +59,13 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
       el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
       if (pausado) return;
       setFalando(true);
-      const terminou = await falar(passo.fala, comVoz);
+      setCarregandoVoz(comVoz);
+      const terminou = await falar(passo.fala, comVoz, () => vivo && setCarregandoVoz(false));
+      setCarregandoVoz(false);
       if (!vivo) return;
       setFalando(false);
       if (terminou) {
-        await esperar(700);
+        await esperar(350);
         if (vivo) { if (ultimo) sair(); else setIdx((i) => i + 1); }
       }
     })();
@@ -110,6 +115,14 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
               </div>
               <h3 className="mt-0.5 text-lg font-bold leading-tight">{passo.titulo}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{passo.fala}</p>
+              {passo.passos && (
+                <ol className="mt-2.5 space-y-1 rounded-lg border border-border bg-card/60 p-2.5 text-xs">
+                  <li className="mb-1 font-semibold text-primary">Como fazer:</li>
+                  {passo.passos.map((t, i) => <li key={i} className="flex gap-2"><span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">{i + 1}</span><span className="text-foreground/85">{t}</span></li>)}
+                </ol>
+              )}
+              {passo.dica && <p className="mt-2 text-xs text-muted-foreground"><span className="font-semibold text-chart-4">Dica: </span>{passo.dica}</p>}
+
             </div>
           </div>
           <div className="flex items-center gap-2 border-t border-border bg-card/60 px-4 py-2.5">
@@ -121,7 +134,7 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
             </div>
           </div>
         </div>
-        {pausado && <p className="mt-2 text-center text-xs text-muted-foreground">Tour pausado. Toque em Continuar quando quiser.</p>}
+        {pausado ? <p className="mt-2 text-center text-xs text-muted-foreground">Tour pausado. Toque em Continuar quando quiser.</p> : carregandoVoz && <p className="mt-2 text-center text-xs text-muted-foreground">Preparando a voz da Yui…</p>}
       </div>
       <span className="sr-only" aria-live="polite">{passo.titulo}. {passo.fala}</span>
     </div>
