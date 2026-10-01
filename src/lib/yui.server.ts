@@ -69,6 +69,35 @@ export async function handleYuiChat(request: Request) {
   const salvo = await supabase.from("suporte_mensagens" as never).upsert({ user_id: userId, mensagem_id: ultima.id, papel: "user", partes: ultima.parts } as never, { onConflict: "user_id,mensagem_id" });
   if (salvo.error) console.error("Falha ao salvar mensagem do usuário", salvo.error);
 
+  let criadoresInfo = "";
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cfg } = await supabaseAdmin
+      .from("configuracoes_sistema" as never)
+      .select("valor")
+      .eq("chave", "criadores_site")
+      .maybeSingle();
+    const valor = (cfg as { valor?: unknown } | null)?.valor;
+    if (valor) {
+      const lista = typeof valor === "string" ? JSON.parse(valor) : valor;
+      if (Array.isArray(lista) && lista.length) {
+        const descricao = lista
+          .map((c: { nome?: string; redes?: { nome?: string; url?: string }[] }) => {
+            const redes = Array.isArray(c?.redes)
+              ? c.redes.filter((r) => r?.url).map((r) => `${r.nome || "Rede social"}: ${r.url}`).join("; ")
+              : "";
+            return `- ${c?.nome || "Criador"}${redes ? ` (${redes})` : ""}`;
+          })
+          .join("\n");
+        if (descricao.trim()) {
+          criadoresInfo = `\n\nCRIADORES DO SITE (informação oficial — use quando perguntarem quem criou/desenvolveu o sistema):\n${descricao}`;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Falha ao carregar criadores do site", e);
+  }
+
   const runIdFetch = createLovableAiGatewayRunIdFetch(getLovableAiGatewayRunId(request));
   const provider = createOpenAI({
     baseURL: GATEWAY,
