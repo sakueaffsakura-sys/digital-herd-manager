@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { acharAlvo, type TourStep } from "./tourSteps";
 import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
@@ -17,22 +16,14 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const [falando, setFalando] = useState(false);
   const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
-  const [exemplo, setExemplo] = useState("");
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = passos[idx];
   const ultimo = idx === passos.length - 1;
 
+  // Fecha o formulário de demonstração ao sair do passo ou do tour.
   useEffect(() => {
     if (!passo.demonstracaoAnotacao) return;
-    const frase = "Observação da ordenha: conferir a alimentação e acompanhar a produção no próximo registro.";
-    setExemplo("");
-    let i = 0;
-    const timer = window.setInterval(() => {
-      i = Math.min(i + 2, frase.length);
-      setExemplo(frase.slice(0, i));
-      if (i === frase.length) window.clearInterval(timer);
-    }, 35);
-    return () => window.clearInterval(timer);
+    return () => { window.dispatchEvent(new Event("yui:demo-fim")); };
   }, [passo]);
 
   const sair = useCallback(() => { calar(); abrirMenu(false); onSair(); }, [abrirMenu, onSair]);
@@ -69,6 +60,21 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       let el: HTMLElement | null = null;
       for (let t = 0; t < 15 && vivo && !el; t++) { el = acharAlvo(passo.alvo); if (!el) await esperar(120); }
       if (!vivo) return;
+      if (passo.demonstracaoAnotacao && el) {
+        // Mostra o botão e abre o formulário real preenchendo sozinho (nunca salva).
+        alvoRef.current = el;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        await esperar(1200);
+        if (!vivo) return;
+        window.dispatchEvent(new CustomEvent("yui:demo-nota", { detail: {
+          producao: "12.5",
+          observacao: "Vaca comeu bem e ficou calma na ordenha da manhã.",
+          comportamento: "Tranquila",
+          alimentacao: "Silagem e ração no cocho, água à vontade.",
+        } }));
+        for (let t = 0; t < 15 && vivo; t++) { const d = acharAlvo("[data-tour='demo-dialog']"); if (d) { el = d; break; } await esperar(120); }
+        if (!vivo) return;
+      }
       el ??= acharAlvo("[data-tour='conteudo']");
       alvoRef.current = el;
       if (!el) setRect(null);
@@ -139,12 +145,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
                 </ol>
               )}
               {passo.dica && <p className="mt-2 text-xs text-muted-foreground"><span className="font-semibold text-chart-4">Dica: </span>{passo.dica}</p>}
-               {passo.demonstracaoAnotacao && <div className="mt-3 space-y-2 rounded-md border border-primary/30 bg-background/70 p-3">
-                 <div className="flex items-center gap-2 text-xs font-semibold text-primary"><NotebookPen className="size-4" />Exemplo de anotação · não será salvo</div>
-                 <p className="text-xs text-muted-foreground">Data: {new Date().toLocaleDateString("pt-BR")} · Campo: Observação</p>
-                 <Textarea aria-label="Exemplo de observação" value={exemplo} onChange={(e) => setExemplo(e.target.value)} rows={2} className="resize-none bg-card text-sm" />
-                 <p className="text-xs text-muted-foreground">Experimente escrever aqui. Para criar uma anotação real depois, use o botão destacado e salve no formulário.</p>
-               </div>}
+               {passo.demonstracaoAnotacao && <p className="mt-2 flex items-center gap-2 rounded-md border border-primary/30 bg-background/70 p-2 text-xs text-muted-foreground"><NotebookPen className="size-4 shrink-0 text-primary" />Estou preenchendo o formulário de verdade só para você ver. Nada será salvo.</p>}
 
             </div>
           </div>
