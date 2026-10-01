@@ -173,12 +173,13 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         <Conversation className="relative z-10 flex-1">
           <ConversationContent className="gap-5 px-4 py-4">
             {messages.length === 0 && etapa === "chat" && (
-              <div className="py-4 text-center">
+              <div className="py-6 text-center">
                 <div className="relative mx-auto size-24">
                   <span className="absolute inset-0 animate-ping rounded-full bg-primary/20 [animation-duration:2.5s]" />
+                  <span className="absolute -inset-2 rounded-full border border-primary/30" />
                   <img src={yuiAvatar} alt="" width={96} height={96} className="relative size-24 rounded-full border-2 border-primary/60 bg-primary/10 object-cover shadow-[0_0_30px_-6px_var(--primary)]" />
                 </div>
-                <p className="mt-4 text-lg font-semibold">Oi! Como posso te ajudar?</p>
+                <p className="mt-4 bg-gradient-to-r from-primary to-chart-2 bg-clip-text text-lg font-bold text-transparent">Oi! Como posso te ajudar?</p>
                 <p className="mx-auto mt-1 max-w-[280px] text-sm text-muted-foreground">Pergunte qualquer coisa sobre o sistema. Eu explico passo a passo.</p>
                 <div className="mt-5 grid grid-cols-2 gap-2 text-left">
                   {SUGESTOES.map((s, i) => {
@@ -241,14 +242,14 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         </Conversation>
         </div>
 
-        <div className="relative z-10 border-t border-border bg-card/70 p-3">
-          <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")}>
+        <div className="relative z-10 border-t border-primary/20 bg-gradient-to-t from-card to-card/70 p-3 backdrop-blur">
+          <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")} className="rounded-2xl border-border shadow-lg focus-within:border-primary/60 focus-within:shadow-[0_0_20px_-8px_var(--primary)]">
             <PromptInputBody>
               <PromptInputTextarea placeholder="Escreva sua dúvida…" autoFocus maxLength={4000} />
             </PromptInputBody>
             <PromptInputFooter className="justify-between">
               <span className="px-2 text-[11px] text-muted-foreground">Respostas geradas por IA</span>
-              <PromptInputSubmit status={status} onStop={stop} />
+              <PromptInputSubmit status={status} onStop={stop} className="rounded-full" />
             </PromptInputFooter>
           </PromptInput>
         </div>
