@@ -16,6 +16,7 @@ export function RecordDialog({
   refs,
   onSave,
   saving,
+  demo,
 }: {
   open: boolean;
   onClose: () => void;
@@ -24,6 +25,8 @@ export function RecordDialog({
   refs: FormRefs | undefined;
   onSave: (r: Row) => void;
   saving: boolean;
+  /** Valores digitados automaticamente pela Yui; nunca são salvos. */
+  demo?: Row | null;
 }) {
   const initial = () =>
     Object.fromEntries(
@@ -34,6 +37,20 @@ export function RecordDialog({
     );
   const [form, setForm] = useState<Row>(initial);
   useEffect(() => setForm(initial()), [row, open]);
+  // Demonstração da Yui: digita campo a campo, como uma pessoa faria.
+  useEffect(() => {
+    if (!open || !demo) return;
+    const fila = Object.entries(demo).map(([k, v]) => [k, String(v)] as const);
+    let campo = 0, i = 0;
+    const timer = window.setInterval(() => {
+      const atual = fila[campo];
+      if (!atual) return window.clearInterval(timer);
+      i = Math.min(i + 2, atual[1].length);
+      setForm((f) => ({ ...f, [atual[0]]: atual[1].slice(0, i) }));
+      if (i >= atual[1].length) { campo++; i = 0; }
+    }, 45);
+    return () => window.clearInterval(timer);
+  }, [open, demo]);
   const options = (f: Field) =>
     f.type === "animal"
       ? refs?.animals
@@ -46,6 +63,7 @@ export function RecordDialog({
           : f.options;
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    if (demo) { toast.info("Isto é só uma demonstração da Yui — nada foi salvo."); onClose(); return; }
     const missing = config.fields.find(
       (f) => f.required && (form[f.key] === undefined || form[f.key] === null || String(form[f.key]).trim() === ""),
     );
@@ -80,10 +98,10 @@ export function RecordDialog({
   };
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
+      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className="dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{row ? "Editar" : "Novo"} {config.singular}</DialogTitle>
-          <DialogDescription>Os dados serão gravados na propriedade selecionada.</DialogDescription>
+          <DialogDescription>{demo ? "Demonstração da Yui: os campos estão sendo preenchidos sozinhos e nada será salvo." : "Os dados serão gravados na propriedade selecionada."}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit}>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -116,7 +134,7 @@ export function RecordDialog({
           </div>
           <DialogFooter className="mt-6">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Salvando…" : demo ? "Salvar (demonstração)" : "Salvar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

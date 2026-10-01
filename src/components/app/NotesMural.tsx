@@ -61,6 +61,14 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
   const [pageSize, setPageSize] = useState(25);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [demo, setDemo] = useState<Row | null>(null);
+  useEffect(() => {
+    const abrir = (e: Event) => { setEditing(null); setDemo((e as CustomEvent<Row>).detail); setOpen(true); };
+    const fechar = () => { setDemo(null); setOpen(false); };
+    window.addEventListener("yui:demo-nota", abrir);
+    window.addEventListener("yui:demo-fim", fechar);
+    return () => { window.removeEventListener("yui:demo-nota", abrir); window.removeEventListener("yui:demo-fim", fechar); };
+  }, []);
   const deferredLocal = useDebouncedValue(local, 300);
   const search = (globalSearch || deferredLocal).trim();
 
@@ -288,12 +296,13 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
 
       <RecordDialog
         open={open}
-        onClose={() => { setOpen(false); setEditing(null); }}
+        onClose={() => { setOpen(false); setEditing(null); setDemo(null); }}
         config={productionNotes}
         row={editing}
         refs={refs.data}
         onSave={(p) => save.mutate(p)}
         saving={save.isPending}
+        demo={demo}
       />
     </div>
   );
