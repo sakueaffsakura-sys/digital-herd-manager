@@ -48,7 +48,7 @@ function falarNavegador(texto: string, minha: number): Promise<boolean> {
       const u = new SpeechSynthesisUtterance(frases[i++]);
       u.lang = "pt-BR";
       u.rate = 0.98;
-      u.pitch = 1.05;
+      u.pitch = 1;
       const v = escolherVoz();
       if (v) u.voice = v;
       let feito = false;
