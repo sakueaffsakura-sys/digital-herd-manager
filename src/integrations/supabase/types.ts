@@ -337,6 +337,27 @@ export type Database = {
           },
         ]
       }
+      configuracoes_sistema: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          chave: string
+          valor: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave: string
+          valor?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave?: string
+          valor?: string | null
+        }
+        Relationships: []
+      }
       eventos_seguranca: {
         Row: {
           caminho: string | null
