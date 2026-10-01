@@ -11,6 +11,7 @@ import { Message, MessageContent, MessageResponse } from "@/components/ai-elemen
 import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useYuiAvatar } from "./useYuiAvatar";
+import { useYuiWallpaper } from "./useYuiWallpaper";
 import { YuiTour } from "./YuiTour";
 import { TOPICOS_TOUR, TOUR } from "./tourSteps";
 import { prepararVoz } from "./voz";
@@ -22,6 +23,7 @@ type Etapa = "chat" | "pergunta1" | "pergunta2";
 
 export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: (s: string) => void; abrirMenu: (aberto: boolean) => void }) {
   const yuiAvatar = useYuiAvatar();
+  const { data: wallpaper } = useYuiWallpaper();
   const [aberto, setAberto] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("chat");
   const [tour, setTour] = useState(false);
@@ -146,7 +148,12 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
           </div>}
         </div>
 
-        <Conversation className="flex-1">
+        <div className="relative flex min-h-0 flex-1 overflow-hidden bg-background">
+          {wallpaper && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
+            <div className="absolute inset-0 bg-background/65" />
+          </div>}
+        <Conversation className="relative z-10 flex-1">
           <ConversationContent className="gap-5 px-4 py-4">
             {messages.length === 0 && etapa === "chat" && (
               <div className="py-6 text-center">
@@ -183,6 +190,7 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
+        </div>
 
         <div className="border-t border-border p-3">
           <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")}>
