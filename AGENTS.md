@@ -16,3 +16,4 @@
 - Yui's single-function lessons reuse filtered steps of the full guided tour — why: the same narration and target hints remain consistent without maintaining duplicate lesson scripts.
 - Yui's optional chat wallpaper stores its active path in `configuracoes_sistema` and media in a private bucket readable and writable only by admins — why: private media and settings must not be exposed to other accounts.
 - Site creator credits are stored as validated structured text in `configuracoes_sistema` and read into the About dialog only for admins — why: credits remain editable without exposing private settings to other accounts.
+- Playwright auth restore writes the minted session with `localStorage.setItem(key, JSON.stringify(session))` — never `context.add_cookies`, and never splice the JSON into the script text as a bare object literal (it stores `[object Object]`, which reads as "session expired") — why: broken restore fakes an auth bug.
