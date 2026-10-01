@@ -47,7 +47,7 @@ export async function handleYuiVoz(request: Request) {
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        contents: [{ role: "user", parts: [{ text: `Diga em português do Brasil, com tom simpático e natural, como uma amiga explicando: ${texto}` }] }],
+        contents: [{ role: "user", parts: [{ text: `Leia o texto a seguir em português do Brasil como uma pessoa conversando normalmente. Use um tom calmo, acolhedor e discreto, ritmo de conversa e pausas curtas e naturais. Evite entonação teatral, ênfase exagerada, voz de anúncio, sussurros e emoção forçada. Não acrescente nem altere palavras. Texto: ${texto}` }] }],
         generationConfig: {
           responseModalities: ["AUDIO"],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
