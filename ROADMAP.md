@@ -12,3 +12,4 @@
 ## Pendente (aguardando decisão do usuário)
 - [ ] 5 avisos do verificador de segurança: funções admin SECURITY DEFINER em `public` executáveis por usuários logados (mesma classe dos 5 já existentes: admin_contas, admin_sistema, admin_definir_conta, setar/cancelar_plano_demonstracao + as 5 novas). Podem ser movidas para o schema `private` + chamadas via funções de servidor — perguntar se o usuário quer.
 - [ ] 1 aviso INFO: RLS habilitada sem política (tabela rate_limits, só service_role usa) — sem impacto prático.
+- [x] Assistente Yui (chat de suporte com IA + tour guiado com voz)

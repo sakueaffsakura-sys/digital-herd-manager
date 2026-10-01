@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiYuiRouteImport } from './routes/api/yui'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app/$section'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,6 +29,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiYuiRoute = ApiYuiRouteImport.update({
+  id: '/api/yui',
+  path: '/api/yui',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
   id: '/app/$section',
   path: '/app/$section',
@@ -37,11 +43,13 @@ const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/yui': typeof ApiYuiRoute
   '/app/$section': typeof AuthenticatedAppSectionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/yui': typeof ApiYuiRoute
   '/app/$section': typeof AuthenticatedAppSectionRoute
 }
 export interface FileRoutesById {
@@ -49,24 +57,27 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/api/yui': typeof ApiYuiRoute
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/app/$section'
+  fullPaths: '/' | '/admin' | '/api/yui' | '/app/$section'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/app/$section'
+  to: '/' | '/admin' | '/api/yui' | '/app/$section'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/admin'
+    | '/api/yui'
     | '/_authenticated/app/$section'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ApiYuiRoute: typeof ApiYuiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -91,6 +102,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/yui': {
+      id: '/api/yui'
+      path: '/api/yui'
+      fullPath: '/api/yui'
+      preLoaderRoute: typeof ApiYuiRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/$section': {
       id: '/_authenticated/app/$section'
@@ -118,6 +136,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ApiYuiRoute: ApiYuiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -12,3 +12,4 @@
 - Selection lists fetch via `fetchAllRows` (1000-row chunks) — why: PostgREST caps responses at 1000 rows.
 - Request rate limiting is in-memory per worker in `src/start.ts` — why: cheap abuse protection; volumetric DDoS is handled by the hosting edge.
 - Security events (rate-limit blocks, global spikes) are aggregated per worker in `src/lib/security-events.server.ts` and flushed to `eventos_seguranca` at most every 15s; admins read them via `admin_alertas` — why: attack visibility without the logger adding load during an attack.
+- Yui support chat streams via server route `/api/yui` (`src/lib/yui.server.ts`, bearer-verified, per-user rate limit) and persists messages in `suporte_mensagens`; the guided tour narrates with the browser's speech synthesis — why: chat keeps AI key server-side; browser voice keeps narration instant and in sync with on-screen steps.

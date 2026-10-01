@@ -1135,6 +1135,33 @@ export type Database = {
         }
         Relationships: []
       }
+      suporte_mensagens: {
+        Row: {
+          created_at: string
+          id: string
+          mensagem_id: string
+          papel: string
+          partes: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensagem_id: string
+          papel: string
+          partes?: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensagem_id?: string
+          papel?: string
+          partes?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       tipos_vacinas: {
         Row: {
           ativo: boolean
