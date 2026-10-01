@@ -14,7 +14,6 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
   const [comVoz, setComVoz] = useState(vozDisponivel());
   const [falando, setFalando] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
-  const [rodada, setRodada] = useState(0);
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = TOUR[idx]!;
   const ultimo = idx === TOUR.length - 1;
@@ -65,9 +64,8 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
       }
     })();
     return () => { vivo = false; };
-    // rodada força repetir o passo atual (retomar/ligar voz)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, rodada, pausado, comVoz]);
+  }, [idx, pausado, comVoz]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
@@ -125,8 +123,6 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
         {pausado && <p className="mt-2 text-center text-xs text-muted-foreground">Tour pausado. Toque em Continuar quando quiser.</p>}
       </div>
       <span className="sr-only" aria-live="polite">{passo.titulo}. {passo.fala}</span>
-      <span hidden>{rodada}</span>
-      <button type="button" hidden onClick={() => setRodada((r) => r + 1)} />
     </div>
   );
 }
