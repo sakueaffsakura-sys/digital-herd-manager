@@ -90,7 +90,7 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
           className="pointer-events-none absolute rounded-xl ring-2 ring-primary transition-all duration-500 ease-out"
           style={{ top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2, boxShadow: "0 0 0 9999px color-mix(in oklab, var(--background) 78%, transparent), 0 0 32px 4px color-mix(in oklab, var(--primary) 45%, transparent)" }}
         >
-          <span className="absolute inset-0 animate-ping rounded-xl ring-2 ring-primary/40" />
+          <span className="absolute inset-0 animate-pulse rounded-xl ring-4 ring-primary/30" />
         </div>
       ) : <div className="absolute inset-0 bg-background/80" />}
 
