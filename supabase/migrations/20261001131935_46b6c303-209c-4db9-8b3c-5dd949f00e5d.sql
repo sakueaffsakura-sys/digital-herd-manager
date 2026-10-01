@@ -1,0 +1,2 @@
+DROP POLICY "yui_wallpaper_read" ON storage.objects;
+CREATE POLICY "yui_wallpaper_read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'yui-chat-wallpapers' AND private.has_role(auth.uid(), 'administrador'));

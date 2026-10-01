@@ -7,9 +7,10 @@ export const YUI_FOTO_QUERY = ["config", YUI_FOTO_CHAVE] as const;
 export const YUI_FOTO_PADRAO = yuiPadrao;
 
 /** Foto da Yui definida pelo admin (link ou upload); cai na foto padrão. */
-export function useYuiAvatar(): string {
+export function useYuiAvatar(enabled = true): string {
   const { data } = useQuery({
     queryKey: YUI_FOTO_QUERY,
+    enabled,
     staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("configuracoes_sistema").select("valor").eq("chave", YUI_FOTO_CHAVE).maybeSingle();
@@ -17,5 +18,5 @@ export function useYuiAvatar(): string {
       return (data?.valor as string | null) ?? null;
     },
   });
-  return data || yuiPadrao;
+  return (enabled && data) || yuiPadrao;
 }

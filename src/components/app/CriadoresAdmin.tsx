@@ -10,7 +10,7 @@ import { CRIADORES_CHAVE, CRIADORES_QUERY, useCriadores, urlSocial, type Criador
 
 export function CriadoresAdmin() {
   const qc = useQueryClient();
-  const { data, isLoading, isError, refetch } = useCriadores();
+  const { data, isLoading, isError, refetch } = useCriadores(true);
   const [lista, setLista] = useState<Criador[]>([]);
   const [alterado, setAlterado] = useState(false);
 
@@ -38,7 +38,7 @@ export function CriadoresAdmin() {
 
   return <section className="rounded-lg border border-border bg-card p-4 sm:p-6">
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><h3 className="font-semibold">Criadores do site</h3><p className="mt-1 text-sm text-muted-foreground">Os nomes e links salvos aparecem para todos na janela Sobre.</p></div>
+       <div><h3 className="font-semibold">Criadores do site</h3><p className="mt-1 text-sm text-muted-foreground">Os nomes e links salvos aparecem somente para administradores na janela Sobre.</p></div>
       <Button variant="outline" disabled={lista.length >= 20 || isLoading || isError} onClick={() => mudar([...lista, { id: crypto.randomUUID(), nome: "", redes: [] }])}><Plus />Adicionar criador</Button>
     </div>
     {isLoading ? <p className="mt-5 text-sm text-muted-foreground">Carregando criadores…</p> : isError ? <div className="mt-5 flex items-center gap-2 text-sm text-destructive">Não foi possível carregar os criadores. <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar novamente</Button></div> : lista.length === 0 ? <p className="mt-5 border-t border-border pt-5 text-sm text-muted-foreground">Nenhum criador cadastrado.</p> : <div className="mt-5 space-y-5">

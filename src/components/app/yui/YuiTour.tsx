@@ -8,8 +8,8 @@ import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
 type Rect = { top: number; left: number; width: number; height: number };
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function YuiTour({ go, abrirMenu, onSair, passos }: { go: (s: string) => void; abrirMenu: (aberto: boolean) => void; onSair: () => void; passos: readonly TourStep[] }) {
-  const yuiAvatar = useYuiAvatar();
+export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: string) => void; abrirMenu: (aberto: boolean) => void; onSair: () => void; passos: readonly TourStep[]; isAdmin: boolean }) {
+  const yuiAvatar = useYuiAvatar(isAdmin);
   const [idx, setIdx] = useState(0);
   const [pausado, setPausado] = useState(false);
   const [comVoz, setComVoz] = useState(vozDisponivel());

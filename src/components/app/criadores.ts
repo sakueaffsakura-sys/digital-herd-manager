@@ -30,7 +30,7 @@ export function lerCriadores(valor: string | null | undefined): Criador[] {
   } catch { return []; }
 }
 
-export function useCriadores(enabled = true) {
+export function useCriadores(enabled = false) {
   return useQuery({
     queryKey: CRIADORES_QUERY,
     enabled,
