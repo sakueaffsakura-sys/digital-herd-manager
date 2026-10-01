@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Baby, CalendarClock, FlaskConical, Milk, Plus, Syringe, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, CalendarClock, FlaskConical, Milk, Plus, Syringe, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { CalfIcon } from "@/components/app/CalfIcon";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
 
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <Metric label="Total de animais" value={v(n("total_animais").toLocaleString("pt-BR"))} icon={HerdIcon} onClick={() => go("rebanho")} hint={<span className="text-[11px] text-muted-foreground">{n("animais_ativos").toLocaleString("pt-BR")} ativos</span>} />
-      <Metric label="Bezerros em evolução" value={v(n("bezerros").toLocaleString("pt-BR"))} icon={Baby} tone="chart-3" onClick={() => go("bezerros")} />
+      <Metric label="Bezerros em evolução" value={v(n("bezerros").toLocaleString("pt-BR"))} icon={CalfIcon} tone="chart-3" onClick={() => go("bezerros")} />
       <Metric label="Vacinações em dia" value={v(n("vacinacoes_em_dia").toLocaleString("pt-BR"))} icon={Syringe} tone="chart-4" onClick={() => go("vacinacao")} hint={data?.vencidas ? <span className="text-[11px] font-semibold text-destructive">{data.vencidas} vencida(s)</span> : <span className="text-[11px] text-muted-foreground">nenhuma vencida</span>} />
       <Metric label="Inseminações" value={v(n("inseminacoes").toLocaleString("pt-BR"))} icon={FlaskConical} tone="chart-2" onClick={() => go("inseminacao")} hint={<span className="text-[11px] text-muted-foreground">{data?.partos ?? 0} parto(s) em 30 dias</span>} />
       <Metric label="Receitas no mês" value={v(money(cur?.receitas))} icon={TrendingUp} onClick={() => go("financeiro")} hint={<Delta value={variacao(cur?.receitas ?? 0, prev?.receitas ?? 0)} label="vs mês anterior" />} />
