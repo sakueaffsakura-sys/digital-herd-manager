@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { YuiFotoAdmin } from "@/components/app/yui/YuiFotoAdmin";
 import { YuiWallpaperAdmin } from "@/components/app/yui/YuiWallpaperAdmin";
+import { CriadoresAdmin } from "@/components/app/CriadoresAdmin";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -114,7 +115,7 @@ function AdminPage() {
   if (!isAdmin.data) return <Shell><div className="rounded-xl border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
 
   const s = sistema.data;
-  const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."] } as const;
+   const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."] } as const;
   return (
     <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length}>
       <div>
@@ -137,6 +138,7 @@ function AdminPage() {
       {tab === "metricas" && <MetricasTab />}
       {tab === "desempenho" && <DesempenhoTab sistema={s} latencia={latencia} />}
        {tab === "yui" && <div className="space-y-4"><YuiFotoAdmin /><YuiWallpaperAdmin /></div>}
+       {tab === "criadores" && <CriadoresAdmin />}
 
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
@@ -536,7 +538,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui";
+type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui" | "criadores";
 const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
   { k: "tempo", label: "Tempo real", icon: Radio },
   { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
@@ -544,6 +546,7 @@ const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
   { k: "metricas", label: "Métricas", icon: BarChart3 },
   { k: "desempenho", label: "Desempenho", icon: Gauge },
   { k: "yui", label: "Yui (assistente)", icon: Bot },
+  { k: "criadores", label: "Criadores", icon: Users },
 ];
 
 function Shell({ children, tab, setTab, alertaCount }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number }) {
