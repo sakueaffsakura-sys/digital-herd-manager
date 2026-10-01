@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Compass, Copy, MessageCircle, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
+import { BookOpen, Compass, Copy, MessageCircle, NotebookPen, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
 import { CalfIcon } from "../CalfIcon";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
-import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
+import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { useYuiWallpaper } from "./useYuiWallpaper";
@@ -17,7 +17,7 @@ import { YuiTour } from "./YuiTour";
 import { TOPICOS_TOUR, TOUR } from "./tourSteps";
 import { falar, prepararVoz } from "./voz";
 
-const SUGESTOES = ["Como cadastro um animal?", "Como registro uma vacina?", "Como vejo o lucro do mês?", "Como registrar um nascimento?"];
+const SUGESTOES = ["Como cadastro um animal?", "Como registro uma vacina?", "Como vejo o lucro do mês?", "Como faço uma anotação?"];
 const BOAS_VINDAS = "yui-boas-vindas-v1";
 
 type Etapa = "chat" | "pergunta1" | "pergunta2";
@@ -107,6 +107,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
   };
 
   const iniciarTour = () => { setEtapa("chat"); setAberto(false); setConvite(false); setEscolhendoFuncao(false); localStorage.setItem(BOAS_VINDAS, "1"); setTour(true); };
+  const demonstrarAnotacao = () => { setTopicoId("producao"); setModo("funcao"); setEtapa("pergunta1"); setEscolhendoFuncao(false); };
 
   return <>
     {tour && <YuiTour passos={passosTour} go={go} abrirMenu={abrirMenu} isAdmin={isAdmin} onSair={() => { setTour(false); setAberto(true); }} />}
@@ -129,7 +130,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
     {tour && <span data-tour="yui" className="fixed bottom-6 right-6 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card"><img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" /></span>}
 
     {aberto && !tour && (
-      <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(640px,calc(100vh-120px))] sm:w-[400px] sm:rounded-2xl sm:border">
+      <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(680px,calc(100vh-120px))] sm:w-[430px] sm:rounded-lg sm:border">
         {wallpaper && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
           <div className="absolute inset-0 bg-background/55" />
@@ -153,6 +154,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
               <span className="min-w-0"><span className="block text-xs font-semibold">Tour completo</span><span className="block truncate text-[11px] text-muted-foreground">Ver o sistema todo</span></span>
             </button>
           </div>
+          {!escolhendoFuncao && <Button type="button" size="sm" variant="ghost" className="mt-2 h-8 w-full justify-start gap-2 border border-border bg-background/40 px-3 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground" onClick={demonstrarAnotacao}><NotebookPen className="size-4 text-primary" />Simular uma anotação<span className="ml-auto text-[10px]">Sem salvar dados</span></Button>}
           {escolhendoFuncao && <div className="mt-2.5 animate-in fade-in slide-in-from-top-1">
             <p className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">O que você quer aprender?</p>
             <div className="grid max-h-48 grid-cols-3 gap-1.5 overflow-y-auto pr-0.5">
@@ -183,7 +185,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
                 <p className="mx-auto mt-1 max-w-[280px] text-sm text-muted-foreground">Pergunte qualquer coisa sobre o sistema. Eu explico passo a passo.</p>
                 <div className="mt-5 grid grid-cols-2 gap-2 text-left">
                   {SUGESTOES.map((s, i) => {
-                    const Icone = [HerdPlus, Syringe, TrendingUp, CalfIcon][i] ?? MessageCircle;
+                    const Icone = [HerdPlus, Syringe, TrendingUp, NotebookPen][i] ?? MessageCircle;
                     return <button key={s} type="button" onClick={() => enviar(s)} className="group flex flex-col gap-2 rounded-xl border border-border bg-card/80 p-3 text-xs leading-snug backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/10">
                       <span className="grid size-7 place-items-center rounded-lg bg-primary/15 text-primary"><Icone className="size-4" /></span>
                       <span className="text-foreground">{s}</span>
@@ -205,7 +207,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
                   <div className="group min-w-0 max-w-[85%]">
                     {novoGrupo && <p className={`mb-1 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
                     <Message from={m.role} className="max-w-full">
-                      <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "rounded-2xl rounded-tl-sm border border-border bg-card/85 px-3 py-2 backdrop-blur"}>
+                      <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "px-1 py-1 text-foreground"}>
                         {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
                       </MessageContent>
                     </Message>
@@ -243,13 +245,11 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         </div>
 
         <div className="relative z-10 border-t border-primary/20 bg-gradient-to-t from-card to-card/70 p-3 backdrop-blur">
-          <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")} className="rounded-2xl border-border shadow-lg focus-within:border-primary/60 focus-within:shadow-[0_0_20px_-8px_var(--primary)]">
-            <PromptInputBody>
-              <PromptInputTextarea placeholder="Escreva sua dúvida…" autoFocus maxLength={4000} />
-            </PromptInputBody>
+          <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")} className="rounded-lg border-border bg-card shadow-lg focus-within:border-primary/60 focus-within:shadow-[0_0_20px_-8px_var(--primary)]">
+              <PromptInputTextarea placeholder="Pergunte à Yui…" autoFocus maxLength={4000} />
             <PromptInputFooter className="justify-between">
               <span className="px-2 text-[11px] text-muted-foreground">Respostas geradas por IA</span>
-              <PromptInputSubmit status={status} onStop={stop} className="rounded-full" />
+              <PromptInputSubmit status={status} onStop={stop} className="size-8 shrink-0 rounded-md" />
             </PromptInputFooter>
           </PromptInput>
         </div>
