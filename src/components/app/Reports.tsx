@@ -12,7 +12,7 @@ import { usePlan } from "./account";
 import { fetchAllRows } from "@/lib/fetchAll";
 
 type ReportType = "geral" | "financeiro" | "leite" | "rebanho" | "comercial";
-const TYPES: { id: ReportType; label: string; icon: typeof BarChart3 }[] = [
+const TYPES: { id: ReportType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "geral", label: "Visão geral", icon: LayoutGrid },
   { id: "financeiro", label: "Financeiro", icon: PiggyBank },
   { id: "leite", label: "Produção de leite", icon: Milk },
