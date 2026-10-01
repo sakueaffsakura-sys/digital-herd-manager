@@ -39,7 +39,7 @@ export function YuiFotoAdmin() {
       const { error } = await supabase.from("configuracoes_sistema").upsert({ chave: YUI_FOTO_CHAVE, valor, atualizado_em: new Date().toISOString(), atualizado_por: u.user?.id ?? null });
       if (error) throw error;
     },
-    onSuccess: (_d, valor) => { qc.invalidateQueries({ queryKey: YUI_FOTO_QUERY }); setPrevia(null); setLink(""); toast.success(valor === null ? "Foto padrão da Yui restaurada." : "Foto da Yui atualizada para todos."); },
+     onSuccess: (_d, valor) => { qc.invalidateQueries({ queryKey: YUI_FOTO_QUERY }); setPrevia(null); setLink(""); toast.success(valor === null ? "Foto padrão da Yui restaurada." : "Foto da Yui atualizada para administradores."); },
     onError: (e: Error) => toast.error(e.message.includes("row-level") ? "Só administradores podem trocar a foto." : "Não foi possível salvar a foto."),
   });
 
@@ -65,7 +65,7 @@ export function YuiFotoAdmin() {
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <h3 className="mb-1 text-sm font-semibold">Foto da Yui</h3>
-      <p className="mb-5 text-xs text-muted-foreground">A foto aparece para todos os usuários no botão de ajuda, no chat e no tour.</p>
+       <p className="mb-5 text-xs text-muted-foreground">A foto personalizada aparece somente para administradores no botão de ajuda, no chat e no tour. Outras contas veem a foto padrão.</p>
       <div className="grid gap-6 md:grid-cols-[160px_1fr]">
         <div className="flex flex-col items-center gap-2">
           <img src={mostrada} alt="Foto da Yui" width={128} height={128} className="size-32 rounded-full border-2 border-primary bg-primary/10 object-cover" />

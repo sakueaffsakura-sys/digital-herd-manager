@@ -108,7 +108,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
   const iniciarTour = () => { setEtapa("chat"); setAberto(false); setConvite(false); setEscolhendoFuncao(false); localStorage.setItem(BOAS_VINDAS, "1"); setTour(true); };
 
   return <>
-    {tour && <YuiTour passos={passosTour} go={go} abrirMenu={abrirMenu} onSair={() => { setTour(false); setAberto(true); }} />}
+    {tour && <YuiTour passos={passosTour} go={go} abrirMenu={abrirMenu} isAdmin={isAdmin} onSair={() => { setTour(false); setAberto(true); }} />}
 
     {convite && !aberto && !tour && (
       <div className="fixed bottom-24 right-4 z-40 w-[min(320px,calc(100vw-32px))] animate-in fade-in slide-in-from-bottom-4 rounded-2xl border border-primary/40 bg-popover p-4 shadow-2xl sm:right-6">

@@ -39,7 +39,7 @@ export function YuiWallpaperAdmin() {
       }
       if (atual?.path && atual.path !== path) await bucket.remove([atual.path]);
     },
-    onSuccess: async () => { setSelecionado(null); await qc.invalidateQueries({ queryKey: YUI_WALLPAPER_QUERY }); toast.success("Fundo do chat atualizado para todos."); },
+    onSuccess: async () => { setSelecionado(null); await qc.invalidateQueries({ queryKey: YUI_WALLPAPER_QUERY }); toast.success("Fundo do chat atualizado para administradores."); },
     onError: (error: Error) => toast.error(error.message),
   });
 
@@ -57,7 +57,7 @@ export function YuiWallpaperAdmin() {
   const video = selecionado ? selecionado.type === "video/mp4" : atual?.video;
   return <section className="rounded-xl border border-border bg-card p-5">
     <h3 className="mb-1 text-sm font-semibold">Fundo do chat da Yui</h3>
-    <p className="mb-5 text-xs text-muted-foreground">Aparece atrás da conversa para todos. Sem arquivo, o chat continua com o fundo normal.</p>
+    <p className="mb-5 text-xs text-muted-foreground">Aparece atrás da conversa somente para administradores. Outras contas usam o fundo normal.</p>
     <div className="grid gap-6 md:grid-cols-[160px_1fr]">
       <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-md border border-border bg-background text-center text-xs text-muted-foreground">
         {url ? video ? <video key={url} src={url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={url} alt="Prévia do fundo da Yui" className="size-full object-cover" /> : <span className="px-3">{isLoading ? "Carregando…" : isError ? "Não foi possível carregar o fundo." : "Sem wallpaper"}</span>}
