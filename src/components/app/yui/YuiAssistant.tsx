@@ -129,13 +129,17 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
 
     {aberto && !tour && (
       <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(640px,calc(100vh-120px))] sm:w-[400px] sm:rounded-2xl sm:border">
-        <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3">
+        {wallpaper && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
+          <div className="absolute inset-0 bg-background/55" />
+        </div>}
+        <header className="relative z-10 flex items-center gap-3 border-b border-border bg-card/70 px-4 py-3">
           <div className="relative"><img src={yuiAvatar} alt="Yui" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-primary" /></div>
           <div className="min-w-0 flex-1"><p className="font-semibold leading-tight">Yui</p><p className="text-xs text-muted-foreground">Suporte · tira suas dúvidas</p></div>
           <Button size="icon" variant="ghost" onClick={limpar} aria-label="Apagar conversa" title="Apagar conversa"><RotateCcw /></Button>
           <Button size="icon" variant="ghost" onClick={() => setAberto(false)} aria-label="Fechar"><X /></Button>
         </header>
-        <div className="border-b border-border bg-card/50 px-4 py-2">
+        <div className="relative z-10 border-b border-border bg-card/60 px-4 py-2">
           <div className="flex gap-2">
             <Button size="sm" variant="outline" className="min-w-0 flex-1 border-primary/40 text-primary" onClick={() => { setModo("funcao"); setEtapa("chat"); setEscolhendoFuncao((v) => !v); }}><BookOpen />Uma função</Button>
             <Button size="sm" variant="outline" className="min-w-0 flex-1" onClick={() => { setModo("completo"); setEscolhendoFuncao(false); setEtapa("pergunta1"); }}><Compass />Tour completo</Button>
@@ -149,11 +153,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
           </div>}
         </div>
 
-        <div className="relative flex min-h-0 flex-1 overflow-hidden bg-background">
-          {wallpaper && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-            {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
-            <div className="absolute inset-0 bg-background/65" />
-          </div>}
+        <div className="relative z-10 flex min-h-0 flex-1 overflow-hidden">
         <Conversation className="relative z-10 flex-1">
           <ConversationContent className="gap-5 px-4 py-4">
             {messages.length === 0 && etapa === "chat" && (
@@ -193,7 +193,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         </Conversation>
         </div>
 
-        <div className="border-t border-border p-3">
+        <div className="relative z-10 border-t border-border bg-card/70 p-3">
           <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")}>
             <PromptInputBody>
               <PromptInputTextarea placeholder="Escreva sua dúvida…" autoFocus maxLength={4000} />
