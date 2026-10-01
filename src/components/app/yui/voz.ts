@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 let geracao = 0;
 let audioAtual: HTMLAudioElement | null = null;
-let abortAtual: AbortController | null = null;
 
 export const vozDisponivel = () => typeof window !== "undefined";
 
