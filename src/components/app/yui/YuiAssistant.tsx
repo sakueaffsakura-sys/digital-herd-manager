@@ -190,7 +190,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
                     {m.role === "assistant" && texto && !(ultima && status === "streaming") && (
                       <div className="mt-1 flex gap-1 opacity-70 transition group-hover:opacity-100">
                         <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Copiar resposta" title="Copiar" onClick={() => { void navigator.clipboard.writeText(texto); toast.success("Resposta copiada"); }}><Copy className="size-3.5" /></Button>
-                        <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Ouvir resposta" title="Ouvir" onClick={() => void falar(texto)}><Volume2 className="size-3.5" /></Button>
+                        <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Ouvir resposta" title="Ouvir" onClick={() => void falar(texto.replace(/[*#`_>]/g, ""), true)}><Volume2 className="size-3.5" /></Button>
                         {ultima && <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Gerar de novo" title="Gerar de novo" onClick={() => void regenerate()}><RefreshCw className="size-3.5" /></Button>}
                       </div>
                     )}
