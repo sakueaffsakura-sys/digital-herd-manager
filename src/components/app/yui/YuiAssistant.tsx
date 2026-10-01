@@ -24,7 +24,7 @@ type Etapa = "chat" | "pergunta1" | "pergunta2";
 export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: string; go: (s: string) => void; abrirMenu: (aberto: boolean) => void; isAdmin: boolean }) {
   const yuiAvatar = useYuiAvatar(isAdmin);
   const { data: wallpaperData } = useYuiWallpaper(isAdmin);
-  const wallpaper = isAdmin ? wallpaperData : null;
+  const wallpaper = wallpaperData ?? { path: "teste-layout", url: "https://images.unsplash.com/photo-1500595046746-cddeb55b1d5b?w=900", video: false };
   const [aberto, setAberto] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("chat");
   const [tour, setTour] = useState(false);
