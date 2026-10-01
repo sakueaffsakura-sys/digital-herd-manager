@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Baby, CalendarClock, FlaskConical, Milk, Plus, Syringe, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, CalendarClock, FlaskConical, Milk, Plus, Syringe, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { CalfIcon } from "@/components/app/CalfIcon";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
