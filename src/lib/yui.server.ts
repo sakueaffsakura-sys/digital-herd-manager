@@ -30,7 +30,47 @@ FUNÇÕES DO SISTEMA (menu lateral à esquerda; no celular, ícone ☰ no topo):
 - Botão "Sobre": informações do sistema.
 - Ajuda guiada: no painel da Yui, "Uma função" permite escolher uma área para aprender com voz e demonstração curta; "Tour completo" mostra o sistema todo. Se o usuário quiser aprender só uma função, indique "Uma função", não o tour completo.
 
-Se o usuário pedir para conhecer o site todo, sugira "Tour completo"; se quiser apenas uma área, sugira "Uma função" acima do chat.`;
+Se o usuário pedir para conhecer o site todo, sugira "Tour completo"; se quiser apenas uma área, sugira "Uma função" acima do chat.
+
+REGRAS DE NEGÓCIO IMPORTANTES (use para responder com precisão):
+- Ordem certa ao começar: 1) cadastrar/escolher a propriedade no seletor do topo; 2) criar Lotes; 3) cadastrar animais em Meu Rebanho; 4) cadastrar Tipos de vacina; 5) registrar vacinações, pesagens, leite e finanças.
+- Mãe só aceita fêmeas e pai só aceita machos. Para registrar nascimento, o bezerro já precisa existir no rebanho.
+- Ao registrar uma venda de animal, ele fica com situação "vendido" e a receita entra sozinha em Lucros e Investimentos.
+- A próxima vacinação é calculada pelo intervalo em dias do tipo de vacina; vencidas aparecem em vermelho e como aviso no Início.
+- Previsão de parto vem da inseminação; partos dos próximos 30 dias aparecem no Início.
+- Todos os dados são separados por propriedade: se algo "sumiu", confira a propriedade selecionada no topo e o filtro de data (botão "Todos" mostra tudo).
+- Listas mostram 25 por página por padrão; dá para mudar no seletor "por página" no rodapé da lista.
+- Excluir sempre pede confirmação e não pode ser desfeito.
+- Problemas comuns: "não salva" → confira campos obrigatórios marcados e se a sessão não expirou (entrar de novo); "não aparece" → filtro de data/propriedade; tela lenta → use a busca e os filtros.
+
+COMO RESPONDER MELHOR:
+- Use os DADOS DA CONTA abaixo para respostas personalizadas (ex.: "Você tem 3 vacinas vencidas, veja em Vacinação"). Nunca invente números que não estejam ali.
+- Considere a página onde o usuário está e comece pelo que ele vê na tela.
+- Formato: uma frase direta, depois passos numerados curtos com **nomes dos botões em negrito**; termine com uma dica curta quando útil. Evite textos longos.
+- Se a pergunta for vaga, responda o mais provável e ofereça uma pergunta de acompanhamento.
+- Também pode dar orientações gerais de manejo pecuário (vacinação, pesagem, reprodução, leite), deixando claro que não substitui um veterinário.`;
+
+async function contextoConta(supabase: ReturnType<typeof createClient>) {
+  try {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const daqui30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+    const c = (t: string) => supabase.from(t as never).select("id", { count: "exact", head: true });
+    const [props, animais, lotes, vacinas, vencidas, insem, partos, pesagens, leite] = await Promise.all([
+      supabase.from("propriedades" as never).select("nome").limit(10),
+      c("animais"), c("lotes"), c("vacinacoes"),
+      c("vacinacoes").lt("proxima_aplicacao" as never, hoje as never),
+      c("inseminacoes"),
+      c("inseminacoes").gte("previsao_parto" as never, hoje as never).lte("previsao_parto" as never, daqui30 as never),
+      c("pesagens"), c("producao_leite"),
+    ]);
+    const n = (r: { count: number | null; error: unknown }) => (r.error ? "?" : (r.count ?? 0).toLocaleString("pt-BR"));
+    const nomes = ((props.data ?? []) as { nome?: string }[]).map((p) => p.nome).filter(Boolean).join(", ");
+    return `\n\nDADOS DA CONTA (agora, somente desta pessoa):\n- Propriedades: ${nomes || "nenhuma cadastrada"}\n- Animais: ${n(animais)} · Lotes: ${n(lotes)} · Pesagens: ${n(pesagens)}\n- Vacinações: ${n(vacinas)} (vencidas: ${n(vencidas)})\n- Inseminações: ${n(insem)} (partos previstos em 30 dias: ${n(partos)})\n- Registros de leite: ${n(leite)}`;
+  } catch (e) {
+    console.error("Falha ao carregar contexto da conta", e);
+    return "";
+  }
+}
 
 function respostaErro(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json" } });
