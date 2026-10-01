@@ -56,8 +56,8 @@ export function YuiFotoAdmin() {
 
   const escolherArquivo = async (f?: File) => {
     if (!f) return;
-    if (!f.type.startsWith("image/")) return toast.error("Escolha um arquivo de imagem (JPG, PNG ou WebP).");
-    if (f.size > 10 * 1024 * 1024) return toast.error("Imagem muito grande (máximo 10 MB).");
+    if (!f.type.startsWith("image/")) { toast.error("Escolha um arquivo de imagem (JPG, PNG ou WebP)."); return; }
+    if (f.size > 10 * 1024 * 1024) { toast.error("Imagem muito grande (máximo 10 MB)."); return; }
     try { setPrevia(await reduzir(f)); } catch { toast.error("Não consegui abrir essa imagem."); }
   };
 
