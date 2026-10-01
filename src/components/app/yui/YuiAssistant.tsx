@@ -3,7 +3,6 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Compass, Copy, MessageCircle, NotebookPen, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
-import { CalfIcon } from "../CalfIcon";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

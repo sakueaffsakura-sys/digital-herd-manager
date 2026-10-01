@@ -105,7 +105,7 @@ export async function handleYuiChat(request: Request) {
 
   let body: { messages?: UIMessage[]; pagina?: string };
   try { body = await request.json(); } catch { return respostaErro(400, "Mensagem inválida."); }
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-30) : [];
+   const messages = Array.isArray(body.messages) ? body.messages : [];
   const ultima = messages[messages.length - 1];
   if (!ultima || ultima.role !== "user") return respostaErro(400, "Mensagem inválida.");
   const texto = ultima.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
