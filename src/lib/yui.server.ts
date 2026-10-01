@@ -145,14 +145,15 @@ export async function handleYuiChat(request: Request) {
     headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
     fetch: runIdFetch.fetch,
   });
+  const dadosConta = await contextoConta(supabase as never);
   const pagina = typeof body.pagina === "string" ? body.pagina.slice(0, 60) : "";
   const result = streamText({
     model: provider.responses(MODEL),
-    system: YUI_SYSTEM + criadoresInfo + (pagina ? `\n\nO usuário está agora na página: ${pagina}.` : ""),
+    system: YUI_SYSTEM + criadoresInfo + dadosConta + (pagina ? `\n\nO usuário está agora na página: ${pagina}.` : ""),
     messages: await convertToModelMessages(messages),
     abortSignal: request.signal,
     providerOptions: {
-      openai: { forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", store: false, include: ["reasoning.encrypted_content"] },
+      openai: { forceReasoning: true, reasoningEffort: "medium", reasoningSummary: "auto", store: false, include: ["reasoning.encrypted_content"] },
     },
   });
 
