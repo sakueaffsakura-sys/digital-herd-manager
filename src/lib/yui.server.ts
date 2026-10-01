@@ -108,7 +108,7 @@ export async function handleYuiChat(request: Request) {
   const pagina = typeof body.pagina === "string" ? body.pagina.slice(0, 60) : "";
   const result = streamText({
     model: provider.responses(MODEL),
-    system: YUI_SYSTEM + (pagina ? `\n\nO usuário está agora na página: ${pagina}.` : ""),
+    system: YUI_SYSTEM + criadoresInfo + (pagina ? `\n\nO usuário está agora na página: ${pagina}.` : ""),
     messages: await convertToModelMessages(messages),
     abortSignal: request.signal,
     providerOptions: {
