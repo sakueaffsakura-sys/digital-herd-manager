@@ -1,0 +1,2 @@
+DROP POLICY "Logados leem configuracoes" ON public.configuracoes_sistema;
+CREATE POLICY "Somente admins leem configuracoes" ON public.configuracoes_sistema FOR SELECT TO authenticated USING (private.has_role(auth.uid(), 'administrador'));
