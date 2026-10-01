@@ -43,7 +43,7 @@ const Reports = lazy(() => import("./Reports"));
 const Diagnostics = lazy(() => import("./Diagnostics"));
 
 const nav = [
-  ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", HerdIcon], ["bezerros", "Evolução dos Bezerros", Activity],
+  ["inicio", "Início", LayoutDashboard], ["rebanho", "Meu Rebanho", HerdIcon], ["bezerros", "Evolução dos Bezerros", CalfIcon],
   ["vacinacao", "Vacinação", Syringe], ["inseminacao", "Inseminação", FlaskConical], ["nascimentos", "Nascimentos", HeartPulse],
   ["lotes", "Lotes", Warehouse], ["producao", "Produção de Leite", Milk], ["relatorios", "Relatórios", BarChart3],
   ["financeiro", "Lucros e Investimentos", CircleDollarSign], ["comercial", "Compra e Venda", ShoppingCart],
