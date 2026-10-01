@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import yuiAvatar from "@/assets/yui-avatar.png";
+import { useYuiAvatar } from "./useYuiAvatar";
 import { TOUR, acharAlvo } from "./tourSteps";
 import { calar, falar, vozDisponivel } from "./voz";
 
@@ -9,6 +9,7 @@ type Rect = { top: number; left: number; width: number; height: number };
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; abrirMenu: (aberto: boolean) => void; onSair: () => void }) {
+  const yuiAvatar = useYuiAvatar();
   const [idx, setIdx] = useState(0);
   const [pausado, setPausado] = useState(false);
   const [comVoz, setComVoz] = useState(vozDisponivel());
