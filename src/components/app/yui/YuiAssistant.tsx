@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Compass, RotateCcw, X } from "lucide-react";
+import { Baby, BookOpen, Compass, Copy, MessageCircle, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -133,9 +133,9 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
           {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
           <div className="absolute inset-0 bg-background/55" />
         </div>}
-        <header className="relative z-10 flex items-center gap-3 border-b border-border bg-card/70 px-4 py-3">
-          <div className="relative"><img src={yuiAvatar} alt="Yui" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-primary" /></div>
-          <div className="min-w-0 flex-1"><p className="font-semibold leading-tight">Yui</p><p className="text-xs text-muted-foreground">Suporte · tira suas dúvidas</p></div>
+        <header className="relative z-10 flex items-center gap-3 border-b border-primary/30 bg-gradient-to-r from-primary/20 via-card/80 to-card/80 px-4 py-3 backdrop-blur">
+          <div className="relative"><img src={yuiAvatar} alt="Yui" width={44} height={44} className="size-11 rounded-full border-2 border-primary/70 bg-primary/10 object-cover" /><span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-card bg-primary" /></div>
+          <div className="min-w-0 flex-1"><p className="font-semibold leading-tight">Yui</p><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className="size-1.5 animate-pulse rounded-full bg-primary" />{status === "streaming" || status === "submitted" ? "Digitando…" : "Online · assistente do sistema"}</p></div>
           <Button size="icon" variant="ghost" onClick={limpar} aria-label="Apagar conversa" title="Apagar conversa"><RotateCcw /></Button>
           <Button size="icon" variant="ghost" onClick={() => setAberto(false)} aria-label="Fechar"><X /></Button>
         </header>
@@ -157,22 +157,49 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         <Conversation className="relative z-10 flex-1">
           <ConversationContent className="gap-5 px-4 py-4">
             {messages.length === 0 && etapa === "chat" && (
-              <div className="py-6 text-center">
-                <img src={yuiAvatar} alt="" width={80} height={80} className="mx-auto size-20 rounded-full bg-primary/10 object-cover" />
-                <p className="mt-3 font-semibold">Oi! Como posso te ajudar?</p>
-                <p className="mt-1 text-sm text-muted-foreground">Pergunte qualquer coisa sobre o sistema. Eu explico passo a passo.</p>
-                <div className="mt-4 flex flex-wrap justify-center gap-2">{SUGESTOES.map((s) => <Button key={s} size="sm" variant="outline" className="h-auto whitespace-normal py-1.5 text-xs" onClick={() => enviar(s)}>{s}</Button>)}</div>
+              <div className="py-4 text-center">
+                <div className="relative mx-auto size-24">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-primary/20 [animation-duration:2.5s]" />
+                  <img src={yuiAvatar} alt="" width={96} height={96} className="relative size-24 rounded-full border-2 border-primary/60 bg-primary/10 object-cover shadow-[0_0_30px_-6px_var(--primary)]" />
+                </div>
+                <p className="mt-4 text-lg font-semibold">Oi! Como posso te ajudar?</p>
+                <p className="mx-auto mt-1 max-w-[280px] text-sm text-muted-foreground">Pergunte qualquer coisa sobre o sistema. Eu explico passo a passo.</p>
+                <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+                  {SUGESTOES.map((s, i) => {
+                    const Icone = [HerdPlus, Syringe, TrendingUp, Baby][i] ?? MessageCircle;
+                    return <button key={s} type="button" onClick={() => enviar(s)} className="group flex flex-col gap-2 rounded-xl border border-border bg-card/80 p-3 text-xs leading-snug backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/10">
+                      <span className="grid size-7 place-items-center rounded-lg bg-primary/15 text-primary"><Icone className="size-4" /></span>
+                      <span className="text-foreground">{s}</span>
+                    </button>;
+                  })}
+                </div>
               </div>
             )}
-            {messages.map((m) => (
-              <Message key={m.id} from={m.role}>
-                <MessageContent className={m.role === "user" ? "bg-primary text-primary-foreground" : ""}>
-                  {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
-                </MessageContent>
-              </Message>
-            ))}
-            {status === "submitted" && <Message from="assistant"><MessageContent><Shimmer>Yui está pensando…</Shimmer></MessageContent></Message>}
-            {error && status !== "streaming" && <p className="text-center text-xs text-destructive">Não consegui responder. Tente enviar de novo.</p>}
+            {messages.map((m, idx) => {
+              const texto = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+              const ultima = idx === messages.length - 1;
+              return (
+                <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : ""}`}>
+                  {m.role === "assistant" && <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />}
+                  <div className="group min-w-0 max-w-[85%]">
+                    <Message from={m.role} className="max-w-full">
+                      <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "rounded-2xl rounded-tl-sm border border-border bg-card/85 px-3 py-2 backdrop-blur"}>
+                        {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
+                      </MessageContent>
+                    </Message>
+                    {m.role === "assistant" && texto && !(ultima && status === "streaming") && (
+                      <div className="mt-1 flex gap-1 opacity-70 transition group-hover:opacity-100">
+                        <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Copiar resposta" title="Copiar" onClick={() => { void navigator.clipboard.writeText(texto); toast.success("Resposta copiada"); }}><Copy className="size-3.5" /></Button>
+                        <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Ouvir resposta" title="Ouvir" onClick={() => void falar(texto)}><Volume2 className="size-3.5" /></Button>
+                        {ultima && <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Gerar de novo" title="Gerar de novo" onClick={() => void regenerate()}><RefreshCw className="size-3.5" /></Button>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {status === "submitted" && <div className="flex gap-2"><img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 rounded-full border border-primary/40 object-cover" /><div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-border bg-card/85 px-4 py-3"><span className="size-1.5 animate-bounce rounded-full bg-primary" /><span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" /><span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" /><Shimmer className="ml-2 text-xs">Yui está digitando…</Shimmer></div></div>}
+            {error && status !== "streaming" && <div className="flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">Não consegui responder.<Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => void regenerate()}><RefreshCw className="size-3.5" />Tentar de novo</Button></div>}
 
             {etapa !== "chat" && (
               <div className="rounded-2xl border border-primary/40 bg-card p-4">
