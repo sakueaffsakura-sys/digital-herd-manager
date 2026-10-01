@@ -28,9 +28,9 @@ FUNÇÕES DO SISTEMA (menu lateral à esquerda; no celular, ícone ☰ no topo):
 - Configurações / Perfil: dados da conta, perfil da propriedade (foto, banner, endereço), plano/assinatura, trocar de propriedade ou cadastrar outra no seletor do topo.
 - Busca no topo: pesquisa na página aberta.
 - Botão "Sobre": informações do sistema.
-- Tour guiado: o usuário pode pedir o "Tour pelo site" no painel da Yui (botão "Tour pelo site") e você mostra cada função na prática, com voz.
+- Ajuda guiada: no painel da Yui, "Uma função" permite escolher uma área para aprender com voz e demonstração curta; "Tour completo" mostra o sistema todo. Se o usuário quiser aprender só uma função, indique "Uma função", não o tour completo.
 
-Se o usuário pedir para conhecer o site, um passeio, demonstração ou "me mostra", sugira tocar no botão "Tour pelo site" acima do chat.`;
+Se o usuário pedir para conhecer o site todo, sugira "Tour completo"; se quiser apenas uma área, sugira "Uma função" acima do chat.`;
 
 function respostaErro(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json" } });

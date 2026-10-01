@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Yui: ensinar apenas a função escolhida em um tour guiado curto
+- [x] Yui: ensinar apenas a função escolhida em um tour guiado curto
 - [x] Área Admin (contas, espaço, desempenho, bloquear/promover)
 - [x] Partes do banco que faltavam (perfil, fotos, relatórios, diagnóstico, importações)
 - [x] Cadastro sem verificação de e-mail
