@@ -10,6 +10,8 @@ export type TourStep = {
   passos?: string[];
   /** Dica curta mostrada na tela. */
   dica?: string;
+  /** Exemplo guiado exibido somente no tour; nunca grava uma anotação. */
+  demonstracaoAnotacao?: boolean;
 };
 
 export const TOUR: TourStep[] = [
@@ -27,6 +29,7 @@ export const TOUR: TourStep[] = [
   { section: "nascimentos", alvo: "[data-tour='nav-nascimentos']", titulo: "Nascimentos", fala: "Em Nascimentos você liga a vaca ao bezerro que nasceu. Dica: cadastre o bezerro no rebanho antes. O sistema já marca quem é a mãe automaticamente.", passos: ["Cadastre o bezerro em Meu Rebanho", "Volte aqui e toque em \"Novo\"", "Escolha a vaca, o bezerro e a data, e salve"] },
   { section: "lotes", alvo: "[data-tour='nav-lotes']", titulo: "Lotes", fala: "Os Lotes servem para organizar os animais em grupos, por pasto ou finalidade. Depois você pode filtrar e vacinar por lote.", passos: ["Toque em \"Novo\"", "Dê um nome (ex.: Pasto 1)", "No cadastro do animal, escolha o lote"] },
   { section: "producao", alvo: "[data-tour='nav-producao']", titulo: "Produção de Leite", fala: "Na Produção de Leite você registra os litros de cada vaca e o valor por litro. O total em reais é calculado sozinho. Na aba Anotações você guarda observações da ordenha.", passos: ["Toque em \"Novo\"", "Escolha a vaca e a data", "Digite os litros e o valor por litro — o total aparece sozinho"] },
+  { section: "producao", alvo: "[data-tour='notas-nova']", titulo: "Vamos simular uma anotação", fala: "Abri a aba Anotações. Aqui fica o botão Nova anotação. Vou te mostrar um exemplo de como preencher: escolha a data, escreva uma observação e, se quiser, vincule um animal. Este exemplo é só uma demonstração: nada será salvo na sua propriedade.", passos: ["Toque em Nova anotação", "Confirme a data e escreva sua observação", "Se quiser, escolha animal, lote ou produção", "Toque em Salvar somente quando for uma anotação real"], demonstracaoAnotacao: true },
   { section: "relatorios", alvo: "[data-tour='nav-relatorios']", titulo: "Relatórios", fala: "Nos Relatórios você escolhe o tipo, como financeiro, leite, nascimentos ou compra e venda, e o mês que quer ver.", passos: ["Escolha o tipo de relatório", "Escolha o mês e o ano", "Veja totais, gráficos e a lista do período"] },
   { section: "relatorios", alvo: "[data-tour='conteudo']", titulo: "Escolhendo o período", fala: "Use as setinhas para trocar de mês, ou escolha Ano inteiro. Só aparecem os registros do período escolhido, com totais, gráficos e comparação com o mês anterior." },
   { section: "financeiro", alvo: "[data-tour='nav-financeiro']", titulo: "Lucros e Investimentos", fala: "Em Lucros e Investimentos você lança receitas, despesas e investimentos. O lucro é calculado automaticamente.", passos: ["Toque em \"Novo\"", "Escolha receita, despesa ou investimento", "Informe valor, data e descrição, e salve"] },

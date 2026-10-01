@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import yuiPadrao from "@/assets/yui-avatar.png";
+import yuiPadrao from "@/assets/yui-suporte.jpg.asset.json";
 
 export const YUI_FOTO_CHAVE = "yui_foto";
 export const YUI_FOTO_QUERY = ["config", YUI_FOTO_CHAVE] as const;
-export const YUI_FOTO_PADRAO = yuiPadrao;
+export const YUI_FOTO_PADRAO = yuiPadrao.url;
 
 /** Foto da Yui definida pelo admin (link ou upload); cai na foto padrão. */
 export function useYuiAvatar(enabled = true): string {
@@ -18,5 +18,5 @@ export function useYuiAvatar(enabled = true): string {
       return (data?.valor as string | null) ?? null;
     },
   });
-  return (enabled && data) || yuiPadrao;
+  return (enabled && data) || YUI_FOTO_PADRAO;
 }
