@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiYuiRouteImport } from './routes/api/yui'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app/$section'
+import { Route as ApiYuiVozRouteImport } from './routes/api/yui/voz'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,32 +40,40 @@ const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
   path: '/app/$section',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiYuiVozRoute = ApiYuiVozRouteImport.update({
+  id: '/voz',
+  path: '/voz',
+  getParentRoute: () => ApiYuiRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/api/yui': typeof ApiYuiRoute
+  '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/yui/voz': typeof ApiYuiVozRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/api/yui': typeof ApiYuiRoute
+  '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/yui/voz': typeof ApiYuiVozRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/api/yui': typeof ApiYuiRoute
+  '/api/yui': typeof ApiYuiRouteWithChildren
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/yui/voz': typeof ApiYuiVozRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/api/yui' | '/app/$section'
+  fullPaths: '/' | '/admin' | '/api/yui' | '/app/$section' | '/api/yui/voz'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/api/yui' | '/app/$section'
+  to: '/' | '/admin' | '/api/yui' | '/app/$section' | '/api/yui/voz'
   id:
     | '__root__'
     | '/'
@@ -72,12 +81,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/api/yui'
     | '/_authenticated/app/$section'
+    | '/api/yui/voz'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  ApiYuiRoute: typeof ApiYuiRoute
+  ApiYuiRoute: typeof ApiYuiRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -117,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/yui/voz': {
+      id: '/api/yui/voz'
+      path: '/voz'
+      fullPath: '/api/yui/voz'
+      preLoaderRoute: typeof ApiYuiVozRouteImport
+      parentRoute: typeof ApiYuiRoute
+    }
   }
 }
 
@@ -133,10 +150,21 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiYuiRouteChildren {
+  ApiYuiVozRoute: typeof ApiYuiVozRoute
+}
+
+const ApiYuiRouteChildren: ApiYuiRouteChildren = {
+  ApiYuiVozRoute: ApiYuiVozRoute,
+}
+
+const ApiYuiRouteWithChildren =
+  ApiYuiRoute._addFileChildren(ApiYuiRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  ApiYuiRoute: ApiYuiRoute,
+  ApiYuiRoute: ApiYuiRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
