@@ -99,7 +99,7 @@ export function prepararVoz(texto: string) {
   void gerarAudio(texto);
 }
 
-async function falarIA(texto: string, minha: number): Promise<boolean> {
+async function falarIA(texto: string, minha: number, aoComecar?: () => void): Promise<boolean> {
   // Se a voz demorar demais, desiste e usa a voz do navegador para não travar o tour.
   const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 9000))]);
   if (minha !== geracao || !blob) return false;
@@ -118,12 +118,12 @@ async function falarIA(texto: string, minha: number): Promise<boolean> {
     };
     audio.onended = () => fim(true);
     audio.onerror = () => fim(false);
-    audio.play().catch(() => fim(false));
+    audio.play().then(() => aoComecar?.()).catch(() => fim(false));
   });
 }
 
 /** Fala o texto; resolve true se terminou, false se foi cancelada. */
-export async function falar(texto: string, comVoz: boolean): Promise<boolean> {
+export async function falar(texto: string, comVoz: boolean, aoComecar?: () => void): Promise<boolean> {
   const minha = ++geracao;
   if (!comVoz) {
     return new Promise((ok) => setTimeout(() => ok(minha === geracao), Math.max(3500, texto.length * 55)));
@@ -132,8 +132,9 @@ export async function falar(texto: string, comVoz: boolean): Promise<boolean> {
   if (temSintese()) speechSynthesis.cancel();
 
   // Tenta a voz realista de IA; se falhar, usa a voz do navegador.
-  const falou = await falarIA(texto, minha);
+  const falou = await falarIA(texto, minha, aoComecar);
   if (falou || minha !== geracao) return falou;
+  aoComecar?.();
   return falarNavegador(texto, minha);
 }
 
