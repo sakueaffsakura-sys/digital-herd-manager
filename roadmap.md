@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Área Admin: cadastrar nomes e redes sociais dos criadores para exibir em Sobre
 - [x] Área Admin: fundo opcional do chat da Yui com JPG, PNG, GIF ou MP4 e remoção
 - [x] Yui: ensinar apenas a função escolhida em um tour guiado curto
 - [x] Área Admin (contas, espaço, desempenho, bloquear/promover)

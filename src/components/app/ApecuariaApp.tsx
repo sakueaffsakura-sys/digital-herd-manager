@@ -1,4 +1,5 @@
 import { YuiAssistant } from "./yui/YuiAssistant";
+import { useCriadores } from "./criadores";
 import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
 import { HerdIcon } from "@/components/app/HerdIcon";
 import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -104,6 +105,7 @@ export function ApecuariaApp() {
 }
 
 function AboutDialog({open,onClose}:{open:boolean;onClose:()=>void}){
+  const criadores = useCriadores(open);
   return <Dialog open={open} onOpenChange={v=>!v&&onClose()}>
     <DialogContent className="dark border-border bg-card sm:max-w-md">
       <DialogHeader>
@@ -125,6 +127,12 @@ function AboutDialog({open,onClose}:{open:boolean;onClose:()=>void}){
           <p>• Financeiro com lucro calculado automaticamente</p>
           <p>• Relatórios mensais e anuais com filtros</p>
         </div>
+        {criadores.isLoading && <p className="text-xs">Carregando criadores…</p>}
+        {criadores.isError && <p className="text-xs text-destructive">Não foi possível carregar os criadores.</p>}
+        {!!criadores.data?.length && <div className="space-y-3 border-t border-border pt-4">
+          <p className="font-medium text-foreground">Criadores do site</p>
+          {criadores.data.map(c => <div key={c.id} className="space-y-1"><p className="font-medium text-foreground">{c.nome}</p>{c.redes.length > 0 && <div className="flex flex-wrap gap-x-4 gap-y-1">{c.redes.map((r,i)=><a key={`${c.id}-${i}`} href={r.url} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline underline-offset-2 hover:text-primary/80">{r.nome}</a>)}</div>}</div>)}
+        </div>}
         <p className="text-xs">Seus dados ficam protegidos e cada conta só enxerga as próprias propriedades.</p>
       </div>
       <DialogFooter><Button onClick={onClose}>Fechar</Button></DialogFooter>

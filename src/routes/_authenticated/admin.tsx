@@ -538,7 +538,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui";
+type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui" | "criadores";
 const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
   { k: "tempo", label: "Tempo real", icon: Radio },
   { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
