@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, BellRing, ShieldAlert, Activity, ArrowLeft, BarChart3, Database, Eye, Gauge, HardDrive, Lock, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, Users, Zap } from "lucide-react";
+import { Bot, AlertTriangle, BellRing, ShieldAlert, Activity, ArrowLeft, BarChart3, Database, Eye, Gauge, HardDrive, Lock, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, Users, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { YuiFotoAdmin } from "@/components/app/yui/YuiFotoAdmin";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -112,7 +113,7 @@ function AdminPage() {
   if (!isAdmin.data) return <Shell><div className="rounded-xl border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
 
   const s = sistema.data;
-  const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."] } as const;
+  const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."] } as const;
   return (
     <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length}>
       <div>
@@ -134,6 +135,7 @@ function AdminPage() {
       {tab === "contas" && <ContasTab filtradas={filtradas} contas={contas} busca={busca} setBusca={setBusca} acao={acao} onDetalhe={setDetalheId} />}
       {tab === "metricas" && <MetricasTab />}
       {tab === "desempenho" && <DesempenhoTab sistema={s} latencia={latencia} />}
+      {tab === "yui" && <YuiFotoAdmin />}
 
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
@@ -533,13 +535,14 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho";
+type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui";
 const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
   { k: "tempo", label: "Tempo real", icon: Radio },
   { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
   { k: "contas", label: "Contas", icon: Users },
   { k: "metricas", label: "Métricas", icon: BarChart3 },
   { k: "desempenho", label: "Desempenho", icon: Gauge },
+  { k: "yui", label: "Yui (assistente)", icon: Bot },
 ];
 
 function Shell({ children, tab, setTab, alertaCount }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number }) {
