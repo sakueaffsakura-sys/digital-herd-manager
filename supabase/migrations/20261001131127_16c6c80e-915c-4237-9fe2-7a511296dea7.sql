@@ -1,0 +1,4 @@
+CREATE POLICY "yui_wallpaper_read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'yui-chat-wallpapers');
+CREATE POLICY "yui_wallpaper_insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'yui-chat-wallpapers' AND private.has_role(auth.uid(), 'administrador'));
+CREATE POLICY "yui_wallpaper_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'yui-chat-wallpapers' AND private.has_role(auth.uid(), 'administrador')) WITH CHECK (bucket_id = 'yui-chat-wallpapers' AND private.has_role(auth.uid(), 'administrador'));
+CREATE POLICY "yui_wallpaper_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'yui-chat-wallpapers' AND private.has_role(auth.uid(), 'administrador'));
