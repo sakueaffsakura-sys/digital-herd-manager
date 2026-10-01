@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useYuiAvatar } from "./useYuiAvatar";
-import { TOUR, acharAlvo } from "./tourSteps";
+import { acharAlvo, type TourStep } from "./tourSteps";
 import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
 
 type Rect = { top: number; left: number; width: number; height: number };
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; abrirMenu: (aberto: boolean) => void; onSair: () => void }) {
+export function YuiTour({ go, abrirMenu, onSair, passos }: { go: (s: string) => void; abrirMenu: (aberto: boolean) => void; onSair: () => void; passos: readonly TourStep[] }) {
   const yuiAvatar = useYuiAvatar();
   const [idx, setIdx] = useState(0);
   const [pausado, setPausado] = useState(false);
@@ -17,8 +17,8 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
   const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
   const alvoRef = useRef<HTMLElement | null>(null);
-  const passo = TOUR[idx]!;
-  const ultimo = idx === TOUR.length - 1;
+  const passo = passos[idx];
+  const ultimo = idx === passos.length - 1;
 
   const sair = useCallback(() => { calar(); abrirMenu(false); onSair(); }, [abrirMenu, onSair]);
 
@@ -44,7 +44,7 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
       calar();
       setFalando(false);
       // Gera a voz deste passo e dos próximos já em paralelo com a navegação (sem espera entre falas).
-      if (comVoz) for (let k = idx; k < Math.min(idx + 3, TOUR.length); k++) prepararVoz(TOUR[k]!.fala);
+       if (comVoz) for (let k = idx; k < Math.min(idx + 3, passos.length); k++) prepararVoz(passos[k].fala);
       if (passo.section) { go(passo.section); await esperar(350); }
       const mobile = window.matchMedia("(max-width: 1023px)").matches;
       const precisaMenu = mobile && passo.alvo.includes("nav-");
@@ -71,7 +71,7 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
     })();
     return () => { vivo = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, pausado, comVoz]);
+  }, [idx, pausado, comVoz, passos]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
@@ -102,7 +102,7 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
 
       <div className={`absolute left-1/2 w-[min(560px,calc(100vw-24px))] -translate-x-1/2 transition-all duration-500 ${embaixo ? "bottom-4" : "top-4"}`}>
         <div className="overflow-hidden rounded-2xl border border-primary/40 bg-popover shadow-2xl">
-          <div className="h-1 bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / TOUR.length) * 100}%` }} /></div>
+           <div className="h-1 bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
           <div className="flex gap-4 p-4">
             <div className="relative shrink-0">
               <img src={yuiAvatar} alt="Yui" width={64} height={64} className={`size-16 rounded-full border-2 border-primary bg-primary/10 object-cover ${falando ? "animate-[pulse_1.2s_ease-in-out_infinite]" : ""}`} />
@@ -110,8 +110,8 @@ export function YuiTour({ go, abrirMenu, onSair }: { go: (s: string) => void; ab
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Yui · passo {idx + 1} de {TOUR.length}</p>
-                <button type="button" onClick={sair} className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Sair do tour"><X className="size-4" /></button>
+                 <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Yui · passo {idx + 1} de {passos.length}</p>
+                 <Button type="button" size="icon-sm" variant="ghost" onClick={sair} className="ml-auto" aria-label="Sair do tour"><X className="size-4" /></Button>
               </div>
               <h3 className="mt-0.5 text-lg font-bold leading-tight">{passo.titulo}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{passo.fala}</p>

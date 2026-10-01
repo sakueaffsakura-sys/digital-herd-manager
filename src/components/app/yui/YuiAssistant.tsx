@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
-import { Compass, RotateCcw, X } from "lucide-react";
+import { BookOpen, Compass, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { PromptInput, PromptInputBody, PromptInputFooter, PromptInputSubmit, Pro
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { YuiTour } from "./YuiTour";
-import { TOUR } from "./tourSteps";
+import { TOPICOS_TOUR, TOUR } from "./tourSteps";
 import { prepararVoz } from "./voz";
 
 const SUGESTOES = ["Como cadastro um animal?", "Como registro uma vacina?", "Como vejo o lucro do mês?", "Como registrar um nascimento?"];
@@ -25,6 +25,9 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
   const [aberto, setAberto] = useState(false);
   const [etapa, setEtapa] = useState<Etapa>("chat");
   const [tour, setTour] = useState(false);
+  const [modo, setModo] = useState<"completo" | "funcao">("completo");
+  const [escolhendoFuncao, setEscolhendoFuncao] = useState(false);
+  const [topicoId, setTopicoId] = useState(() => TOPICOS_TOUR.some((t) => t.id === section) ? section : "rebanho");
   const [convite, setConvite] = useState(false);
   const secaoRef = useRef(section);
   secaoRef.current = section;
@@ -69,17 +72,20 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
   }, []);
   const fecharConvite = () => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); };
 
+  const topico = TOPICOS_TOUR.find((t) => t.id === topicoId) ?? TOPICOS_TOUR[0];
+  const passosTour = modo === "funcao" ? topico.passos : TOUR;
+
   // Enquanto a pessoa confirma o tour, já prepara a voz das primeiras falas (sem espera no início).
   useEffect(() => {
     if (etapa === "chat") return;
-    TOUR.slice(0, 2).forEach((p) => prepararVoz(p.fala));
-  }, [etapa]);
+    passosTour.slice(0, 2).forEach((p) => prepararVoz(p.fala));
+  }, [etapa, passosTour]);
 
   const ocupado = status === "submitted" || status === "streaming";
   const enviar = (texto: string) => {
     const t = texto.trim();
     if (!t || ocupado) return;
-    if (/\b(tour|passeio|me mostra|demonstra)/i.test(t)) setEtapa("pergunta1");
+    if (/\b(tour|passeio|me mostra|demonstra)/i.test(t) && !/\b(s[oó]|apenas|uma|um|espec[ií]fic)/i.test(t)) { setModo("completo"); setEtapa("pergunta1"); }
     void sendMessage({ text: t });
   };
 
@@ -96,25 +102,25 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
     toast.success("Conversa apagada.");
   };
 
-  const iniciarTour = () => { setEtapa("chat"); setAberto(false); setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); setTour(true); };
+  const iniciarTour = () => { setEtapa("chat"); setAberto(false); setConvite(false); setEscolhendoFuncao(false); localStorage.setItem(BOAS_VINDAS, "1"); setTour(true); };
 
   return <>
-    {tour && <YuiTour go={go} abrirMenu={abrirMenu} onSair={() => { setTour(false); setAberto(true); }} />}
+    {tour && <YuiTour passos={passosTour} go={go} abrirMenu={abrirMenu} onSair={() => { setTour(false); setAberto(true); }} />}
 
     {convite && !aberto && !tour && (
       <div className="fixed bottom-24 right-4 z-40 w-[min(320px,calc(100vw-32px))] animate-in fade-in slide-in-from-bottom-4 rounded-2xl border border-primary/40 bg-popover p-4 shadow-2xl sm:right-6">
-        <button type="button" onClick={fecharConvite} className="absolute right-2 top-2 rounded p-1 text-muted-foreground hover:text-foreground" aria-label="Fechar"><X className="size-4" /></button>
+        <Button type="button" size="icon-sm" variant="ghost" onClick={fecharConvite} className="absolute right-2 top-2" aria-label="Fechar"><X className="size-4" /></Button>
         <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="text-sm font-semibold">Oi! Eu sou a Yui 👋</p><p className="mt-1 text-sm text-muted-foreground">Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
         <div className="mt-3 flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={fecharConvite}>Agora não</Button><Button size="sm" onClick={() => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); setEtapa("pergunta2"); setAberto(true); }}>Quero sim</Button></div>
       </div>
     )}
 
     {!tour && (
-      <button type="button" data-tour="yui" onClick={() => { setAberto((a) => !a); setConvite(false); }} aria-label={aberto ? "Fechar suporte da Yui" : "Abrir suporte da Yui"}
+      <Button type="button" data-tour="yui" onClick={() => { setAberto((a) => !a); setConvite(false); }} aria-label={aberto ? "Fechar suporte da Yui" : "Abrir suporte da Yui"}
         className="group fixed bottom-4 right-4 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card shadow-[0_8px_30px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)] transition-transform hover:scale-105 sm:bottom-6 sm:right-6">
         <img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" />
         <span className="absolute -top-1 right-0 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">Ajuda</span>
-      </button>
+      </Button>
     )}
     {tour && <span data-tour="yui" className="fixed bottom-6 right-6 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card"><img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" /></span>}
 
@@ -127,7 +133,17 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
           <Button size="icon" variant="ghost" onClick={() => setAberto(false)} aria-label="Fechar"><X /></Button>
         </header>
         <div className="border-b border-border bg-card/50 px-4 py-2">
-          <Button size="sm" variant="outline" className="w-full border-primary/40 text-primary" onClick={() => setEtapa("pergunta1")}><Compass />Tour pelo site</Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="min-w-0 flex-1 border-primary/40 text-primary" onClick={() => { setModo("funcao"); setEtapa("chat"); setEscolhendoFuncao((v) => !v); }}><BookOpen />Uma função</Button>
+            <Button size="sm" variant="outline" className="min-w-0 flex-1" onClick={() => { setModo("completo"); setEscolhendoFuncao(false); setEtapa("pergunta1"); }}><Compass />Tour completo</Button>
+          </div>
+          {escolhendoFuncao && <div className="mt-2 flex gap-2">
+            <label htmlFor="yui-funcao" className="sr-only">Função que deseja aprender</label>
+            <select id="yui-funcao" value={topicoId} onChange={(e) => setTopicoId(e.target.value)} className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm text-foreground">
+              {TOPICOS_TOUR.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+            </select>
+            <Button size="sm" onClick={() => { setModo("funcao"); setEtapa("pergunta1"); setEscolhendoFuncao(false); }}>Aprender</Button>
+          </div>}
         </div>
 
         <Conversation className="flex-1">
@@ -154,13 +170,13 @@ export function YuiAssistant({ section, go, abrirMenu }: { section: string; go: 
               <div className="rounded-2xl border border-primary/40 bg-card p-4">
                 <div className="flex gap-3"><img src={yuiAvatar} alt="" width={36} height={36} className="size-9 shrink-0 rounded-full bg-primary/10 object-cover" />
                   <div className="text-sm">
-                    {etapa === "pergunta1" ? <><p className="font-semibold">Quer que eu entre no modo automático?</p><p className="mt-1 text-muted-foreground">Eu vou passear por todas as páginas, mostrando e explicando cada função com voz.</p></>
-                      : <><p className="font-semibold">Tem certeza? Posso começar?</p><p className="mt-1 text-muted-foreground">Durante o tour eu controlo a tela e falo em voz alta (aumente o volume). Você pode pausar ou sair quando quiser.</p></>}
+                     {etapa === "pergunta1" ? <><p className="font-semibold">Quer que eu entre no modo automático?</p><p className="mt-1 text-muted-foreground">{modo === "funcao" ? `Vou mostrar apenas ${topico.nome}, passo a passo e com voz.` : "Eu vou passear por todas as páginas, mostrando e explicando cada função com voz."}</p></>
+                       : <><p className="font-semibold">Tem certeza? Posso começar?</p><p className="mt-1 text-muted-foreground">{modo === "funcao" ? `Vamos ver só ${topico.nome}. ` : ""}Durante a demonstração eu controlo a tela e falo em voz alta. Você pode pausar ou sair quando quiser.</p></>}
                   </div>
                 </div>
                 <div className="mt-3 flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => setEtapa("chat")}>Agora não</Button>
-                  {etapa === "pergunta1" ? <Button size="sm" onClick={() => setEtapa("pergunta2")}>Sim, quero</Button> : <Button size="sm" onClick={iniciarTour}>Sim, começar o tour</Button>}
+                   {etapa === "pergunta1" ? <Button size="sm" onClick={() => setEtapa("pergunta2")}>Sim, quero</Button> : <Button size="sm" onClick={iniciarTour}>{modo === "funcao" ? "Começar esta função" : "Sim, começar o tour"}</Button>}
                 </div>
               </div>
             )}
