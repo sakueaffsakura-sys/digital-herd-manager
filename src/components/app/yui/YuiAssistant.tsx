@@ -139,17 +139,32 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
           <Button size="icon" variant="ghost" onClick={limpar} aria-label="Apagar conversa" title="Apagar conversa"><RotateCcw /></Button>
           <Button size="icon" variant="ghost" onClick={() => setAberto(false)} aria-label="Fechar"><X /></Button>
         </header>
-        <div className="relative z-10 border-b border-border bg-card/60 px-4 py-2">
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="min-w-0 flex-1 border-primary/40 text-primary" onClick={() => { setModo("funcao"); setEtapa("chat"); setEscolhendoFuncao((v) => !v); }}><BookOpen />Uma função</Button>
-            <Button size="sm" variant="outline" className="min-w-0 flex-1" onClick={() => { setModo("completo"); setEscolhendoFuncao(false); setEtapa("pergunta1"); }}><Compass />Tour completo</Button>
+        <div className="relative z-10 border-b border-border bg-card/60 px-3 py-2.5 backdrop-blur">
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => { setModo("funcao"); setEtapa("chat"); setEscolhendoFuncao((v) => !v); }} aria-expanded={escolhendoFuncao}
+              className={`flex items-center gap-2 rounded-xl border p-2 text-left transition ${escolhendoFuncao ? "border-primary bg-primary/15" : "border-border bg-background/60 hover:border-primary/60"}`}>
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary"><BookOpen className="size-4" /></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold">Uma função</span><span className="block truncate text-[11px] text-muted-foreground">Aprender só uma área</span></span>
+            </button>
+            <button type="button" onClick={() => { setModo("completo"); setEscolhendoFuncao(false); setEtapa("pergunta1"); }}
+              className="flex items-center gap-2 rounded-xl border border-border bg-background/60 p-2 text-left transition hover:border-primary/60">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary"><Compass className="size-4" /></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold">Tour completo</span><span className="block truncate text-[11px] text-muted-foreground">Ver o sistema todo</span></span>
+            </button>
           </div>
-          {escolhendoFuncao && <div className="mt-2 flex gap-2">
-            <label htmlFor="yui-funcao" className="sr-only">Função que deseja aprender</label>
-            <select id="yui-funcao" value={topicoId} onChange={(e) => setTopicoId(e.target.value)} className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm text-foreground">
-              {TOPICOS_TOUR.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
-            </select>
-            <Button size="sm" onClick={() => { setModo("funcao"); setEtapa("pergunta1"); setEscolhendoFuncao(false); }}>Aprender</Button>
+          {escolhendoFuncao && <div className="mt-2.5 animate-in fade-in slide-in-from-top-1">
+            <p className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">O que você quer aprender?</p>
+            <div className="grid max-h-48 grid-cols-3 gap-1.5 overflow-y-auto pr-0.5">
+              {TOPICOS_TOUR.map((t) => {
+                const ativo = t.id === topicoId;
+                return <button key={t.id} type="button" onClick={() => setTopicoId(t.id)} aria-pressed={ativo}
+                  className={`flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center text-[11px] leading-tight transition ${ativo ? "border-primary bg-primary/15 text-foreground" : "border-border bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>
+                  <span className="font-medium">{t.nome}</span>
+                  <span className="text-[10px] opacity-70">{t.passos.length} passo{t.passos.length === 1 ? "" : "s"}</span>
+                </button>;
+              })}
+            </div>
+            <Button size="sm" className="mt-2 w-full" onClick={() => { setModo("funcao"); setEtapa("pergunta1"); setEscolhendoFuncao(false); }}><BookOpen />Aprender {topico.nome}</Button>
           </div>}
         </div>
 
