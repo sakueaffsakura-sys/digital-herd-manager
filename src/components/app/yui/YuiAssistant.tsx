@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
-import { Baby, BookOpen, Compass, Copy, MessageCircle, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
+import { BookOpen, Compass, Copy, MessageCircle, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
+import { CalfIcon } from "../CalfIcon";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -172,16 +173,17 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         <Conversation className="relative z-10 flex-1">
           <ConversationContent className="gap-5 px-4 py-4">
             {messages.length === 0 && etapa === "chat" && (
-              <div className="py-4 text-center">
+              <div className="py-6 text-center">
                 <div className="relative mx-auto size-24">
                   <span className="absolute inset-0 animate-ping rounded-full bg-primary/20 [animation-duration:2.5s]" />
+                  <span className="absolute -inset-2 rounded-full border border-primary/30" />
                   <img src={yuiAvatar} alt="" width={96} height={96} className="relative size-24 rounded-full border-2 border-primary/60 bg-primary/10 object-cover shadow-[0_0_30px_-6px_var(--primary)]" />
                 </div>
-                <p className="mt-4 text-lg font-semibold">Oi! Como posso te ajudar?</p>
+                <p className="mt-4 bg-gradient-to-r from-primary to-chart-2 bg-clip-text text-lg font-bold text-transparent">Oi! Como posso te ajudar?</p>
                 <p className="mx-auto mt-1 max-w-[280px] text-sm text-muted-foreground">Pergunte qualquer coisa sobre o sistema. Eu explico passo a passo.</p>
                 <div className="mt-5 grid grid-cols-2 gap-2 text-left">
                   {SUGESTOES.map((s, i) => {
-                    const Icone = [HerdPlus, Syringe, TrendingUp, Baby][i] ?? MessageCircle;
+                    const Icone = [HerdPlus, Syringe, TrendingUp, CalfIcon][i] ?? MessageCircle;
                     return <button key={s} type="button" onClick={() => enviar(s)} className="group flex flex-col gap-2 rounded-xl border border-border bg-card/80 p-3 text-xs leading-snug backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/10">
                       <span className="grid size-7 place-items-center rounded-lg bg-primary/15 text-primary"><Icone className="size-4" /></span>
                       <span className="text-foreground">{s}</span>
@@ -193,10 +195,15 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
             {messages.map((m, idx) => {
               const texto = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
               const ultima = idx === messages.length - 1;
+              const anterior = messages[idx - 1];
+              const novoGrupo = !anterior || anterior.role !== m.role;
               return (
-                <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : ""}`}>
-                  {m.role === "assistant" && <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />}
+                <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "justify-end" : ""} ${novoGrupo ? "" : "-mt-3"}`}>
+                  {m.role === "assistant" && (novoGrupo
+                    ? <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />
+                    : <span className="size-7 shrink-0" />)}
                   <div className="group min-w-0 max-w-[85%]">
+                    {novoGrupo && <p className={`mb-1 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
                     <Message from={m.role} className="max-w-full">
                       <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "rounded-2xl rounded-tl-sm border border-border bg-card/85 px-3 py-2 backdrop-blur"}>
                         {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
@@ -235,14 +242,14 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
         </Conversation>
         </div>
 
-        <div className="relative z-10 border-t border-border bg-card/70 p-3">
-          <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")}>
+        <div className="relative z-10 border-t border-primary/20 bg-gradient-to-t from-card to-card/70 p-3 backdrop-blur">
+          <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")} className="rounded-2xl border-border shadow-lg focus-within:border-primary/60 focus-within:shadow-[0_0_20px_-8px_var(--primary)]">
             <PromptInputBody>
               <PromptInputTextarea placeholder="Escreva sua dúvida…" autoFocus maxLength={4000} />
             </PromptInputBody>
             <PromptInputFooter className="justify-between">
               <span className="px-2 text-[11px] text-muted-foreground">Respostas geradas por IA</span>
-              <PromptInputSubmit status={status} onStop={stop} />
+              <PromptInputSubmit status={status} onStop={stop} className="rounded-full" />
             </PromptInputFooter>
           </PromptInput>
         </div>
