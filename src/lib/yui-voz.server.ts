@@ -68,7 +68,25 @@ export async function handleYuiVoz(request: Request) {
     return respostaErro(502, "A voz da Yui falhou. Tente de novo.");
   }
 
-  return new Response(upstream.body, {
+  // Repassa o áudio engolindo cancelamentos (usuário parou a voz) para não virar erro sem tratamento.
+  const reader = upstream.body.getReader();
+  const seguro = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) controller.close();
+        else controller.enqueue(value);
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") console.error("Voz da Yui interrompida", err);
+        try { controller.close(); } catch { /* já fechado */ }
+      }
+    },
+    cancel() {
+      reader.cancel().catch(() => {});
+    },
+  });
+
+  return new Response(seguro, {
     status: 200,
     headers: { "content-type": upstream.headers.get("content-type") ?? "audio/wav", "cache-control": "no-cache" },
   });
