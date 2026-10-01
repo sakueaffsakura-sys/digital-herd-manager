@@ -14,7 +14,7 @@ import { useYuiAvatar } from "./useYuiAvatar";
 import { useYuiWallpaper } from "./useYuiWallpaper";
 import { YuiTour } from "./YuiTour";
 import { TOPICOS_TOUR, TOUR } from "./tourSteps";
-import { prepararVoz } from "./voz";
+import { falar, prepararVoz } from "./voz";
 
 const SUGESTOES = ["Como cadastro um animal?", "Como registro uma vacina?", "Como vejo o lucro do mês?", "Como registrar um nascimento?"];
 const BOAS_VINDAS = "yui-boas-vindas-v1";
@@ -45,7 +45,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
     body: () => ({ pagina: secaoRef.current }),
   }), []);
 
-  const { messages, sendMessage, status, stop, setMessages, error } = useChat({
+  const { messages, sendMessage, status, stop, setMessages, error, regenerate } = useChat({
     id: "yui",
     transport,
     onError: (e) => toast.error(e.message.startsWith("{") ? (JSON.parse(e.message).error ?? "A Yui não conseguiu responder.") : e.message || "A Yui não conseguiu responder."),
