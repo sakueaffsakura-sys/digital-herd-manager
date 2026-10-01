@@ -2,6 +2,7 @@ import { YuiAssistant } from "./yui/YuiAssistant";
 import { useCriadores } from "./criadores";
 import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
 import { HerdIcon } from "@/components/app/HerdIcon";
+import { CalfIcon } from "@/components/app/CalfIcon";
 import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
