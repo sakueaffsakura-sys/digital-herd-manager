@@ -39,8 +39,10 @@ export function RecordDialog({
   useEffect(() => setForm(initial()), [row, open]);
   // Demonstração da Yui: digita campo a campo, como uma pessoa faria.
   useEffect(() => {
+    console.log("[demo] efeito disparado", { open, demo });
     if (!open || !demo) return;
     const fila = Object.entries(demo).map(([k, v]) => [k, String(v)] as const);
+    console.log("[demo] fila", fila);
     let campo = 0, i = 0;
     const timer = window.setInterval(() => {
       const atual = fila[campo];
