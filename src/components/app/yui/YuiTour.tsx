@@ -110,6 +110,9 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
 
   const pad = 8;
   const embaixo = !rect || rect.top + rect.height / 2 < window.innerHeight * 0.55;
+  // No modo automático o cartão minimiza sozinho para não tampar a demonstração;
+  // ao pausar ele expande. O usuário pode forçar um dos dois estados.
+  const minimizado = minimizadoManual ?? !pausado;
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
