@@ -1,3 +1,4 @@
+import { pdfParaImagem, ACEITA_IMAGEM_OU_PDF } from "@/lib/pdfImagem";
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUp, Link2, RotateCcw } from "lucide-react";
@@ -54,8 +55,9 @@ export function YuiFotoAdmin() {
     } catch { toast.error("Cole um link válido começando com https://"); }
   };
 
-  const escolherArquivo = async (f?: File) => {
-    if (!f) return;
+  const escolherArquivo = async (arq?: File) => {
+    if (!arq) return;
+    let f: File; try { f = await pdfParaImagem(arq); } catch (e) { toast.error((e as Error).message); return; }
     if (!f.type.startsWith("image/")) { toast.error("Escolha um arquivo de imagem (JPG, PNG ou WebP)."); return; }
     if (f.size > 10 * 1024 * 1024) { toast.error("Imagem muito grande (máximo 10 MB)."); return; }
     try { setPrevia(await reduzir(f)); } catch { toast.error("Não consegui abrir essa imagem."); }
@@ -81,7 +83,7 @@ export function YuiFotoAdmin() {
           </div>
           <div className="space-y-2">
             <Label>Ou enviar do computador/celular</Label>
-            <input ref={arquivo} type="file" accept="image/*" className="hidden" onChange={(e) => { escolherArquivo(e.target.files?.[0]); e.target.value = ""; }} />
+            <input ref={arquivo} type="file" accept={ACEITA_IMAGEM_OU_PDF} className="hidden" onChange={(e) => { escolherArquivo(e.target.files?.[0]); e.target.value = ""; }} />
             <Button variant="outline" onClick={() => arquivo.current?.click()}><ImageUp />Escolher imagem</Button>
             <p className="text-[11px] text-muted-foreground">A imagem é recortada em quadrado e reduzida automaticamente.</p>
           </div>

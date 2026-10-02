@@ -1,3 +1,4 @@
+import { pdfParaImagem, ACEITA_IMAGEM_OU_PDF } from "@/lib/pdfImagem";
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUp, Link2, RotateCcw } from "lucide-react";
@@ -49,8 +50,9 @@ function Item({ info }: { info: (typeof IMAGENS_INFO)[number] }) {
       const t = new Image(); t.onload = () => setPrevia(u.toString()); t.onerror = () => toast.error("Esse link não abriu uma imagem."); t.src = u.toString();
     } catch { toast.error("Cole um link válido começando com https://"); }
   };
-  const escolher = async (f?: File) => {
-    if (!f) return;
+  const escolher = async (arq?: File) => {
+    if (!arq) return;
+    let f: File; try { f = await pdfParaImagem(arq); } catch (e) { toast.error((e as Error).message); return; }
     if (!f.type.startsWith("image/")) { toast.error("Escolha um arquivo de imagem (JPG, PNG ou WebP)."); return; }
     if (f.size > 15 * 1024 * 1024) { toast.error("Imagem muito grande (máximo 15 MB)."); return; }
     try { setPrevia(await reduzir(f, info.largura, info.altura)); } catch { toast.error("Não consegui usar essa imagem."); }
@@ -72,7 +74,7 @@ function Item({ info }: { info: (typeof IMAGENS_INFO)[number] }) {
             <Input placeholder="https://exemplo.com/imagem.jpg" value={link} onChange={(e) => setLink(e.target.value)} onKeyDown={(e) => e.key === "Enter" && usarLink()} />
             <Button variant="outline" onClick={usarLink} disabled={!link.trim()}><Link2 />Ver</Button>
           </div>
-          <input ref={arquivo} type="file" accept="image/*" className="hidden" onChange={(e) => { escolher(e.target.files?.[0]); e.target.value = ""; }} />
+          <input ref={arquivo} type="file" accept={ACEITA_IMAGEM_OU_PDF} className="hidden" onChange={(e) => { escolher(e.target.files?.[0]); e.target.value = ""; }} />
           <Button variant="outline" onClick={() => arquivo.current?.click()}><ImageUp />Enviar imagem</Button>
           <div className="flex flex-wrap gap-2 border-t border-border pt-3">
             <Button disabled={!previa || salvar.isPending} onClick={() => previa && salvar.mutate(previa)}>{salvar.isPending ? "Salvando…" : "Salvar"}</Button>
