@@ -97,7 +97,7 @@ export function ApecuariaApp() {
   return <div className="app-shell dark relative min-h-screen bg-background text-foreground">
     <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col overflow-hidden border-r border-sidebar-border/80 bg-sidebar shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
-        <img src={fundoApp.url} alt="" className="h-full w-full object-cover object-top opacity-[0.42]" />
+        <img src={fundoApp.url} alt="" className="w-full opacity-[0.45]" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/45 to-background/95" />
       </div>
       <div className="relative z-10 flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
