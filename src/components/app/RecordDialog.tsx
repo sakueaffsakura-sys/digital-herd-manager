@@ -147,6 +147,16 @@ export function RecordDialog({
               </div>
             ))}
           </div>
+          {demo && demoExemplos && onDemoExemplo && (
+            <div className="mt-4 rounded-lg border border-primary/30 bg-background/60 p-2.5">
+              <p className="mb-1.5 text-xs font-semibold text-primary">Escolha outro exemplo — a Yui preenche para você ver:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {demoExemplos.map((ex, i) => (
+                  <Button key={ex.rotulo} type="button" size="sm" variant={i === demoExemploAtual ? "default" : "outline"} className="h-7 px-2.5 text-xs" onClick={() => onDemoExemplo(i)}>{ex.rotulo}</Button>
+                ))}
+              </div>
+            </div>
+          )}
           <DialogFooter className="mt-6">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={saving}>{saving ? "Salvando…" : demo ? "Salvar (demonstração)" : "Salvar"}</Button>
