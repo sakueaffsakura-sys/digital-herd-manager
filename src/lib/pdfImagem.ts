@@ -17,10 +17,11 @@ export async function pdfParaImagem(f: File): Promise<File> {
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(vp.width);
     canvas.height = Math.round(vp.height);
-    await pagina.render({ canvas, viewport: vp }).promise;
+    const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("canvas");
+    await pagina.render({ canvasContext: ctx, viewport: vp }).promise;
     const blob = await new Promise<Blob>((ok, erro) => canvas.toBlob((b) => (b ? ok(b) : erro(new Error())), "image/png"));
     return new File([blob], f.name.replace(/\.pdf$/i, "") + ".png", { type: "image/png" });
-  } catch (e) { console.error("pdf " + String(e) + " " + (e as Error)?.stack);
+  } catch {
     throw new Error("Não foi possível extrair a imagem deste PDF.");
   }
 }
