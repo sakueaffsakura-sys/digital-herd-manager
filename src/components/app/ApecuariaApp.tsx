@@ -95,17 +95,16 @@ export function ApecuariaApp() {
   const signOut=async()=>{ await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({to:"/",replace:true}); };
 
   return <div className="app-shell dark relative min-h-screen bg-background text-foreground">
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <img src={fundoApp.url} alt="" className="h-full w-full object-cover opacity-[0.22] blur-[1px]" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/25" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background/85" />
-    </div>
-    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col border-r border-sidebar-border/80 bg-sidebar backdrop-blur-2xl shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
-      <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
+    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col overflow-hidden border-r border-sidebar-border/80 bg-sidebar shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
+        <img src={fundoApp.url} alt="" className="h-full w-full object-cover object-top opacity-[0.42]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/45 to-background/95" />
+      </div>
+      <div className="relative z-10 flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
         <img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-12 w-auto max-w-[190px] object-contain" />
         <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X/></Button>
       </div>
-      <nav aria-label="Gestão da propriedade" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
+      <nav aria-label="Gestão da propriedade" className="relative z-10 min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
         {navGroups.map(group => <div key={group.label}>
           <p className="mb-2 px-4 text-[10px] font-bold uppercase text-sidebar-foreground/45">{group.label}</p>
           <div className="space-y-0.5">{group.items.map(([key,label,Icon]) => {
@@ -118,7 +117,7 @@ export function ApecuariaApp() {
           })}</div>
         </div>)}
       </nav>
-      <div className="shrink-0 border-t border-sidebar-border bg-sidebar-accent/20 px-3 py-3">
+      <div className="relative z-10 shrink-0 border-t border-sidebar-border bg-sidebar-accent/20 px-3 py-3">
         {isAdminQuery.data&&<Button variant="ghost" className="mb-0.5 h-9 w-full justify-start gap-3 px-3 text-sidebar-primary hover:bg-sidebar-accent/60 hover:text-sidebar-primary" onClick={()=>navigate({to:"/admin"})}><ShieldCheck/>Área Admin</Button>}
         <Button variant="ghost" className="mb-0.5 h-9 w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground" onClick={()=>setAboutOpen(true)}><Info/>Sobre</Button>
         <Button variant="ghost" className="h-9 w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut/>Sair</Button>
