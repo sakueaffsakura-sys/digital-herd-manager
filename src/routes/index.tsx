@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import cattleImage from "@/assets/cattle-dashboard.jpg";
 import cattleImageMobile from "@/assets/cattle-dashboard-800.webp";
 import cattleImageWide from "@/assets/cattle-dashboard.webp";
