@@ -99,8 +99,8 @@ export function ApecuariaApp() {
     <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col overflow-hidden border-r border-white/10 bg-sidebar shadow-2xl shadow-background/40 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
         <img src={imagemSite("fundo_menu")} alt="" className="h-full w-full object-cover object-top" />
-        <div className="absolute inset-0 bg-background/70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50" />
+        <div className="absolute inset-0 bg-background/62 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/55" />
       </div>
       <div className="relative z-10 flex h-[84px] shrink-0 items-center justify-between border-b border-white/5 px-6">
         <img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-12 w-auto max-w-[190px] object-contain" />
