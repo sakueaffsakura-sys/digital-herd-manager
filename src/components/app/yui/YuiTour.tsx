@@ -115,7 +115,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const minimizado = minimizadoManual ?? !pausado;
 
   return (
-    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
+    <div className={`fixed inset-0 z-[70] ${passo.demonstracaoAnotacao ? "pointer-events-none" : ""}`} role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
       {/* Durante a anotação, permite escolher exemplos no formulário sem sair do tour. */}
       {!passo.demonstracaoAnotacao && <div className="absolute inset-0" />}
       {rect ? (

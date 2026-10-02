@@ -49,6 +49,7 @@ export function RecordDialog({
   // nenhum campo preenchido seja perdido por atualizações fora de ordem.
   useEffect(() => {
     if (!open || !demo) return;
+    setForm({ ...initial(), producao: "", observacao: "", comportamento: "", alimentacao: "", informacoes_adicionais: "" });
     const fila = Object.entries(demo).map(([k, v]) => [k, String(v)] as const);
     const total = fila.reduce((acc, [, v]) => acc + v.length, 0);
     let pos = 0;
