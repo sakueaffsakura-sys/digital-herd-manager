@@ -29,7 +29,7 @@ export async function handleYuiVoz(request: Request) {
   const { data: u, error: ue } = await supabase.auth.getUser(token);
   if (ue || !u.user) return respostaErro(401, "Sua sessão expirou. Entre novamente.");
 
-  if (!allowRequest(`yui-voz:${u.user.id}`, 20, 60_000, 60_000)) return respostaErro(429, "Muitas falas seguidas. Espere um minutinho.");
+  if (!allowRequest(`yui-voz:${u.user.id}`, 90, 60_000, 30_000)) return respostaErro(429, "Muitas falas seguidas. Espere um minutinho.");
 
   let texto: string;
   try {

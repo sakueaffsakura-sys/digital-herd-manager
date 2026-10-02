@@ -51,8 +51,8 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       calar();
       setFalando(false);
       // Gera a voz deste passo e dos próximos já em paralelo com a navegação (sem espera entre falas).
-       if (comVoz) for (let k = idx; k < Math.min(idx + 3, passos.length); k++) prepararVoz(passos[k].fala);
-      if (passo.section) { go(passo.section); await esperar(350); }
+       if (comVoz) for (let k = idx; k < Math.min(idx + 4, passos.length); k++) prepararVoz(passos[k].fala);
+      if (passo.section) { go(passo.section); await esperar(200); }
       if (passo.demonstracaoAnotacao) { window.dispatchEvent(new Event("yui:show-notes")); await esperar(250); }
       const mobile = window.matchMedia("(max-width: 1023px)").matches;
       const precisaMenu = mobile && passo.alvo.includes("nav-");
@@ -88,7 +88,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       if (!vivo) return;
       setFalando(false);
        if (terminou && !passo.demonstracaoAnotacao) {
-        await esperar(350);
+        await esperar(150);
         if (vivo) { if (ultimo) sair(); else setIdx((i) => i + 1); }
       }
     })();

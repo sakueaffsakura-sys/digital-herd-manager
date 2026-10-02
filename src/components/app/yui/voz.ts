@@ -101,7 +101,7 @@ export function prepararVoz(texto: string) {
 
 async function falarIA(texto: string, minha: number, aoComecar?: () => void): Promise<boolean> {
   // Se a voz demorar demais, desiste e usa a voz do navegador para não travar o tour.
-  const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
+  const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 15000))]);
   if (minha !== geracao || !blob) return false;
 
   return new Promise((ok) => {
@@ -112,7 +112,7 @@ async function falarIA(texto: string, minha: number, aoComecar?: () => void): Pr
     // Vigia: alguns navegadores não disparam "ended" (ou o áudio trava no meio).
     // Se o áudio parar de avançar ou passar muito do tempo esperado, segue em frente.
     let ultimoTempo = -1, parado = 0;
-    const limite = Date.now() + Math.max(8000, texto.length * 120);
+    const limite = Date.now() + Math.max(15000, texto.length * 150);
     const vigia = setInterval(() => {
       if (minha !== geracao) return fim(false);
       const d = audio.duration;
