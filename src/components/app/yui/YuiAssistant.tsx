@@ -113,7 +113,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
     {convite && !aberto && !tour && (
       <div className="fixed bottom-24 right-4 z-40 w-[min(320px,calc(100vw-32px))] animate-in fade-in slide-in-from-bottom-4 rounded-2xl border border-primary/40 bg-popover p-4 shadow-2xl sm:right-6">
         <Button type="button" size="icon-sm" variant="ghost" onClick={fecharConvite} className="absolute right-2 top-2" aria-label="Fechar"><X className="size-4" /></Button>
-        <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="text-sm font-semibold">Oi! Eu sou a Yui 👋</p><p className="mt-1 text-sm text-muted-foreground">Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
+        <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="text-sm font-semibold">Oi! 👋</p><p className="mt-1 text-sm text-muted-foreground">Sou a assistente virtual do Pecuária Digital, criada para dar suporte quando você tiver dificuldade ou dúvidas. Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
         <div className="mt-3 flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={fecharConvite}>Agora não</Button><Button size="sm" onClick={() => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); setEtapa("pergunta2"); setAberto(true); }}>Quero sim</Button></div>
       </div>
     )}
