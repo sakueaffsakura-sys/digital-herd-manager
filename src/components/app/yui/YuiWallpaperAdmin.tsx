@@ -49,7 +49,7 @@ export function YuiWallpaperAdmin() {
       if (error) throw error;
       if (atual?.path) await supabase.storage.from(YUI_WALLPAPER_BUCKET).remove([atual.path]);
     },
-    onSuccess: async () => { setSelecionado(null); await qc.invalidateQueries({ queryKey: YUI_WALLPAPER_QUERY }); toast.success("Chat sem fundo novamente."); },
+    onSuccess: async () => { setSelecionado(null); await qc.invalidateQueries({ queryKey: YUI_WALLPAPER_QUERY }); toast.success("Fundo original do chat restaurado."); },
     onError: (error: Error) => toast.error(error.message),
   });
 
@@ -57,7 +57,7 @@ export function YuiWallpaperAdmin() {
   const video = selecionado ? selecionado.type === "video/mp4" : atual?.video;
   return <section className="rounded-xl border border-border bg-card p-5">
     <h3 className="mb-1 text-sm font-semibold">Fundo do chat da Yui</h3>
-    <p className="mb-5 text-xs text-muted-foreground">Aparece atrás da conversa somente para administradores. Outras contas usam o fundo normal.</p>
+    <p className="mb-5 text-xs text-muted-foreground">Sem fundo personalizado, o chat usa o fundo original para todas as contas. Um fundo personalizado aparece somente para administradores.</p>
     <div className="grid gap-6 md:grid-cols-[160px_1fr]">
       <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-md border border-border bg-background text-center text-xs text-muted-foreground">
         {url ? video ? <video key={url} src={url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={url} alt="Prévia do fundo da Yui" className="size-full object-cover" /> : <span className="px-3">{isLoading ? "Carregando…" : isError ? "Não foi possível carregar o fundo." : "Sem wallpaper"}</span>}
@@ -73,7 +73,7 @@ export function YuiWallpaperAdmin() {
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <Button disabled={!selecionado || salvar.isPending || remover.isPending} onClick={() => selecionado && salvar.mutate(selecionado)}>{salvar.isPending ? "Salvando…" : "Salvar fundo"}</Button>
           {selecionado && <Button variant="ghost" disabled={salvar.isPending} onClick={() => setSelecionado(null)}>Cancelar</Button>}
-          <Button variant="outline" disabled={!atual || salvar.isPending || remover.isPending} onClick={() => { if (confirm("Remover o fundo do chat da Yui?")) remover.mutate(); }}><Trash2 />Deixar sem wallpaper</Button>
+          <Button variant="outline" disabled={!atual || atual.padrao || salvar.isPending || remover.isPending} onClick={() => { if (confirm("Voltar ao fundo original do chat da Yui?")) remover.mutate(); }}><Trash2 />Voltar ao fundo original</Button>
         </div>
       </div>
     </div>
