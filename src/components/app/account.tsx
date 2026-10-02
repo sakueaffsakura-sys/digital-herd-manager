@@ -1,3 +1,4 @@
+import { pdfParaImagem, ACEITA_IMAGEM_OU_PDF } from "@/lib/pdfImagem";
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -544,9 +545,10 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
   }, [p]);
 
   const pickAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const arq = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (!arq) return;
+    let file: File; try { file = await pdfParaImagem(arq); } catch (er) { toast.error((er as Error).message); return; }
     const res = await avatar.run(file);
     if (!res.ok) {
       toast.error(res.motivo);
@@ -632,7 +634,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
             <input
               ref={fileRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept={ACEITA_IMAGEM_OU_PDF}
               className="hidden"
               onChange={pickAvatar}
             />
@@ -887,13 +889,13 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
         <div className="mt-3 flex items-center gap-2">
           <input
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept={ACEITA_IMAGEM_OU_PDF}
             className="hidden"
             id={`file-${col}`}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              if (file) void pickFile(kindFor(col), upload, bucket, file, col, label);
+              if (file) void pdfParaImagem(file).then((f) => pickFile(kindFor(col), upload, bucket, f, col, label), (er: Error) => toast.error(er.message));
             }}
           />
           <Button
