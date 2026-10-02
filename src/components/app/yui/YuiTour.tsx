@@ -115,9 +115,9 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const minimizado = minimizadoManual ?? !pausado;
 
   return (
-    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
-      {/* bloqueia cliques no site durante o modo automático */}
-      <div className="absolute inset-0" />
+    <div className={`fixed inset-0 z-[70] ${passo.demonstracaoAnotacao ? "pointer-events-none" : ""}`} role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
+      {/* Durante a anotação, permite escolher exemplos no formulário sem sair do tour. */}
+      {!passo.demonstracaoAnotacao && <div className="absolute inset-0" />}
       {rect ? (
         <div
           className="pointer-events-none absolute rounded-xl ring-2 ring-primary transition-all duration-500 ease-out"
@@ -129,7 +129,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
 
       {minimizado ? (
         /* Pílula compacta: acompanha o tour sem tampar a tela */
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-primary/40 bg-popover/95 py-1.5 pl-1.5 pr-2 shadow-2xl backdrop-blur transition-all duration-500">
+        <div className={`pointer-events-auto absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-primary/40 bg-popover/95 py-1.5 pl-1.5 pr-2 shadow-2xl backdrop-blur transition-all duration-500 ${passo.demonstracaoAnotacao ? "z-[82]" : ""}`}>
           <div className="relative shrink-0">
             <img src={yuiAvatar} alt="Yui" width={36} height={36} className={`size-9 rounded-full border-2 border-primary bg-primary/10 object-cover ${falando ? "animate-[pulse_1.2s_ease-in-out_infinite]" : ""}`} />
             {falando && <span className="absolute -bottom-0.5 -right-0.5 flex h-4 items-end gap-0.5 rounded-full bg-primary px-1 py-0.5">{[0, 1, 2].map((i) => <span key={i} className="w-0.5 animate-bounce rounded bg-primary-foreground" style={{ height: 5 + i * 2, animationDelay: `${i * 120}ms` }} />)}</span>}
@@ -144,7 +144,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
           <Button type="button" size="icon-sm" variant="ghost" onClick={sair} aria-label="Sair do tour"><X className="size-4" /></Button>
         </div>
       ) : (
-      <div className={`absolute left-1/2 w-[min(560px,calc(100vw-24px))] -translate-x-1/2 transition-all duration-500 ${embaixo ? "bottom-4" : "top-4"}`}>
+      <div className={`pointer-events-auto absolute left-1/2 w-[min(560px,calc(100vw-24px))] -translate-x-1/2 transition-all duration-500 ${passo.demonstracaoAnotacao ? "z-[82]" : ""} ${embaixo ? "bottom-4" : "top-4"}`}>
         <div className="overflow-hidden rounded-2xl border border-primary/40 bg-popover shadow-2xl">
            <div className="h-1 bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
           <div className="flex gap-4 p-4">

@@ -307,7 +307,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
         demo={demo}
         demoExemplos={EXEMPLOS_NOTA}
         demoExemploAtual={demoIndice}
-        onDemoExemplo={(i) => { setDemoIndice(i); setDemo(EXEMPLOS_NOTA[i].valores); }}
+        onDemoExemplo={(i) => { setDemoIndice(i); setDemo({ producao: "", observacao: "", comportamento: "", alimentacao: "", informacoes_adicionais: "", ...EXEMPLOS_NOTA[i].valores }); }}
       />
     </div>
   );

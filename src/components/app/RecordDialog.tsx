@@ -49,6 +49,7 @@ export function RecordDialog({
   // nenhum campo preenchido seja perdido por atualizações fora de ordem.
   useEffect(() => {
     if (!open || !demo) return;
+    setForm({ ...initial(), producao: "", observacao: "", comportamento: "", alimentacao: "", informacoes_adicionais: "" });
     const fila = Object.entries(demo).map(([k, v]) => [k, String(v)] as const);
     const total = fila.reduce((acc, [, v]) => acc + v.length, 0);
     let pos = 0;
@@ -112,8 +113,8 @@ export function RecordDialog({
     onSave(cleaned);
   };
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className="dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
+    <Dialog open={open} modal={!demo} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className={`dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl ${demo ? "z-[80]" : ""}`}>
         <DialogHeader>
           <DialogTitle>{row ? "Editar" : "Novo"} {config.singular}</DialogTitle>
           <DialogDescription>{demo ? "Demonstração da Yui: os campos estão sendo preenchidos sozinhos e nada será salvo." : "Os dados serão gravados na propriedade selecionada."}</DialogDescription>
