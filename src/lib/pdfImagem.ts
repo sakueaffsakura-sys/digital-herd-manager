@@ -20,7 +20,7 @@ export async function pdfParaImagem(f: File): Promise<File> {
     await pagina.render({ canvas, viewport: vp }).promise;
     const blob = await new Promise<Blob>((ok, erro) => canvas.toBlob((b) => (b ? ok(b) : erro(new Error())), "image/png"));
     return new File([blob], f.name.replace(/\.pdf$/i, "") + ".png", { type: "image/png" });
-  } catch (e) { console.error("pdf", e);
+  } catch (e) { console.error("pdf " + String(e) + " " + (e as Error)?.stack);
     throw new Error("Não foi possível extrair a imagem deste PDF.");
   }
 }
