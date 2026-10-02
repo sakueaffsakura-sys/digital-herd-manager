@@ -50,7 +50,7 @@ export function Panel({ title, subtitle, children, action, className }: { title:
 }
 
 export function Empty({ message }: { message: string }) {
-  return <div className="grid min-h-36 place-items-center p-6 text-center"><div><PackageOpen className="mx-auto mb-2 size-7 text-muted-foreground" /><p className="text-sm text-muted-foreground">{message}</p></div></div>;
+  return <div className="grid min-h-40 place-items-center p-6 text-center"><div className="rounded-2xl border border-border bg-card/60 px-10 py-8 backdrop-blur-md"><PackageOpen className="mx-auto mb-3 size-8 text-primary/70" /><p className="text-sm text-muted-foreground">{message}</p></div></div>;
 }
 
 export function EmptyProperty({ onCreate }: { onCreate: () => void }) {
