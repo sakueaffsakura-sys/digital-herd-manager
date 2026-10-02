@@ -1,6 +1,7 @@
 import { YuiAssistant } from "./yui/YuiAssistant";
 import { useCriadores } from "./criadores";
 import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
+import fundoApp from "@/assets/yui-wallpaper-original.png.asset.json";
 import { HerdIcon } from "@/components/app/HerdIcon";
 import { CalfIcon } from "@/components/app/CalfIcon";
 import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -93,8 +94,13 @@ export function ApecuariaApp() {
   const isAdminQuery = useQuery({ queryKey:["sou-admin"], queryFn:async()=>{ const r=await (supabase.rpc as unknown as (f:string)=>Promise<{data:unknown}>)("sou_admin"); return r.data===true; }});
   const signOut=async()=>{ await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({to:"/",replace:true}); };
 
-  return <div className="dark min-h-screen bg-background text-foreground">
-    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col border-r border-sidebar-border bg-sidebar shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
+  return <div className="app-shell dark relative min-h-screen bg-background text-foreground">
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <img src={fundoApp.url} alt="" className="h-full w-full object-cover opacity-[0.22] blur-[1px]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/25" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background/85" />
+    </div>
+    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col border-r border-sidebar-border/80 bg-sidebar backdrop-blur-2xl shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
       <div className="flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
         <img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-12 w-auto max-w-[190px] object-contain" />
         <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X/></Button>
@@ -119,8 +125,8 @@ export function ApecuariaApp() {
       </div>
     </aside>
     {mobileOpen&&<div className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden" onClick={()=>setMobileOpen(false)}/>}
-    <div className="lg:pl-[284px]">
-      <header className="sticky top-0 z-20 flex h-[76px] items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-6"><Button variant="ghost" size="icon" className="lg:hidden" onClick={()=>setMobileOpen(true)} aria-label="Abrir menu"><Menu/></Button><div data-tour="busca" className="relative hidden max-w-xl flex-1 sm:block"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="h-10 bg-muted/50 pl-10" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Pesquisar em toda a propriedade..."/></div><div className="ml-auto flex items-center gap-2"><Select value={propertyId??""} onValueChange={setPropertyId}><SelectTrigger data-tour="propriedade" className="w-[180px] bg-card"><SelectValue placeholder="Selecionar propriedade"/></SelectTrigger><SelectContent>{propertiesQuery.data?.map(p=><SelectItem value={p.id} key={p.id}>{p.nome}</SelectItem>)}</SelectContent></Select><Button variant="ghost" size="icon" aria-label="Notificações"><Bell/></Button><HeaderAccount userId={userQuery.data?.id} propertyId={propertyId} onClick={()=>go("perfil")}/></div></header>
+    <div className="relative z-10 lg:pl-[284px]">
+      <header className="sticky top-0 z-20 flex h-[76px] items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-6"><Button variant="ghost" size="icon" className="lg:hidden" onClick={()=>setMobileOpen(true)} aria-label="Abrir menu"><Menu/></Button><div data-tour="busca" className="relative hidden max-w-xl flex-1 sm:block"><Search className="absolute left-3 top-2.5 size-4 text-muted-foreground"/><Input className="h-10 rounded-full bg-muted/50 pl-10 focus-visible:ring-primary/60" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Pesquisar em toda a propriedade..."/></div><div className="ml-auto flex items-center gap-2"><Select value={propertyId??""} onValueChange={setPropertyId}><SelectTrigger data-tour="propriedade" className="w-[180px] bg-card"><SelectValue placeholder="Selecionar propriedade"/></SelectTrigger><SelectContent>{propertiesQuery.data?.map(p=><SelectItem value={p.id} key={p.id}>{p.nome}</SelectItem>)}</SelectContent></Select><Button variant="ghost" size="icon" aria-label="Notificações"><Bell/></Button><HeaderAccount userId={userQuery.data?.id} propertyId={propertyId} onClick={()=>go("perfil")}/></div></header>
 <main data-tour="conteudo" className="mx-auto max-w-[1600px] p-4 pb-28 sm:p-6 sm:pb-28">
          {section==="perfil" ? (userQuery.data?.id ? <ProfileArea key={section} section={section} userId={userQuery.data.id} email={userQuery.data.email} propertyId={propertyId!} property={currentProperty} onPropertyUpdated={()=>queryClient.invalidateQueries({queryKey:["properties"]})}/> : <EmptySection go={()=>go("inicio")}/>) : !propertyId && section!=="configuracoes" ? <EmptyProperty onCreate={()=>setPropertyDialog(true)}/> : section==="inicio" ? <Suspense fallback={<SectionLoading/>}><Dashboard propertyId={propertyId!} propertyName={currentProperty?.nome??"Propriedade"} go={go}/></Suspense> : section==="relatorios" ? <Suspense fallback={<SectionLoading/>}><Reports propertyId={propertyId!}/></Suspense> : section==="diagnostico" ? <Suspense fallback={<SectionLoading/>}><Diagnostics propertyId={propertyId!}/></Suspense> : section==="comercial" ? <Commerce propertyId={propertyId!}/> : section==="vacinacao" ? <VaccinationArea propertyId={propertyId!} globalSearch={deferredSearch}/> : section==="producao" ? <ProductionArea propertyId={propertyId!} globalSearch={deferredSearch}/> : (section==="configuracoes"||section==="perfil-propriedade"||section==="assinatura") ? (userQuery.data?.id ? <ProfileArea key={section} section={section} userId={userQuery.data.id} email={userQuery.data.email} propertyId={propertyId!} property={currentProperty} onPropertyUpdated={()=>queryClient.invalidateQueries({queryKey:["properties"]})}/> : <EmptySection go={()=>go("inicio")}/>) : modules[section] ? <CrudModule config={modules[section]} propertyId={propertyId!} globalSearch={deferredSearch}/> : <EmptySection go={()=>go("inicio")}/>} 
       </main>
