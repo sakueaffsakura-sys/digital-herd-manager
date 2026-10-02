@@ -5,7 +5,7 @@ import { CalfIcon } from "@/components/app/CalfIcon";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import bannerImage from "@/assets/pecuaria-fundo.png.asset.json";
+import { useImagensSite } from "./imagensSite";
 import { HerdIcon } from "./HerdIcon";
 import { Delta, Empty, Metric, MiniList, Panel, Status, dateNow, money, pretty, variacao, type Row } from "./shared";
 import { BUCKETS, StorageImage, usePropertyProfile } from "./account";
@@ -16,6 +16,7 @@ const compact = (v: number) => Intl.NumberFormat("pt-BR", { notation: "compact",
 const fmtDate = (d: unknown) => (d ? String(d).slice(0, 10).split("-").reverse().join("/") : "—");
 
 export default function Dashboard({ propertyId, propertyName, go }: { propertyId: string; propertyName: string; go: (s: string) => void }) {
+  const imagemSite = useImagensSite();
   const propertyProfile = usePropertyProfile(propertyId);
   const query = useQuery({
     queryKey: ["dashboard", propertyId],
@@ -81,7 +82,7 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
 
   return <div className="space-y-5">
     <section className="relative min-h-[220px] overflow-hidden rounded-xl border border-border">
-      <StorageImage bucket={BUCKETS.banners} path={propertyProfile.data?.banner_url} alt="Banner da propriedade" className="absolute inset-0 h-full w-full object-cover" fallback={<img src={bannerImage.url} alt="Pecuária Digital — Tecnologia no Campo" className="absolute inset-0 h-full w-full object-cover" />} />
+      <StorageImage bucket={BUCKETS.banners} path={propertyProfile.data?.banner_url} alt="Banner da propriedade" className="absolute inset-0 h-full w-full object-cover" fallback={<img src={imagemSite("banner_inicio")} alt="Pecuária Digital — Tecnologia no Campo" className="absolute inset-0 h-full w-full object-cover" />} />
       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/10" />
       <div className="relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-xl">

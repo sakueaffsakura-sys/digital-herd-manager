@@ -1,7 +1,7 @@
 import { YuiAssistant } from "./yui/YuiAssistant";
 import { useCriadores } from "./criadores";
 import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
-import fundoMenu from "@/assets/menu-fundo-vertical.jpg";
+import { useImagensSite } from "./imagensSite";
 import { HerdIcon } from "@/components/app/HerdIcon";
 import { CalfIcon } from "@/components/app/CalfIcon";
 import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -74,6 +74,7 @@ const modules: Record<string, Module> = {
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"Catálogo sanitário e intervalo recomendado entre aplicações.", searchColumns:["nome"], columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
 
 export function ApecuariaApp() {
+  const imagemSite = useImagensSite();
   const { section = "inicio" } = useParams({ strict:false }) as { section?: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -97,7 +98,7 @@ export function ApecuariaApp() {
   return <div className="app-shell dark relative min-h-screen bg-background text-foreground">
     <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col overflow-hidden border-r border-sidebar-border/80 bg-sidebar shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
-        <img src={fundoMenu} alt="" className="h-full w-full object-cover object-top opacity-[0.5]" />
+        <img src={imagemSite("fundo_menu")} alt="" className="h-full w-full object-cover object-top opacity-[0.5]" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/45 to-background/95" />
       </div>
       <div className="relative z-10 flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
