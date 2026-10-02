@@ -391,6 +391,27 @@ export type Database = {
         }
         Relationships: []
       }
+      imagens_site: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          chave: string
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave: string
+          valor: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       importacoes: {
         Row: {
           aceitas: number
