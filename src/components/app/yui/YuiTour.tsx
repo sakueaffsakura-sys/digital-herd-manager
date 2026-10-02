@@ -83,7 +83,9 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       if (pausado) return;
       setFalando(true);
       setCarregandoVoz(comVoz);
-      const terminou = await falar(passo.fala, comVoz, () => vivo && setCarregandoVoz(false));
+      let terminou = await falar(passo.fala, comVoz, () => vivo && setCarregandoVoz(false));
+      // Se a fala foi cortada por fora (sem pausar nem trocar de passo), fala de novo.
+      if (!terminou && vivo) terminou = await falar(passo.fala, comVoz, () => vivo && setCarregandoVoz(false));
       setCarregandoVoz(false);
       if (!vivo) return;
       setFalando(false);
@@ -105,8 +107,11 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       if (e.key === " ") { e.preventDefault(); setPausado((p) => !p); }
     };
     window.addEventListener("keydown", tecla);
-    return () => { window.removeEventListener("keydown", tecla); calar(); };
+    return () => { window.removeEventListener("keydown", tecla); };
   }, [idx, ultimo, sair]);
+
+  // Só cala a voz quando o tour fecha de verdade (antes cortava a fala a cada passo).
+  useEffect(() => () => calar(), []);
 
   const pad = 8;
   const embaixo = !rect || rect.top + rect.height / 2 < window.innerHeight * 0.55;
