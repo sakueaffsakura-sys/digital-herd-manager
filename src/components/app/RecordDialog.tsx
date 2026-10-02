@@ -52,7 +52,7 @@ export function RecordDialog({
       setForm((f) => ({ ...f, [atual[0]]: atual[1].slice(0, i) }));
       if (i >= atual[1].length) { campo++; i = 0; }
     }, 45);
-    return () => window.clearInterval(timer);
+    return () => { console.log("[demo] cleanup do efeito de digitacao"); window.clearInterval(timer); };
   }, [open, demo]);
   const options = (f: Field) =>
     f.type === "animal"
