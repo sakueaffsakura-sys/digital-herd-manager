@@ -117,7 +117,7 @@ async function falarIA(texto: string, minha: number, aoComecar?: () => void): Pr
       if (minha !== geracao) return fim(false);
       const d = audio.duration;
       if (Number.isFinite(d) && d > 0 && audio.currentTime >= d - 0.15) return fim(true);
-      if (audio.currentTime === ultimoTempo) parado++; else { parado = 0; ultimoTempo = audio.currentTime; }
+      if (audio.currentTime > 0 && audio.currentTime === ultimoTempo) parado++; else { parado = 0; ultimoTempo = audio.currentTime; }
       if (parado >= 6 || Date.now() > limite) fim(true);
     }, 500);
     const fim = (terminou: boolean) => {
