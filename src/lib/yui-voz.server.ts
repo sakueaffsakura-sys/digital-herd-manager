@@ -4,7 +4,7 @@ import { allowRequest } from "./rate-limit";
 
 const GATEWAY = "https://ai.gateway.lovable.dev";
 const MODEL = "google/gemini-3.1-flash-tts-preview";
-const VOICE = "Kore";
+const VOICE = "Callirrhoe";
 
 function respostaErro(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json" } });
@@ -47,7 +47,7 @@ export async function handleYuiVoz(request: Request) {
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
-        contents: [{ role: "user", parts: [{ text: `Leia o texto a seguir em português do Brasil como uma pessoa conversando normalmente. Use um tom calmo, acolhedor e discreto, ritmo de conversa e pausas curtas e naturais. Evite entonação teatral, ênfase exagerada, voz de anúncio, sussurros e emoção forçada. Não acrescente nem altere palavras. Texto: ${texto}` }] }],
+        contents: [{ role: "user", parts: [{ text: `Fale o texto a seguir em português do Brasil com voz feminina jovem, leve e espontânea, como uma amiga explicando algo com naturalidade. Ritmo de conversa real, com pequenas variações de velocidade e pausas naturais entre as frases. Tom amigável e descontraído, sem soar formal, robótica, teatral ou como locutora de anúncio. Não acrescente nem altere palavras. Texto: ${texto}` }] }],
         generationConfig: {
           responseModalities: ["AUDIO"],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
