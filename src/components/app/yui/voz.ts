@@ -101,7 +101,7 @@ export function prepararVoz(texto: string) {
 
 async function falarIA(texto: string, minha: number, aoComecar?: () => void): Promise<boolean> {
   // Se a voz demorar demais, desiste e usa a voz do navegador para não travar o tour.
-  const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 9000))]);
+  const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
   if (minha !== geracao || !blob) return false;
 
   return new Promise((ok) => {
@@ -109,9 +109,22 @@ async function falarIA(texto: string, minha: number, aoComecar?: () => void): Pr
     const audio = new Audio(url);
     audioAtual = audio;
     let feito = false;
+    // Vigia: alguns navegadores não disparam "ended" (ou o áudio trava no meio).
+    // Se o áudio parar de avançar ou passar muito do tempo esperado, segue em frente.
+    let ultimoTempo = -1, parado = 0;
+    const limite = Date.now() + Math.max(8000, texto.length * 120);
+    const vigia = setInterval(() => {
+      if (minha !== geracao) return fim(false);
+      const d = audio.duration;
+      if (Number.isFinite(d) && d > 0 && audio.currentTime >= d - 0.15) return fim(true);
+      if (audio.currentTime === ultimoTempo) parado++; else { parado = 0; ultimoTempo = audio.currentTime; }
+      if (parado >= 6 || Date.now() > limite) fim(true);
+    }, 500);
     const fim = (terminou: boolean) => {
       if (feito) return;
       feito = true;
+      clearInterval(vigia);
+      audio.pause();
       if (audioAtual === audio) audioAtual = null;
       URL.revokeObjectURL(url);
       ok(terminou && minha === geracao);
@@ -119,6 +132,8 @@ async function falarIA(texto: string, minha: number, aoComecar?: () => void): Pr
     audio.onended = () => fim(true);
     audio.onerror = () => fim(false);
     audio.play().then(() => aoComecar?.()).catch(() => fim(false));
+    // Se o navegador nem começar a tocar em 5s, desiste e usa a voz do navegador.
+    setTimeout(() => { if (!feito && audio.currentTime === 0) fim(false); }, 5000);
   });
 }
 
