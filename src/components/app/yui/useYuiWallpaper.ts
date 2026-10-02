@@ -6,8 +6,10 @@ export const YUI_WALLPAPER_BUCKET = "yui-chat-wallpapers";
 export const YUI_WALLPAPER_KEY = "yui_chat_wallpaper";
 export const YUI_WALLPAPER_QUERY = ["config", YUI_WALLPAPER_KEY] as const;
 
+export type YuiWallpaper = { path?: string; url: string; video: boolean; padrao: boolean };
+
 // Fundo original do chat da Yui — usado quando nenhuma personalização está salva.
-export const WALLPAPER_ORIGINAL = { url: wallpaperPadrao.url, video: false, padrao: true } as const;
+export const WALLPAPER_ORIGINAL: YuiWallpaper = { url: wallpaperPadrao.url, video: false, padrao: true };
 
 export function useYuiWallpaper(enabled = true) {
   return useQuery({
