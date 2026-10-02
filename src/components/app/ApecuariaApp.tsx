@@ -96,32 +96,33 @@ export function ApecuariaApp() {
   const signOut=async()=>{ await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({to:"/",replace:true}); };
 
   return <div className="app-shell dark relative min-h-screen bg-background text-foreground">
-    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col overflow-hidden border-r border-sidebar-border/80 bg-sidebar shadow-xl shadow-background/30 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
+    <aside aria-label="Menu principal" className={`fixed inset-y-0 left-0 z-40 flex w-[284px] max-w-[calc(100vw-32px)] flex-col overflow-hidden border-r border-white/10 bg-sidebar shadow-2xl shadow-background/40 transition-transform duration-200 ease-out lg:translate-x-0 ${mobileOpen?"translate-x-0":"-translate-x-full"}`}>
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
-        <img src={imagemSite("fundo_menu")} alt="" className="h-full w-full object-cover object-top opacity-[0.5]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/45 to-background/95" />
+        <img src={imagemSite("fundo_menu")} alt="" className="h-full w-full object-cover object-top" />
+        <div className="absolute inset-0 bg-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50" />
       </div>
-      <div className="relative z-10 flex h-[84px] shrink-0 items-center justify-between border-b border-sidebar-border/80 px-6">
+      <div className="relative z-10 flex h-[84px] shrink-0 items-center justify-between border-b border-white/5 px-6">
         <img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-12 w-auto max-w-[190px] object-contain" />
         <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={()=>setMobileOpen(false)} aria-label="Fechar menu"><X/></Button>
       </div>
-      <nav aria-label="Gestão da propriedade" className="relative z-10 min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-5 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
+      <nav aria-label="Gestão da propriedade" className="relative z-10 min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-5 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
         {navGroups.map(group => <div key={group.label}>
-          <p className="mb-2 px-4 text-[10px] font-bold uppercase text-sidebar-foreground/45">{group.label}</p>
-          <div className="space-y-0.5">{group.items.map(([key,label,Icon]) => {
+          <p className="mb-2 px-4 text-[10px] font-bold uppercase tracking-[0.25em] text-sidebar-foreground/35">{group.label}</p>
+          <div className="space-y-1">{group.items.map(([key,label,Icon]) => {
             const active = section === key;
-            return <Button key={key} data-tour={`nav-${key}`} variant="ghost" aria-current={active ? "page" : undefined} onClick={()=>go(key)} className={`group relative h-10 w-full justify-start gap-3 overflow-hidden rounded-md px-3 text-[13px] font-medium transition-colors ${active ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm shadow-background/20 ring-1 ring-inset ring-sidebar-primary/20 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"}`}>
-              {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-0.5 rounded-r bg-sidebar-primary" />}
-              <span className={`flex size-7 shrink-0 items-center justify-center rounded-md ${active ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-primary"}`}><Icon className="size-4" /></span>
+            return <Button key={key} data-tour={`nav-${key}`} variant="ghost" aria-current={active ? "page" : undefined} onClick={()=>go(key)} className={`group relative h-11 w-full justify-start gap-3 overflow-hidden rounded-xl px-3.5 text-sm font-semibold ring-1 ring-inset ring-transparent transition-all duration-200 active:scale-[0.96] ${active ? "bg-primary/10 text-primary shadow-[0_0_18px_rgba(110,231,70,0.10)] ring-primary/20" : "text-sidebar-foreground/60 hover:bg-white/5 hover:text-sidebar-foreground"}`}>
+              {active && <span aria-hidden="true" className="absolute inset-y-2.5 left-0 w-1 rounded-r-full bg-primary shadow-[0_0_10px_rgba(110,231,70,0.7)]" />}
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${active ? "bg-primary/15 text-primary" : "text-sidebar-foreground/55 group-hover:scale-110 group-hover:text-primary"}`}><Icon className="size-4" /></span>
               <span className="min-w-0 truncate text-left">{label}</span>
             </Button>;
           })}</div>
         </div>)}
       </nav>
-      <div className="relative z-10 shrink-0 border-t border-sidebar-border bg-sidebar-accent/20 px-3 py-3">
-        {isAdminQuery.data&&<Button variant="ghost" className="mb-0.5 h-9 w-full justify-start gap-3 px-3 text-sidebar-primary hover:bg-sidebar-accent/60 hover:text-sidebar-primary" onClick={()=>navigate({to:"/admin"})}><ShieldCheck/>Área Admin</Button>}
-        <Button variant="ghost" className="mb-0.5 h-9 w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground" onClick={()=>setAboutOpen(true)}><Info/>Sobre</Button>
-        <Button variant="ghost" className="h-9 w-full justify-start gap-3 px-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground" onClick={signOut}><LogOut/>Sair</Button>
+      <div className="relative z-10 shrink-0 space-y-1 border-t border-white/5 bg-background/60 px-3 py-3 backdrop-blur-md">
+        {isAdminQuery.data&&<Button variant="ghost" className="mb-0.5 h-10 w-full justify-start gap-3 rounded-xl px-3.5 text-sm font-semibold text-primary transition-all duration-200 hover:bg-primary/10 hover:text-primary active:scale-[0.96]" onClick={()=>navigate({to:"/admin"})}><ShieldCheck/>Área Admin</Button>}
+        <Button variant="ghost" className="mb-0.5 h-10 w-full justify-start gap-3 rounded-xl px-3.5 text-xs font-semibold text-sidebar-foreground/60 transition-all duration-200 hover:bg-white/5 hover:text-sidebar-foreground active:scale-[0.96]" onClick={()=>setAboutOpen(true)}><Info/>Sobre</Button>
+        <Button variant="ghost" className="h-10 w-full justify-start gap-3 rounded-xl px-3.5 text-xs font-semibold text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]" onClick={signOut}><LogOut/>Sair</Button>
       </div>
     </aside>
     {mobileOpen&&<div className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden" onClick={()=>setMobileOpen(false)}/>}
