@@ -36,18 +36,26 @@ export function RecordDialog({
       ]),
     );
   const [form, setForm] = useState<Row>(initial);
-  useEffect(() => setForm(initial()), [row, open]);
+  useEffect(() => { if (!demo) setForm(initial()); }, [row, open, demo]);
   // Demonstração da Yui: digita campo a campo, como uma pessoa faria.
+  // A cada passo reescreve o formulário inteiro de forma cumulativa, para que
+  // nenhum campo preenchido seja perdido por atualizações fora de ordem.
   useEffect(() => {
     if (!open || !demo) return;
     const fila = Object.entries(demo).map(([k, v]) => [k, String(v)] as const);
-    let campo = 0, i = 0;
+    const total = fila.reduce((acc, [, v]) => acc + v.length, 0);
+    let pos = 0;
     const timer = window.setInterval(() => {
-      const atual = fila[campo];
-      if (!atual) return window.clearInterval(timer);
-      i = Math.min(i + 2, atual[1].length);
-      setForm((f) => ({ ...f, [atual[0]]: atual[1].slice(0, i) }));
-      if (i >= atual[1].length) { campo++; i = 0; }
+      pos = Math.min(pos + 2, total);
+      let resto = pos;
+      const parcial: Row = {};
+      for (const [k, v] of fila) {
+        const n = Math.max(0, Math.min(resto, v.length));
+        parcial[k] = v.slice(0, n);
+        resto -= n;
+      }
+      setForm((f) => ({ ...f, ...parcial }));
+      if (pos >= total) window.clearInterval(timer);
     }, 45);
     return () => window.clearInterval(timer);
   }, [open, demo]);
