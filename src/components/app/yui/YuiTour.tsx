@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { acharAlvo, type TourStep } from "./tourSteps";
