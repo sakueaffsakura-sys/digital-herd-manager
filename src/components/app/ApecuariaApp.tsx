@@ -1,7 +1,7 @@
 import { YuiAssistant } from "./yui/YuiAssistant";
 import { useCriadores } from "./criadores";
 import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
-import fundoApp from "@/assets/yui-wallpaper-original.png.asset.json";
+import fundoMenu from "@/assets/menu-fundo-vertical.jpg";
 import { HerdIcon } from "@/components/app/HerdIcon";
 import { CalfIcon } from "@/components/app/CalfIcon";
 import { Suspense, lazy, useDeferredValue, useEffect, useMemo, useState, type FormEvent } from "react";
