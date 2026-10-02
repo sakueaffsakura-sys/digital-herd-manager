@@ -16,6 +16,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const [falando, setFalando] = useState(false);
   const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [minimizadoManual, setMinimizadoManual] = useState<boolean | null>(null);
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = passos[idx];
   const ultimo = idx === passos.length - 1;
