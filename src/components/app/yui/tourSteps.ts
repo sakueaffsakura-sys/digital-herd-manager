@@ -14,6 +14,58 @@ export type TourStep = {
   demonstracaoAnotacao?: boolean;
 };
 
+/** Exemplos que a Yui digita na demonstração de anotação; nada é salvo. */
+export const EXEMPLOS_NOTA: { rotulo: string; valores: Record<string, string> }[] = [
+  {
+    rotulo: "Ordenha da manhã",
+    valores: {
+      producao: "12.5",
+      observacao: "Vaca comeu bem e ficou calma na ordenha da manhã.",
+      comportamento: "Tranquila",
+      alimentacao: "Silagem e ração no cocho, água à vontade.",
+    },
+  },
+  {
+    rotulo: "Ordenha da tarde",
+    valores: {
+      producao: "9.8",
+      observacao: "Ordenha da tarde tranquila, com volume menor que o da manhã.",
+      comportamento: "Calma",
+      alimentacao: "Capim fresco no piquete antes da ordenha.",
+    },
+  },
+  {
+    rotulo: "Animal observado",
+    valores: {
+      producao: "",
+      observacao: "Vaca 08 apresentou apatia e comeu menos na vistoria de hoje.",
+      comportamento: "Apática",
+      alimentacao: "Comeu pouco; deixar água fresca à vontade.",
+      informacoes_adicionais: "Reavaliar amanhã; se piorar, chamar o veterinário.",
+    },
+  },
+  {
+    rotulo: "Carrapato",
+    valores: {
+      producao: "",
+      observacao: "Vaca 05 com muitos carrapatos no dorso; aplicado banho carrapaticida.",
+      comportamento: "Inquieta",
+      alimentacao: "Comeu normalmente.",
+      informacoes_adicionais: "Repetir o banho em 21 dias e conferir a dose do produto.",
+    },
+  },
+  {
+    rotulo: "Troca de lote",
+    valores: {
+      producao: "",
+      observacao: "Vaca 12 foi levada para o lote de engorda após a pesagem de hoje.",
+      comportamento: "Normal",
+      alimentacao: "Começando a transição para a ração de engorda.",
+      informacoes_adicionais: "Acompanhar o peso nos próximos dias para conferir a adaptação.",
+    },
+  },
+];
+
 export const TOUR: TourStep[] = [
   { alvo: "[data-tour='yui']", titulo: "Olá, seja bem-vindo!", fala: "Oi! Eu sou a assistente virtual do Pecuária Digital, criada para dar suporte aos usuários que tiverem dificuldade ou dúvidas. Vou te mostrar cada parte do sistema na prática. Pode relaxar e só acompanhar. Se quiser, use os botões para pausar, voltar, avançar ou sair a qualquer momento." },
   { section: "inicio", alvo: "[data-tour='nav-inicio']", titulo: "Menu lateral", fala: "Aqui do lado fica o menu. Cada item leva a uma área do sistema. Vamos começar pelo Início.", passos: ["Toque no nome da área no menu", "A página abre à direita", "No celular, toque em ☰ no topo para abrir o menu"] },
@@ -29,7 +81,7 @@ export const TOUR: TourStep[] = [
   { section: "nascimentos", alvo: "[data-tour='nav-nascimentos']", titulo: "Nascimentos", fala: "Em Nascimentos você liga a vaca ao bezerro que nasceu. Dica: cadastre o bezerro no rebanho antes. O sistema já marca quem é a mãe automaticamente.", passos: ["Cadastre o bezerro em Meu Rebanho", "Volte aqui e toque em \"Novo\"", "Escolha a vaca, o bezerro e a data, e salve"] },
   { section: "lotes", alvo: "[data-tour='nav-lotes']", titulo: "Lotes", fala: "Os Lotes servem para organizar os animais em grupos, por pasto ou finalidade. Depois você pode filtrar e vacinar por lote.", passos: ["Toque em \"Novo\"", "Dê um nome (ex.: Pasto 1)", "No cadastro do animal, escolha o lote"] },
   { section: "producao", alvo: "[data-tour='nav-producao']", titulo: "Produção de Leite", fala: "Na Produção de Leite você registra os litros de cada vaca e o valor por litro. O total em reais é calculado sozinho. Na aba Anotações você guarda observações da ordenha.", passos: ["Toque em \"Novo\"", "Escolha a vaca e a data", "Digite os litros e o valor por litro — o total aparece sozinho"] },
-  { section: "producao", alvo: "[data-tour='notas-nova']", titulo: "Vamos simular uma anotação", fala: "Abri a aba Anotações. Aqui fica o botão Nova anotação. Vou te mostrar um exemplo de como preencher: escolha a data, escreva uma observação e, se quiser, vincule um animal. Este exemplo é só uma demonstração: nada será salvo na sua propriedade.", passos: ["Toque em Nova anotação", "Confirme a data e escreva sua observação", "Se quiser, escolha animal, lote ou produção", "Toque em Salvar somente quando for uma anotação real"], demonstracaoAnotacao: true },
+  { section: "producao", alvo: "[data-tour='notas-nova']", titulo: "Vamos simular uma anotação", fala: "Abri a aba Anotações. Aqui fica o botão Nova anotação. Vou te mostrar um exemplo de como preencher: escolha a data, escreva uma observação e, se quiser, vincule um animal. Embaixo do formulário há vários exemplos, como ordenha, animal observado e troca de lote: toque em um para eu preencher outro caso. Este exemplo é só uma demonstração: nada será salvo na sua propriedade.", passos: ["Toque em Nova anotação", "Confirme a data e escreva sua observação", "Toque em um dos exemplos para eu preencher outro caso", "Toque em Salvar somente quando for uma anotação real"], demonstracaoAnotacao: true },
   { section: "relatorios", alvo: "[data-tour='nav-relatorios']", titulo: "Relatórios", fala: "Nos Relatórios você escolhe o tipo, como financeiro, leite, nascimentos ou compra e venda, e o mês que quer ver.", passos: ["Escolha o tipo de relatório", "Escolha o mês e o ano", "Veja totais, gráficos e a lista do período"] },
   { section: "relatorios", alvo: "[data-tour='conteudo']", titulo: "Escolhendo o período", fala: "Use as setinhas para trocar de mês, ou escolha Ano inteiro. Só aparecem os registros do período escolhido, com totais, gráficos e comparação com o mês anterior." },
   { section: "financeiro", alvo: "[data-tour='nav-financeiro']", titulo: "Lucros e Investimentos", fala: "Em Lucros e Investimentos você lança receitas, despesas e investimentos. O lucro é calculado automaticamente.", passos: ["Toque em \"Novo\"", "Escolha receita, despesa ou investimento", "Informe valor, data e descrição, e salve"] },

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useYuiAvatar } from "./useYuiAvatar";
-import { acharAlvo, type TourStep } from "./tourSteps";
+import { acharAlvo, EXEMPLOS_NOTA, type TourStep } from "./tourSteps";
 import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
 
 type Rect = { top: number; left: number; width: number; height: number };
@@ -67,12 +67,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         await esperar(1200);
         if (!vivo) return;
-        window.dispatchEvent(new CustomEvent("yui:demo-nota", { detail: {
-          producao: "12.5",
-          observacao: "Vaca comeu bem e ficou calma na ordenha da manhã.",
-          comportamento: "Tranquila",
-          alimentacao: "Silagem e ração no cocho, água à vontade.",
-        } }));
+        window.dispatchEvent(new CustomEvent("yui:demo-nota", { detail: EXEMPLOS_NOTA[0].valores }));
         for (let t = 0; t < 15 && vivo; t++) { const d = acharAlvo("[data-tour='demo-dialog']"); if (d) { el = d; break; } await esperar(120); }
         if (!vivo) return;
       }

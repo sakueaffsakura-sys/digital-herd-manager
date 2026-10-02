@@ -24,6 +24,7 @@ import { maxPage, pageSummary, pageWindow, PAGE_SIZES } from "@/lib/pagination";
 import { createPageableTable, useDebouncedValue, usePagedRows } from "./usePagedRows";
 import { Empty, PageTitle, friendlyError, pretty, type FormRefs, type Module, type Row } from "./shared";
 import { RecordDialog } from "./RecordDialog";
+import { EXEMPLOS_NOTA } from "./yui/tourSteps";
 
 export const productionNotes: Module = {
   title: "Anotações da Produção",
@@ -62,8 +63,9 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [demo, setDemo] = useState<Row | null>(null);
+  const [demoIndice, setDemoIndice] = useState(0);
   useEffect(() => {
-    const abrir = (e: Event) => { setEditing(null); setDemo((e as CustomEvent<Row>).detail); setOpen(true); };
+    const abrir = (e: Event) => { setEditing(null); setDemoIndice(0); setDemo((e as CustomEvent<Row>).detail); setOpen(true); };
     const fechar = () => { setDemo(null); setOpen(false); };
     window.addEventListener("yui:demo-nota", abrir);
     window.addEventListener("yui:demo-fim", fechar);
@@ -303,6 +305,9 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
         onSave={(p) => save.mutate(p)}
         saving={save.isPending}
         demo={demo}
+        demoExemplos={EXEMPLOS_NOTA}
+        demoExemploAtual={demoIndice}
+        onDemoExemplo={(i) => { setDemoIndice(i); setDemo(EXEMPLOS_NOTA[i].valores); }}
       />
     </div>
   );
