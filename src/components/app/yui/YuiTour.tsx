@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useYuiAvatar } from "./useYuiAvatar";
-import { acharAlvo, type TourStep } from "./tourSteps";
+import { acharAlvo, EXEMPLOS_NOTA, type TourStep } from "./tourSteps";
 import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
 
 type Rect = { top: number; left: number; width: number; height: number };
