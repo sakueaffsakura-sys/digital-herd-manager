@@ -48,6 +48,7 @@ export function RecordDialog({
       const atual = fila[campo];
       if (!atual) return window.clearInterval(timer);
       i = Math.min(i + 2, atual[1].length);
+      if (i <= 2) console.log("[demo] tick", atual[0], atual[1].slice(0, i));
       setForm((f) => ({ ...f, [atual[0]]: atual[1].slice(0, i) }));
       if (i >= atual[1].length) { campo++; i = 0; }
     }, 45);
