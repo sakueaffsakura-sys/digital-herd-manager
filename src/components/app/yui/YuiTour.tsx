@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2, NotebookPen, Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useYuiAvatar } from "./useYuiAvatar";
 import { acharAlvo, type TourStep } from "./tourSteps";
@@ -16,6 +16,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const [falando, setFalando] = useState(false);
   const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [minimizadoManual, setMinimizadoManual] = useState<boolean | null>(null);
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = passos[idx];
   const ultimo = idx === passos.length - 1;
@@ -109,6 +110,9 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
 
   const pad = 8;
   const embaixo = !rect || rect.top + rect.height / 2 < window.innerHeight * 0.55;
+  // No modo automático o cartão minimiza sozinho para não tampar a demonstração;
+  // ao pausar ele expande. O usuário pode forçar um dos dois estados.
+  const minimizado = minimizadoManual ?? !pausado;
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
@@ -123,21 +127,39 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
         </div>
       ) : <div className="absolute inset-0 bg-background/80" />}
 
+      {minimizado ? (
+        /* Pílula compacta: acompanha o tour sem tampar a tela */
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-primary/40 bg-popover/95 py-1.5 pl-1.5 pr-2 shadow-2xl backdrop-blur transition-all duration-500">
+          <div className="relative shrink-0">
+            <img src={yuiAvatar} alt="Yui" width={36} height={36} className={`size-9 rounded-full border-2 border-primary bg-primary/10 object-cover ${falando ? "animate-[pulse_1.2s_ease-in-out_infinite]" : ""}`} />
+            {falando && <span className="absolute -bottom-0.5 -right-0.5 flex h-4 items-end gap-0.5 rounded-full bg-primary px-1 py-0.5">{[0, 1, 2].map((i) => <span key={i} className="w-0.5 animate-bounce rounded bg-primary-foreground" style={{ height: 5 + i * 2, animationDelay: `${i * 120}ms` }} />)}</span>}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Yui · {idx + 1}/{passos.length}</p>
+            <p className="max-w-40 truncate text-xs font-semibold leading-tight">{passo.titulo}</p>
+          </div>
+          <div className="h-1 w-14 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
+          <Button type="button" size="icon-sm" variant="ghost" onClick={() => { setPausado((p) => !p); if (!pausado) calar(); }} aria-label={pausado ? "Continuar" : "Pausar"}>{pausado ? <Play className="size-4" /> : <Pause className="size-4" />}</Button>
+          <Button type="button" size="icon-sm" variant="ghost" onClick={() => setMinimizadoManual(false)} aria-label="Expandir explicação"><Maximize2 className="size-4" /></Button>
+          <Button type="button" size="icon-sm" variant="ghost" onClick={sair} aria-label="Sair do tour"><X className="size-4" /></Button>
+        </div>
+      ) : (
       <div className={`absolute left-1/2 w-[min(560px,calc(100vw-24px))] -translate-x-1/2 transition-all duration-500 ${embaixo ? "bottom-4" : "top-4"}`}>
         <div className="overflow-hidden rounded-2xl border border-primary/40 bg-popover shadow-2xl">
            <div className="h-1 bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
           <div className="flex gap-4 p-4">
-            <div className="relative shrink-0">
+             <div className="relative shrink-0">
               <img src={yuiAvatar} alt="Yui" width={64} height={64} className={`size-16 rounded-full border-2 border-primary bg-primary/10 object-cover ${falando ? "animate-[pulse_1.2s_ease-in-out_infinite]" : ""}`} />
               {falando && <span className="absolute -bottom-1 -right-1 flex h-5 items-end gap-0.5 rounded-full bg-primary px-1.5 py-1">{[0, 1, 2].map((i) => <span key={i} className="w-0.5 animate-bounce rounded bg-primary-foreground" style={{ height: 8 + i * 2, animationDelay: `${i * 120}ms` }} />)}</span>}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                  <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Yui · passo {idx + 1} de {passos.length}</p>
-                 <Button type="button" size="icon-sm" variant="ghost" onClick={sair} className="ml-auto" aria-label="Sair do tour"><X className="size-4" /></Button>
+                 <Button type="button" size="icon-sm" variant="ghost" onClick={() => setMinimizadoManual(true)} className="ml-auto" aria-label="Minimizar explicação"><Minimize2 className="size-4" /></Button>
+                 <Button type="button" size="icon-sm" variant="ghost" onClick={sair} aria-label="Sair do tour"><X className="size-4" /></Button>
               </div>
               <h3 className="mt-0.5 text-lg font-bold leading-tight">{passo.titulo}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{passo.fala}</p>
+               <p className="mt-1.5 text-sm leading-relaxed text-foreground/85">{passo.fala}</p>
               {passo.passos && (
                 <ol className="mt-2.5 space-y-1 rounded-lg border border-border bg-card/60 p-2.5 text-xs">
                   <li className="mb-1 font-semibold text-primary">Como fazer:</li>
@@ -160,6 +182,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
         </div>
         {pausado ? <p className="mt-2 text-center text-xs text-muted-foreground">Tour pausado. Toque em Continuar quando quiser.</p> : carregandoVoz && <p className="mt-2 text-center text-xs text-muted-foreground">Preparando a voz da Yui…</p>}
       </div>
+      )}
       <span className="sr-only" aria-live="polite">{passo.titulo}. {passo.fala}</span>
     </div>
   );
