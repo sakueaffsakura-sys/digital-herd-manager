@@ -36,7 +36,7 @@ export function RecordDialog({
       ]),
     );
   const [form, setForm] = useState<Row>(initial);
-  useEffect(() => setForm(initial()), [row, open]);
+  useEffect(() => { console.log("[demo] reset", { row, open }); setForm(initial()); }, [row, open]);
   // Demonstração da Yui: digita campo a campo, como uma pessoa faria.
   useEffect(() => {
     console.log("[demo] efeito disparado", { open, demo });
