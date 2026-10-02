@@ -131,9 +131,16 @@ async function falarIA(texto: string, minha: number, aoComecar?: () => void): Pr
     };
     audio.onended = () => fim(true);
     audio.onerror = () => fim(false);
-    audio.play().then(() => aoComecar?.()).catch(() => fim(false));
-    // Se o navegador nem começar a tocar em 5s, desiste e usa a voz do navegador.
-    setTimeout(() => { if (!feito && audio.currentTime === 0) fim(false); }, 5000);
+    // Tenta tocar; se o navegador segurar o áudio, tenta de novo uma vez antes de desistir.
+    const tentar = (vez: number) => {
+      audio.play().then(() => aoComecar?.()).catch(() => {
+        if (vez === 1 && !feito && minha === geracao) setTimeout(() => tentar(2), 600);
+        else fim(false);
+      });
+    };
+    tentar(1);
+    // Se o navegador nem começar a tocar em 8s, desiste e usa a voz do navegador.
+    setTimeout(() => { if (!feito && audio.currentTime === 0) fim(false); }, 8000);
   });
 }
 
