@@ -51,8 +51,8 @@ function Item({ info }: { info: (typeof IMAGENS_INFO)[number] }) {
   };
   const escolher = async (f?: File) => {
     if (!f) return;
-    if (!f.type.startsWith("image/")) return toast.error("Escolha um arquivo de imagem (JPG, PNG ou WebP).");
-    if (f.size > 15 * 1024 * 1024) return toast.error("Imagem muito grande (máximo 15 MB).");
+    if (!f.type.startsWith("image/")) { toast.error("Escolha um arquivo de imagem (JPG, PNG ou WebP)."); return; }
+    if (f.size > 15 * 1024 * 1024) { toast.error("Imagem muito grande (máximo 15 MB)."); return; }
     try { setPrevia(await reduzir(f, info.largura, info.altura)); } catch { toast.error("Não consegui usar essa imagem."); }
   };
   const padrao = atual === IMAGENS_PADRAO[info.chave as ChaveImagem];
