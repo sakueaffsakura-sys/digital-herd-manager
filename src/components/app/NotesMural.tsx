@@ -24,6 +24,7 @@ import { maxPage, pageSummary, pageWindow, PAGE_SIZES } from "@/lib/pagination";
 import { createPageableTable, useDebouncedValue, usePagedRows } from "./usePagedRows";
 import { Empty, PageTitle, friendlyError, pretty, type FormRefs, type Module, type Row } from "./shared";
 import { RecordDialog } from "./RecordDialog";
+import { EXEMPLOS_NOTA } from "./yui/tourSteps";
 
 export const productionNotes: Module = {
   title: "Anotações da Produção",

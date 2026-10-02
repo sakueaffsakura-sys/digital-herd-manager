@@ -17,6 +17,10 @@ export function RecordDialog({
   onSave,
   saving,
   demo,
+  /** Exemplos que a Yui oferece durante a demonstração; escolher um preenche o formulário de novo. */
+  demoExemplos,
+  demoExemploAtual,
+  onDemoExemplo,
 }: {
   open: boolean;
   onClose: () => void;
@@ -27,6 +31,9 @@ export function RecordDialog({
   saving: boolean;
   /** Valores digitados automaticamente pela Yui; nunca são salvos. */
   demo?: Row | null;
+  demoExemplos?: { rotulo: string; valores: Record<string, string> }[];
+  demoExemploAtual?: number;
+  onDemoExemplo?: (i: number) => void;
 }) {
   const initial = () =>
     Object.fromEntries(
