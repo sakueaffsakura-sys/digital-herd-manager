@@ -3,6 +3,7 @@ import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId, withLovableAiGatewayRunIdHeader } from "./ai/run-id.server";
 import { allowRequest } from "./rate-limit";
+import { dataNoFuso, somarDias } from "./datas";
 
 const MODEL = "openai/gpt-6-astra";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1";
@@ -58,8 +59,8 @@ COMO RESPONDER MELHOR:
 
 async function contextoConta(supabase: ReturnType<typeof createClient>) {
   try {
-    const hoje = new Date().toISOString().slice(0, 10);
-    const daqui30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+    const hoje = dataNoFuso();
+    const daqui30 = somarDias(hoje, 30);
     const c = (t: string) => supabase.from(t as never).select("id", { count: "exact", head: true });
     const [props, animais, lotes, vacinas, vencidas, insem, partos, pesagens, leite] = await Promise.all([
       supabase.from("propriedades" as never).select("nome").limit(10),

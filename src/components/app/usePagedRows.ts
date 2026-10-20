@@ -2,6 +2,9 @@ import { type QueryClient, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { clampPage, rangeOf } from "@/lib/pagination";
+import { escapeILikeValue, orSearch, termoDeBusca } from "@/lib/busca";
+
+export { escapeILikeValue };
 
 export type GridFilter = {
   key: string;
@@ -10,15 +13,6 @@ export type GridFilter = {
 };
 
 export type FilterBag = GridFilter[];
-
-/**
- * Escapa um valor para uso dentro de `.or("...")` do PostgREST em um único
- * passe: separadores `,` / `()` / aspas / barra e curingas `%_` viram literais.
- */
-export const escapeOrValue = (value: string) =>
-  value.replace(/[\\"(),%_]/g, (m) => `\\${m}`);
-
-const orTerm = (key: string, value: string) => `${key}.ilike.%${escapeOrValue(value)}%`;
 
 export function useDebouncedValue<T>(value: T, delay = 350): T {
   const [debounced, setDebounced] = useState(value);
@@ -50,18 +44,10 @@ function baseScopedQuery(
     if (f.value === null || f.value === "") continue;
     q = q[f.op](f.key, f.op === "ilike" ? `%${escapeILikeValue(f.value)}%` : f.value);
   }
-  if (search && (searchColumns?.length ?? 0) > 0) {
-    const compiled = searchColumns!.length === 1
-      ? orTerm(searchColumns![0], search)
-      : `(${searchColumns!.map((c) => orTerm(c, search)).join(",")})`;
-    q = q.or(compiled);
-  }
+  const compiled = orSearch(searchColumns, search);
+  if (compiled) q = q.or(compiled);
   return q;
 }
-
-/** Escapa curingas do ILIKE mantendo o valor literal. */
-export const escapeILikeValue = (value: string) =>
-  value.replace(/[\\%_]/g, (m) => `\\${m}`);
 
 export function createPageableTable({ table, propertyId }: { table: string; propertyId: string }) {
   return {
@@ -121,8 +107,13 @@ export type UsePagedRowsArgs = {
 };
 
 /**
- * Listagem servida do banco com paginação (range), contagem exata e busca
- * ilike. Não carrega a tabela inteira no navegador.
+ * Listagem servida do banco com paginação (range) e busca ilike. Não carrega
+ * a tabela inteira no navegador.
+ *
+ * A lista e o total são consultas separadas: as linhas aparecem assim que
+ * chegam, sem esperar o `count(*)` — que em fazendas com milhões de registros
+ * é a parte mais lenta. Enquanto o total não chega (`totalReady === false`)
+ * quem usa não deve "corrigir" a página atual.
  */
 export function usePagedRows({
   table,
@@ -135,7 +126,8 @@ export function usePagedRows({
   filters,
 }: UsePagedRowsArgs) {
   const finalPage = clampPage(page, Number.MAX_SAFE_INTEGER, pageSize);
-  const cacheKey = serialize(filters, search);
+  const termo = termoDeBusca(search);
+  const cacheKey = serialize(filters, termo);
 
   const list = useQuery({
     queryKey: [table, propertyId, "rows", cols, finalPage, pageSize, cacheKey],
@@ -144,7 +136,7 @@ export function usePagedRows({
         cols,
         page: finalPage,
         pageSize,
-        search,
+        search: termo,
         searchColumns,
         filters,
       });
@@ -158,7 +150,7 @@ export function usePagedRows({
     queryKey: [table, propertyId, "total", cacheKey],
     queryFn: async () => {
       const res = await createPageableTable({ table, propertyId }).count({
-        search,
+        search: termo,
         searchColumns,
         filters,
       });
@@ -166,13 +158,20 @@ export function usePagedRows({
       return res.count;
     },
     placeholderData: (prev) => prev,
+    // o total muda pouco; evita recontar a cada troca de página ou de aba
+    staleTime: 20_000,
   });
 
   return {
     rows: (list.data ?? []) as Record<string, unknown>[],
     total: (total.data ?? 0) as number,
-    isPending: list.isPending || total.isPending,
-    isError: list.isError || total.isError,
+    /** true só na primeira carga das linhas (depois, a lista anterior fica na tela). */
+    isPending: list.isPending,
+    /** true enquanto o total ainda não foi calculado nenhuma vez. */
+    totalPending: total.isPending,
+    totalReady: !total.isPending && !total.isError,
+    isFetching: list.isFetching,
+    isError: list.isError,
     error: (list.error ?? total.error) as unknown as Error | null,
     refetch: () => {
       void list.refetch();

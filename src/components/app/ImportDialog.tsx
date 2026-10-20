@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { chunk, detectAndParse, fnv1a, splitInHalf, type ParsedImport } from "@/lib/importParser";
+import { buildAliases, detectAndParse, novoUuid, remapHeaders, splitInHalf, type ParsedImport } from "@/lib/importParser";
 import { naturalKeyForTable, normalizeAndValidate, type ImportField } from "@/lib/validate";
 import { friendlyError, type Module, type Row } from "./shared";
 
@@ -22,6 +22,14 @@ type State =
   | { step: "done"; aceitas: number; rejeitadas: number; reasons: Reason[]; duplicated: number };
 
 const MAX_DETAIL = 500;
+/** Linhas por envio. Maior que isso não ganha velocidade e piora o "tudo ou nada" de cada lote. */
+const BATCH = 100;
+/**
+ * Só erros de DADOS (classes 21/22/23 do PostgreSQL: valor inválido, violação de
+ * unicidade, chave estrangeira, CHECK) justificam dividir o lote para achar a linha
+ * ruim. Rede fora do ar, sessão expirada ou erro 5xx pausam a importação.
+ */
+const isDataError = (code: unknown) => /^(21|22|23)/.test(String(code ?? ""));
 
 const toImportFields = (config: Module): ImportField[] =>
   config.fields.map((f) => ({
@@ -62,7 +70,7 @@ export default function ImportDialog({
   }, [open]);
 
   const fields = useMemo(() => toImportFields(config), [config]);
-  const resume = useRef<{ processadas: number; reasons: Reason[] } | null>(null);
+  const resume = useRef<{ processadas: number; aceitas: number; reasons: Reason[] } | null>(null);
 
   const applyRefMapping = (rows: Row[]): { rows: Row[]; reasons: Reason[] } => {
     const reasons: Reason[] = [];
@@ -101,21 +109,27 @@ export default function ImportDialog({
   };
 
   const start = async () => {
-    let current = state;
+    const current = state;
     if (current.step !== "preview") return;
     const data = current.data;
 
     const seen = new Set<string>();
-    const reasons: Reason[] = [...current.reasons];
-    const rejectedLines = new Set(reasons.map((r) => r.linha));
-    let aceitas = 0;
-    const startAt = resume.current?.processadas ?? 0;
-    resume.current?.reasons.forEach((r) => {
-      rejectedLines.add(r.linha);
+    const reasons: Reason[] = [];
+    const reasonKeys = new Set<string>();
+    const addReason = (r: Reason) => {
+      const k = `${r.linha}|${r.motivo}`;
+      if (reasonKeys.has(k)) return;
+      reasonKeys.add(k);
       reasons.push(r);
-    });
+    };
+    current.reasons.filter((r) => r.linha > 0).forEach(addReason); // linha 0 = aviso de pausa, não é linha do arquivo
+    resume.current?.reasons.forEach(addReason);
+    const rejectedLines = new Set(reasons.map((r) => r.linha));
+    const startAt = resume.current?.processadas ?? 0;
+    let aceitas = resume.current?.aceitas ?? 0;
+    let done = startAt;
 
-    setState({ step: "running", data, fields: current.fields, progress: startAt, total: data.rows.length, aceitas: 0, rejeitadas: rejectedLines.size });
+    setState({ step: "running", data, fields: current.fields, progress: startAt, total: data.rows.length, aceitas, rejeitadas: rejectedLines.size });
 
     const saveProgress = async (processadas: number, status: "em_andamento" | "erro" | "concluida" = "em_andamento", erro?: string) => {
       const payload = {
@@ -127,7 +141,7 @@ export default function ImportDialog({
         aceitas,
         rejeitadas: reasons.length,
         rejeitadas_detalhe: reasons.slice(0, MAX_DETAIL),
-        status: status,
+        status,
         erro: erro ?? null,
       };
       await supabase.from("importacoes").upsert(payload, { onConflict: "propriedade_id,tabela,arquivo" });
@@ -138,18 +152,22 @@ export default function ImportDialog({
         const { __linha: _line, ...rest } = r as Row & { __linha?: unknown };
         return rest;
       });
-      const { data: inserted, error } = await (supabase.from(config.table as any) as any).insert(payload).select("id");
+      // upsert com ignoreDuplicates = INSERT ... ON CONFLICT (id) DO NOTHING: reenviar um lote cuja
+      // resposta se perdeu não duplica as linhas que já entraram (cada linha tem id próprio).
+      const { data: inserted, error } = await (supabase.from(config.table as any) as any)
+        .upsert(payload, { onConflict: "id", ignoreDuplicates: true })
+        .select("id");
       if (!error) {
         aceitas += inserted?.length ?? rows.length;
-        for (const row of rows) seen.add(naturalKeyForTable(config.table, row));
         return;
       }
-      if (error.code !== "23505" || rows.length <= 1) {
-        for (const row of rows) {
-          reasons.push({ linha: Number(row["__linha"] ?? 0), motivo: error.code === "23505" ? "Registro duplicado (já existe no banco)." : friendlyError(error) });
-        }
+      // rede/permissão/servidor: não é culpa das linhas — interrompe para retomar depois
+      if (!isDataError(error.code)) throw error;
+      if (rows.length === 1) {
+        addReason({ linha: Number(rows[0]["__linha"] ?? 0), motivo: error.code === "23505" ? "Registro duplicado (já existe no banco)." : friendlyError(error) });
         return;
       }
+      // divide o lote até isolar a(s) linha(s) problemática(s); as boas entram
       const [a, b] = splitInHalf<Row>(rows);
       await insertChunk(a);
       await insertChunk(b);
@@ -158,39 +176,39 @@ export default function ImportDialog({
     try {
       if (startAt === 0) await saveProgress(0);
       const byLinha = new Map<number, Row>(current.valid.map((r) => [Number(r["__linha"]), r]));
-      let innerReasons = reasons.length;
-      for (let i = 0; i < data.rows.length; i += 50) {
-        if (i < startAt) continue;
-        const slice = data.rows
-          .slice(i, i + 50)
-          .map((_raw, k) => byLinha.get(i + k + 2))
-          .filter((r): r is Row => Boolean(r));
-        for (const row of slice) {
+      for (let i = startAt; i < data.rows.length; i += BATCH) {
+        const fresh: Row[] = [];
+        for (let k = 0; k < BATCH && i + k < data.rows.length; k++) {
+          const row = byLinha.get(i + k + 2); // linha 1 do arquivo é o cabeçalho
+          if (!row) continue; // linha com problema de validação (já listada)
+          const linha = Number(row["__linha"]);
+          if (rejectedLines.has(linha)) continue;
           const key = naturalKeyForTable(config.table, row);
           if (seen.has(key)) {
-            reasons.push({ linha: Number(row["__linha"] ?? 0), motivo: "Registro duplicado dentro do próprio arquivo." });
-            rejectedLines.add(Number(row["__linha"]));
+            addReason({ linha, motivo: "Registro duplicado dentro do próprio arquivo." });
+            rejectedLines.add(linha);
             continue;
           }
+          seen.add(key);
+          fresh.push({ ...row, propriedade_id: propertyId });
         }
-        const fresh = slice.filter((r) => !rejectedLines.has(Number(r["__linha"])));
-        if (fresh.length) {
-          await insertChunk(fresh.map((r) => ({ ...r, propriedade_id: propertyId })));
-          innerReasons = reasons.length;
-        }
-        const processed = Math.min(i + 50, data.rows.length);
-        setState((s) => (s.step === "running" ? { ...s, progress: processed, aceitas, rejeitadas: innerReasons } : s));
-        if (processed % 250 === 0) await saveProgress(processed);
+        if (fresh.length) await insertChunk(fresh);
+        done = Math.min(i + BATCH, data.rows.length);
+        await saveProgress(done); // gravar a cada lote: se cair, a retomada não repete linhas
+        setState((st) => (st.step === "running" ? { ...st, progress: done, aceitas, rejeitadas: reasons.length } : st));
       }
       const duplicated = reasons.filter((r) => r.motivo.includes("duplicado")).length;
       await saveProgress(data.rows.length, "concluida");
+      resume.current = null;
       setState({ step: "done", aceitas, rejeitadas: reasons.length, reasons: reasons.slice(0, MAX_DETAIL), duplicated });
       toast.success(`Importação concluída: ${aceitas} registros adicionados.`);
       onImported(aceitas);
     } catch (error) {
-      await saveProgress(data.rows.length, "erro", friendlyError(error)).catch(() => undefined);
-      setState({ step: "preview", data, fields: current.fields, valid: current.valid, reasons: [...current.reasons, { linha: 0, motivo: "Erro inesperado: " + friendlyError(error) }], fieldsTouched: current.fieldsTouched });
-      toast.error("A importação foi pausada. Reabra o arquivo para retomar de onde parou.");
+      // guarda o ponto exato onde parou (status continua "em_andamento" para poder retomar)
+      await saveProgress(done, "em_andamento", friendlyError(error)).catch(() => undefined);
+      resume.current = { processadas: done, aceitas, reasons: reasons.slice(0, MAX_DETAIL) };
+      setState({ step: "preview", data, fields: current.fields, valid: current.valid, reasons: [...current.reasons, { linha: 0, motivo: "Importação pausada: " + friendlyError(error) }], fieldsTouched: current.fieldsTouched });
+      toast.error("A importação foi pausada. Clique em Importar para continuar de onde parou.");
     }
   };
 
@@ -204,7 +222,7 @@ export default function ImportDialog({
     void (async () => {
       try {
         const text = await selected.text();
-        const data = detectAndParse(selected.name, text);
+        const data = remapHeaders(detectAndParse(selected.name, text), buildAliases(config.fields));
         if (!data.rows.length) {
           toast.error("Nenhuma linha encontrada no arquivo.");
           return;
@@ -214,10 +232,11 @@ export default function ImportDialog({
         );
         const errors: Reason[] = [];
         const valid: Row[] = [];
+        const comVinculoRuim = new Set(reasons.map((r) => r.linha)); // animal/lote/vacina não encontrado
         mapped.forEach((row) => {
           const { value, errors: errs } = normalizeAndValidate(fields, row as Record<string, string>, Number(row["__linha"]));
           if (errs.length) errs.forEach((m) => errors.push({ linha: Number(row["__linha"]), motivo: m }));
-          else valid.push({ ...value, __linha: row["__linha"] });
+          else if (!comVinculoRuim.has(Number(row["__linha"]))) valid.push({ ...value, __linha: row["__linha"], id: novoUuid() });
         });
         const combined = [...reasons, ...errors];
         const fieldNames = new Set(fields.map((f) => f.key));
@@ -237,7 +256,7 @@ export default function ImportDialog({
     void (async () => {
       const { data } = await supabase
         .from("importacoes")
-        .select("processadas,rejeitadas_detalhe,status")
+        .select("processadas,aceitas,rejeitadas_detalhe,status")
         .eq("propriedade_id", propertyId)
         .eq("tabela", config.table)
         .eq("arquivo", selected.name)
@@ -245,6 +264,7 @@ export default function ImportDialog({
       if (data && data.status === "em_andamento" && Number(data.processadas) !== 0) {
         resume.current = {
           processadas: Number(data.processadas),
+          aceitas: Number(data.aceitas ?? 0),
           reasons: ((data.rejeitadas_detalhe as unknown) ?? []) as Reason[],
         };
       } else {

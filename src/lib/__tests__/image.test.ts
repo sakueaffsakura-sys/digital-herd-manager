@@ -30,7 +30,7 @@ describe("sniffImageType", () => {
   it("identifica JPEG/PNG/WebP pelos magic bytes", () => {
     expect(sniffImageType(bytes("ffd8ff"))).toBe("image/jpeg");
     expect(sniffImageType(bytes("89504e470d0a1a0a"))).toBe("image/png");
-    expect(sniffImageType(bytes("52494646aaaa57534250"))).toBe("image/webp");
+    expect(sniffImageType(bytes("52494646aaaaaaaa57454250"))).toBe("image/webp");
   });
 
   it("rejeita desconhecido", () => {
@@ -91,7 +91,9 @@ describe("validarImagem", () => {
 describe("readableSize", () => {
   it("formata bytes de forma legível", () => {
     expect(readableSize(500)).toBe("500 B");
-    expect(readableSize(2048)).toBe("2 KB");
+    expect(readableSize(2048)).toBe("2.0 KB");
+    expect(readableSize(150 * 1024)).toBe("150 KB");
+    expect(readableSize(1024 * 1024 - 1)).toBe("1.0 MB");
     expect(readableSize(5 * 1024 * 1024)).toBe("5.0 MB");
   });
 });
