@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Delta, variacao, Empty, Metric, PageTitle, Panel, dateNow, money, pretty, type Row } from "./shared";
 import { usePlan } from "./account";
-import { fetchAllRows } from "@/lib/fetchAll";
+import { fetchAllRows, fetchAllRowsInfo } from "@/lib/fetchAll";
 
 type ReportType = "geral" | "financeiro" | "leite" | "rebanho" | "comercial";
 const TYPES: { id: ReportType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -69,8 +69,13 @@ export default function Reports({ propertyId }: { propertyId: string }) {
     queryKey: ["reports", propertyId, f.type, range.de, range.ate],
     queryFn: async () => {
       const { de, ate } = range;
-      const inRange = <T,>(table: string, sel: string, col = "data") =>
-        fetchAllRows<T>((a, b) => (supabase.from(table as "vendas").select(sel) as any).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).range(a, b));
+      let truncado = false;
+      // ordem total (coluna + id): sem o desempate, as páginas do range repetem/pulam linhas com a mesma data
+      const inRange = async <T,>(table: string, sel: string, col = "data") => {
+        const r = await fetchAllRowsInfo<T>((a, b) => (supabase.from(table as "vendas").select(sel) as any).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).order("id").range(a, b));
+        if (r.truncated) truncado = true;
+        return r.rows;
+      };
       const out: Record<string, unknown> = {};
       if (f.type === "geral") {
         const r = await supabase.rpc("relatorio_indicadores", { _propriedade_id: propertyId, _de: de, _ate: ate });
@@ -85,6 +90,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
         const [c, v] = await Promise.all([inRange<Row>("compras", "id,data,produto_animal,quantidade,valor,fornecedor,categoria"), inRange<Row>("vendas", "id,data,item,quantidade,valor,comprador,categoria")]);
         out.compras = c; out.vendas = v;
       }
+      out.truncado = truncado;
       return out;
     },
   });
@@ -100,7 +106,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
     enabled: f.type === "geral" || f.type === "financeiro",
     staleTime: 60_000,
     queryFn: async () => {
-      const list = await fetchAllRows<Row>((a, b) => supabase.from("movimentacoes_financeiras").select("tipo,valor").eq("propriedade_id", propertyId).gte("data", prevRange.de).lte("data", prevRange.ate).range(a, b) as any);
+      const list = await fetchAllRows<Row>((a, b) => supabase.from("movimentacoes_financeiras").select("tipo,valor").eq("propriedade_id", propertyId).gte("data", prevRange.de).lte("data", prevRange.ate).order("data").order("id").range(a, b) as any);
       const t: Record<string, number> = {}; list.forEach((r) => { t[String(r.tipo)] = (t[String(r.tipo)] ?? 0) + Number(r.valor); }); return t;
     },
   });
@@ -179,6 +185,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
         <span className="ml-auto rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary">{TYPES.find((t) => t.id === f.type)?.label} · {label}</span>
       </div></div>
     </div>
+    {d.truncado === true && <p role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-500">Este período tem mais de 20.000 registros e só os primeiros 20.000 entraram na conta. Os totais abaixo estão incompletos: escolha um mês (em vez do ano inteiro) para ver tudo.</p>}
     {body()}
   </div>;
 }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useImagensSite } from "./imagensSite";
 import { HerdIcon } from "./HerdIcon";
 import { Delta, Empty, Metric, MiniList, Panel, Status, dateNow, money, pretty, variacao, type Row } from "./shared";
+import { mesLocalISO, primeiroDiaDoMes, somarDias } from "@/lib/datas";
 import { BUCKETS, StorageImage, usePropertyProfile } from "./account";
 
 const tip = { background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
@@ -22,12 +23,9 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
     queryKey: ["dashboard", propertyId],
     staleTime: 30_000,
     queryFn: async () => {
-      const start = new Date();
-      start.setDate(1);
-      start.setMonth(start.getMonth() - 11);
-      const desde = start.toISOString().slice(0, 10);
+      const desde = primeiroDiaDoMes(-11);
       const hoje = dateNow();
-      const em30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+      const em30 = somarDias(hoje, 30);
       const [summary, finance, milk, vaccines, lots, inseminations, vencidas, partos] = await Promise.all([
         supabase.rpc("dashboard_resumo", { _propriedade_id: propertyId }),
         supabase.from("v_financeiro_mensal").select("mes,receitas,despesas").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
@@ -50,10 +48,8 @@ export default function Dashboard({ propertyId, propertyName, go }: { propertyId
   const data = query.data;
   const months = useMemo(() => {
     const list = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date();
-      d.setDate(1);
-      d.setMonth(d.getMonth() - 11 + i);
-      return { key: d.toISOString().slice(0, 7), mes: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""), receitas: 0, despesas: 0, leite: 0 };
+      const d = new Date(new Date().getFullYear(), new Date().getMonth() - 11 + i, 1);
+      return { key: mesLocalISO(d), mes: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""), receitas: 0, despesas: 0, leite: 0 };
     });
     const fin = new Map((data?.finance ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
     const mk = new Map((data?.milk ?? []).map((r) => [String(r.mes).slice(0, 7), r]));

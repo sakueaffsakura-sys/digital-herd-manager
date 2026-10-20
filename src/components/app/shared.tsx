@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/integrations/supabase/types";
+import { dataLocalISO } from "@/lib/datas";
 
 export type TableName = keyof Database["public"]["Tables"];
 export type Row = Record<string, unknown>;
@@ -22,9 +23,18 @@ export type FormRefs = {
   vaccines: { id: string; nome: string }[];
 };
 
-export const dateNow = () => new Date().toISOString().slice(0, 10);
+/** Data de hoje no relógio de quem usa (não em UTC). Veja src/lib/datas.ts. */
+export const dateNow = () => dataLocalISO();
 export const money = (value: unknown) => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-export const pretty = (value: unknown) => (value == null || value === "" ? "—" : String(value).replaceAll("_", " "));
+/**
+ * Texto para a tela. Só códigos do banco em minúsculas ("em_andamento") perdem o "_";
+ * nomes e anotações digitados pela pessoa ("Lote_A", "ver cerca_norte") ficam como estão.
+ */
+export const pretty = (value: unknown) => {
+  if (value == null || value === "") return "—";
+  const texto = String(value);
+  return /^[a-z0-9]+(_[a-z0-9]+)+$/.test(texto) ? texto.replaceAll("_", " ") : texto;
+};
 
 export const friendlyError = (error: unknown) => {
   const e = error as { code?: string; message?: string };

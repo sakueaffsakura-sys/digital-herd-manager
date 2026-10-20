@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { maxPage, pageSummary, pageWindow, PAGE_SIZES } from "@/lib/pagination";
 import { createPageableTable, useDebouncedValue, usePagedRows } from "./usePagedRows";
 import { Empty, PageTitle, friendlyError, pretty, type FormRefs, type Module, type Row } from "./shared";
+import { formatarDataBR } from "@/lib/datas";
 import { RecordDialog } from "./RecordDialog";
 import { EXEMPLOS_NOTA } from "./yui/tourSteps";
 
@@ -98,9 +99,10 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
   });
 
   useEffect(() => {
+    if (!paged.totalReady) return;
     const last = maxPage({ total: paged.total, pageSize });
     if (page > last) setPage(last);
-  }, [paged.total, pageSize, page]);
+  }, [paged.total, paged.totalReady, pageSize, page]);
 
   useEffect(() => {
     setPage(1);
@@ -174,7 +176,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
           />
         </div>
         <span className="text-xs text-muted-foreground">
-          {summary.total.toLocaleString("pt-BR")} anotações
+          {paged.totalReady ? `${summary.total.toLocaleString("pt-BR")} anotações` : "contando…"}
         </span>
       </div>
 
@@ -209,7 +211,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
                 <header className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CalendarDays className="size-3.5" />
-                    {pretty(row["data"])}
+                    {formatarDataBR(row["data"])}
                   </span>
                   {producao > 0 && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">

@@ -3,6 +3,8 @@ import {
   escapeILike,
   naturalKeyFor,
   normalizeAndValidate,
+  parseFlexibleDate,
+  parseNumber,
   type ImportField,
 } from "../validate";
 
@@ -75,5 +77,69 @@ describe("escapeILike", () => {
     expect(escapeILike("50%")).toBe("50\\%");
     expect(escapeILike("a_b")).toBe("a\\_b");
     expect(escapeILike("12\\5")).toBe("12\\\\5");
+  });
+});
+describe("parseFlexibleDate", () => {
+  it("aceita formatos brasileiros e ISO, só datas que existem", () => {
+    expect(parseFlexibleDate("2026-03-15")).toBe("2026-03-15");
+    expect(parseFlexibleDate("15/03/2026")).toBe("2026-03-15");
+    expect(parseFlexibleDate("5/3/2026")).toBe("2026-03-05");
+    expect(parseFlexibleDate("15.03.2026")).toBe("2026-03-15");
+    expect(parseFlexibleDate("2026/03/15")).toBe("2026-03-15");
+    expect(parseFlexibleDate("31/02/2026")).toBeNull();
+    expect(parseFlexibleDate("2026-02-30")).toBeNull();
+    expect(parseFlexibleDate("32/13/2023")).toBeNull();
+    expect(parseFlexibleDate("")).toBeNull();
+    expect(parseFlexibleDate("ontem")).toBeNull();
+  });
+});
+
+describe("parseNumber", () => {
+  it("entende 1.234,56, 1234.56 e R$", () => {
+    expect(parseNumber("1.234,56")).toBe(1234.56);
+    expect(parseNumber("1234.56")).toBe(1234.56);
+    expect(parseNumber("R$ 1.500,00")).toBe(1500);
+    expect(parseNumber("-3,5")).toBe(-3.5);
+    expect(parseNumber("12")).toBe(12);
+  });
+  it("rejeita o que não é número de verdade", () => {
+    expect(parseNumber("abc")).toBeNull();
+    expect(parseNumber("1e3")).toBeNull();
+    expect(parseNumber("0x10")).toBeNull();
+    expect(parseNumber("1,2,3")).toBeNull();
+    expect(parseNumber("")).toBeNull();
+  });
+});
+
+describe("normalizeAndValidate: tipos extras", () => {
+  it("select aceita valor, rótulo e maiúsculas", () => {
+    const f: ImportField[] = [{ key: "situacao", label: "Situação", type: "select", options: [{ value: "em_andamento", label: "Em andamento" }, { value: "confirmada", label: "Confirmada" }] }];
+    expect(normalizeAndValidate(f, { situacao: "em_andamento" }, 1).value.situacao).toBe("em_andamento");
+    expect(normalizeAndValidate(f, { situacao: "Em andamento" }, 1).value.situacao).toBe("em_andamento");
+    expect(normalizeAndValidate(f, { situacao: "CONFIRMADA" }, 1).value.situacao).toBe("confirmada");
+    expect(normalizeAndValidate(f, { situacao: "outra" }, 1).errors).toHaveLength(1);
+  });
+  it("boolean reconhece sim/não e recusa o resto", () => {
+    const f: ImportField[] = [{ key: "ativo", label: "Ativo", type: "boolean" }];
+    expect(normalizeAndValidate(f, { ativo: "Sim" }, 1).value.ativo).toBe(true);
+    expect(normalizeAndValidate(f, { ativo: "não" }, 1).value.ativo).toBe(false);
+    expect(normalizeAndValidate(f, { ativo: "talvez" }, 1).errors).toHaveLength(1);
+  });
+  it("valor só com espaços conta como ausente", () => {
+    const f: ImportField[] = [{ key: "nome", label: "Nome", required: true }];
+    expect(normalizeAndValidate(f, { nome: "   " }, 1).errors).toHaveLength(1);
+  });
+  it("data impossível é recusada", () => {
+    const f: ImportField[] = [{ key: "data", label: "Data", type: "date", required: true }];
+    expect(normalizeAndValidate(f, { data: "31/04/2026" }, 5).errors).toHaveLength(1);
+  });
+});
+
+describe("naturalKeyFor: anotações", () => {
+  it("duas anotações no mesmo dia para o mesmo animal não são duplicatas se o texto difere", () => {
+    const key = naturalKeyFor("anotacoes_producao");
+    const base = { data: "2026-03-01", animal_id: "a1" };
+    expect(key({ ...base, observacao: "manhã: calma" })).not.toBe(key({ ...base, observacao: "tarde: agitada" }));
+    expect(key({ ...base, observacao: " Manhã: Calma " })).toBe(key({ ...base, observacao: "manhã: calma" }));
   });
 });

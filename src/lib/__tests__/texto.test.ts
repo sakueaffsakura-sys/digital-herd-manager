@@ -14,7 +14,8 @@ describe("sanitizarLinha", () => {
   });
 
   it("remove caracteres de controle", () => {
-    expect(sanitizarLinha("a\u0000b\nc", 10)).toBe("a b c");
+    // o caractere NUL é descartado (não vira espaço); a quebra de linha vira espaço
+    expect(sanitizarLinha("a\u0000b\nc", 10)).toBe("ab c");
   });
 
   it("trunca no limite", () => {

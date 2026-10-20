@@ -41,8 +41,10 @@ export function extensionOf(name: string): string {
 }
 
 export function extensaoValida(name: string | undefined): boolean {
-  if (!name) return true; // sem extensão: confiamos nos magic bytes
-  return (ALLOWED_EXTENSIONS as readonly string[]).includes(extensionOf(name));
+  if (!name) return true; // sem nome: confiamos nos magic bytes
+  const ext = extensionOf(name);
+  if (ext === "") return true; // sem extensão ("foto", "foto."): confiamos nos magic bytes
+  return (ALLOWED_EXTENSIONS as readonly string[]).includes(ext);
 }
 
 export function mimeAllowed(type: string): boolean {
@@ -107,9 +109,11 @@ export const recomendacoes: Record<TipoImagem, { w: number; h: number; maxDim: n
 };
 
 export function readableSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
+  if (!Number.isFinite(bytes) || bytes < 0) return "0 B";
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
   const kb = bytes / 1024;
-  if (kb < 1024) return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`;
+  // 1023,6 KB arredonda para 1024: já é 1 MB.
+  if (Math.round(kb) < 1024) return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`;
   return `${(kb / 1024).toFixed(1)} MB`;
 }
 
