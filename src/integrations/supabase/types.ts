@@ -1177,6 +1177,30 @@ export type Database = {
         }
         Relationships: []
       }
+      registros_excluidos: {
+        Row: {
+          excluido_em: string
+          id: number
+          propriedade_id: string
+          registro_id: string
+          tabela: string
+        }
+        Insert: {
+          excluido_em?: string
+          id?: never
+          propriedade_id: string
+          registro_id: string
+          tabela: string
+        }
+        Update: {
+          excluido_em?: string
+          id?: never
+          propriedade_id?: string
+          registro_id?: string
+          tabela?: string
+        }
+        Relationships: []
+      }
       suporte_mensagens: {
         Row: {
           created_at: string
@@ -1638,6 +1662,17 @@ export type Database = {
       admin_saude: { Args: never; Returns: Json }
       admin_sistema: { Args: never; Returns: Json }
       admin_tempo_real: { Args: never; Returns: Json }
+      app_diagnostico: { Args: { p_propriedade_id: string }; Returns: Json }
+      app_sincronizar: {
+        Args: {
+          p_apos_id?: string
+          p_apos_updated_at?: string
+          p_limite?: number
+          p_propriedade_id: string
+          p_tabela: string
+        }
+        Returns: Json[]
+      }
       cancelar_plano_demonstracao: {
         Args: { _motivo?: string; _propriedade_id: string }
         Returns: Json
