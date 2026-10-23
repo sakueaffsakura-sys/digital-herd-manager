@@ -139,10 +139,10 @@ export const naturalKeyFor = (tabela: string) => {
     producao_leite: (r) => `leite:${String(r["animal_id"] ?? "")}:${String(r["data"] ?? "")}`,
     // Anotações não têm identificador natural: duas no mesmo dia para o mesmo animal
     // são normais. Só é duplicata se o texto também for igual.
-    anotacoes_producao: (r) =>
-      `nota:${String(r["data"] ?? "")}:${String(r["animal_id"] ?? r["lote_id"] ?? "")}:${String(
-        r["observacao"] ?? "",
-      ).trim().toLowerCase()}:${String(r["producao"] ?? "")}`,
+    anotacoes_producao: (r) => `nota:${JSON.stringify(
+      ["data", "animal_id", "lote_id", "observacao", "producao", "comportamento", "alimentacao", "informacoes_adicionais"]
+        .map((key) => String(r[key] ?? "").trim().toLowerCase()),
+    )}`,
     movimentacoes_financeiras: (r) =>
       `fin:${String(r["tipo"] ?? "")}:${String(r["descricao"] ?? "")}:${String(
         r["valor"] ?? "",
