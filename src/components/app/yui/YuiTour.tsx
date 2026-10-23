@@ -8,7 +8,7 @@ import { calar, falar, prepararVoz, vozDisponivel } from "./voz";
 type Rect = { top: number; left: number; width: number; height: number };
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: string) => void; abrirMenu: (aberto: boolean) => void; onSair: () => void; passos: readonly TourStep[]; isAdmin: boolean }) {
+export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: string) => void | Promise<void>; abrirMenu: (aberto: boolean) => void; onSair: () => void; passos: readonly TourStep[]; isAdmin: boolean }) {
   const yuiAvatar = useYuiAvatar(isAdmin);
   const [idx, setIdx] = useState(0);
   const [pausado, setPausado] = useState(false);
@@ -17,6 +17,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const [carregandoVoz, setCarregandoVoz] = useState(false);
   const [rect, setRect] = useState<Rect | null>(null);
   const [minimizadoManual, setMinimizadoManual] = useState<boolean | null>(null);
+  const [pronto, setPronto] = useState<TourStep | null>(null);
   const alvoRef = useRef<HTMLElement | null>(null);
   const passo = passos[idx];
   const ultimo = idx === passos.length - 1;
@@ -44,16 +45,23 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Executa o passo atual: navega, destaca, fala e avança sozinho.
+  // Prepara a página uma vez por passo, sem reiniciar exemplos ao pausar.
   useEffect(() => {
     let vivo = true;
+    setPronto(null);
     (async () => {
       calar();
       setFalando(false);
       // Gera a voz deste passo e dos próximos já em paralelo com a navegação (sem espera entre falas).
        if (comVoz) for (let k = idx; k < Math.min(idx + 4, passos.length); k++) prepararVoz(passos[k].fala);
-      if (passo.section) { go(passo.section); await esperar(200); }
-      if (passo.demonstracaoAnotacao) { window.dispatchEvent(new Event("yui:show-notes")); await esperar(250); }
+      if (passo.section) { await go(passo.section); if (!vivo) return; }
+      if (passo.demonstracaoAnotacao) {
+        for (let t = 0; t < 80 && vivo; t++) {
+          const aba = acharAlvo("[data-tour='notas-aba']");
+          if (aba) { aba.click(); break; }
+          await esperar(100);
+        }
+      }
       const mobile = window.matchMedia("(max-width: 1023px)").matches;
       const precisaMenu = mobile && passo.alvo.includes("nav-");
       abrirMenu(precisaMenu);
@@ -75,27 +83,40 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
       alvoRef.current = el;
       if (!el) setRect(null);
       el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      if (pausado) return;
+      setPronto(passo);
+    })();
+    return () => { vivo = false; };
+    // Page setup intentionally does not depend on pause/voice toggles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, passos]);
+
+  useEffect(() => {
+    calar();
+    setFalando(false);
+    setCarregandoVoz(false);
+    if (pausado || pronto !== passo) return;
+    let vivo = true;
+    (async () => {
       setFalando(true);
       setCarregandoVoz(comVoz);
       let terminou = await falar(passo.fala, comVoz, () => vivo && setCarregandoVoz(false));
       // Se a fala foi cortada por fora (sem pausar nem trocar de passo), fala de novo.
       if (!terminou && vivo) terminou = await falar(passo.fala, comVoz, () => vivo && setCarregandoVoz(false));
-      setCarregandoVoz(false);
       if (!vivo) return;
+      setCarregandoVoz(false);
       setFalando(false);
        if (terminou && !passo.demonstracaoAnotacao) {
         await esperar(150);
         if (vivo) { if (ultimo) sair(); else setIdx((i) => i + 1); }
       }
     })();
-    return () => { vivo = false; };
+    return () => { vivo = false; calar(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, pausado, comVoz, passos]);
+  }, [pronto, passo, pausado, comVoz]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.defaultPrevented || (e.target instanceof Element && e.target.closest("input, textarea, select, button, [role=combobox], [contenteditable=true]"))) return;
       if (e.key === "Escape") sair();
       if (e.key === "ArrowRight" && !ultimo) setIdx((i) => i + 1);
       if (e.key === "ArrowLeft" && idx > 0) setIdx((i) => i - 1);
@@ -115,7 +136,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
   const minimizado = minimizadoManual ?? !pausado;
 
   return (
-    <div className={`fixed inset-0 z-[70] ${passo.demonstracaoAnotacao ? "pointer-events-none" : ""}`} role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
+    <div className={`fixed inset-0 z-[90] ${passo.demonstracaoAnotacao ? "pointer-events-none" : ""}`} role="dialog" aria-modal="true" aria-label="Tour guiado pela Yui">
       {/* Durante a anotação, permite escolher exemplos no formulário sem sair do tour. */}
       {!passo.demonstracaoAnotacao && <div className="absolute inset-0" />}
       {rect ? (
@@ -136,10 +157,11 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
           </div>
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Yui · {idx + 1}/{passos.length}</p>
-            <p className="max-w-40 truncate text-xs font-semibold leading-tight">{passo.titulo}</p>
+            <p className="max-w-40 truncate text-xs font-semibold leading-tight">{carregandoVoz ? "Preparando voz…" : passo.titulo}</p>
           </div>
-          <div className="h-1 w-14 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
+          <div className="hidden sm:block h-1 w-14 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
           <Button type="button" size="icon-sm" variant="ghost" onClick={() => { setPausado((p) => !p); if (!pausado) calar(); }} aria-label={pausado ? "Continuar" : "Pausar"}>{pausado ? <Play className="size-4" /> : <Pause className="size-4" />}</Button>
+          {passo.demonstracaoAnotacao && <Button size="icon-sm" variant="default" aria-label={ultimo ? "Concluir demonstração" : "Avançar demonstração"} onClick={() => ultimo ? sair() : setIdx((i) => i + 1)}><ChevronRight className="size-4" /></Button>}
           <Button type="button" size="icon-sm" variant="ghost" onClick={() => setMinimizadoManual(false)} aria-label="Expandir explicação"><Maximize2 className="size-4" /></Button>
           <Button type="button" size="icon-sm" variant="ghost" onClick={sair} aria-label="Sair do tour"><X className="size-4" /></Button>
         </div>

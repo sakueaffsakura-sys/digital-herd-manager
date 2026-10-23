@@ -56,6 +56,7 @@ function falarNavegador(texto: string, minha: number): Promise<boolean> {
       const guarda = setTimeout(fim, Math.max(4000, u.text.length * 110));
       u.onend = fim;
       u.onerror = fim;
+      speechSynthesis.resume();
       speechSynthesis.speak(u);
     };
     proxima();
@@ -76,6 +77,7 @@ function gerarAudio(texto: string): Promise<Blob | null> {
     if (!token) return null;
     try {
       const resp = await fetch("/api/yui/voz", {
+        signal: AbortSignal.timeout(20000),
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
         body: JSON.stringify({ texto }),
