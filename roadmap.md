@@ -1,6 +1,8 @@
 # Roadmap
-- [ ] Investigar e corrigir falhas confirmadas nas telas, anotações e assistente virtual
-- [ ] Verificar anotações e demonstração da Yui com uma sessão real
+- [x] Analisar telas e corrigir contagem/paginação, referências dos formulários, estado por propriedade, controles da demonstração e duplicatas de anotações (97 testes passaram)
+- [ ] Verificar CRUD de anotações e demonstração completa após correções — bloqueado: acesso de teste não pôde ser renovado; requer login no preview
+- [ ] Verificar respostas e voz realista da Yui — bloqueado: serviço de IA retornou falta de créditos
+- [ ] Aprofundar retomada de importações: identificada possibilidade de duplicar lote após resposta perdida; não corrigida nesta análise
 - [x] Área Admin: cadastrar nomes e redes sociais dos criadores para exibir em Sobre
 - [x] Área Admin: fundo opcional do chat da Yui com JPG, PNG, GIF ou MP4 e remoção
 - [x] Yui: ensinar apenas a função escolhida em um tour guiado curto

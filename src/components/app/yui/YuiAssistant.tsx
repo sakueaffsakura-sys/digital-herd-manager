@@ -21,7 +21,7 @@ const BOAS_VINDAS = "yui-boas-vindas-v1";
 
 type Etapa = "chat" | "pergunta1" | "pergunta2";
 
-export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: string; go: (s: string) => void; abrirMenu: (aberto: boolean) => void; isAdmin: boolean }) {
+export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: string; go: (s: string) => void | Promise<void>; abrirMenu: (aberto: boolean) => void; isAdmin: boolean }) {
   const yuiAvatar = useYuiAvatar(isAdmin);
   const { data: wallpaper } = useYuiWallpaper();
   const [aberto, setAberto] = useState(false);
@@ -47,7 +47,11 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
   const { messages, sendMessage, status, stop, setMessages, error, regenerate } = useChat({
     id: "yui",
     transport,
-    onError: (e) => toast.error(e.message.startsWith("{") ? (JSON.parse(e.message).error ?? "A Yui não conseguiu responder.") : e.message || "A Yui não conseguiu responder."),
+    onError: (e) => {
+      let mensagem = e.message || "A Yui não conseguiu responder.";
+      try { if (mensagem.startsWith("{")) mensagem = JSON.parse(mensagem).error ?? mensagem; } catch { /* resposta não JSON */ }
+      toast.error(mensagem);
+    },
   });
 
   const historico = useQuery({

@@ -136,6 +136,13 @@ describe("normalizeAndValidate: tipos extras", () => {
 });
 
 describe("naturalKeyFor: anotações", () => {
+  it("preserva anotações com lote ou conteúdo complementar diferente", () => {
+    const key = naturalKeyFor("anotacoes_producao");
+    const base = { data: "2026-03-01", animal_id: "a1", lote_id: "l1", observacao: "Ordenha tranquila", producao: 12 };
+    for (const [campo, valor] of Object.entries({ lote_id: "l2", comportamento: "Calma", alimentacao: "Silagem", informacoes_adicionais: "Conferir amanhã" })) {
+      expect(key({ ...base, [campo]: valor })).not.toBe(key(base));
+    }
+  });
   it("duas anotações no mesmo dia para o mesmo animal não são duplicatas se o texto difere", () => {
     const key = naturalKeyFor("anotacoes_producao");
     const base = { data: "2026-03-01", animal_id: "a1" };

@@ -88,7 +88,7 @@ export const TOUR: TourStep[] = [
   { section: "comercial", alvo: "[data-tour='nav-comercial']", titulo: "Compra e Venda", fala: "Em Compra e Venda você registra o que comprou e vendeu. Quando vende um animal, ele é marcado como vendido e o valor entra no financeiro sozinho.", passos: ["Escolha Compras ou Vendas", "Toque em \"Novo\" e preencha", "Ao vender um animal, escolha ele na lista"], dica: "O valor entra no financeiro automaticamente." },
   { alvo: "[data-tour='propriedade']", titulo: "Trocar de propriedade", fala: "Aqui em cima você escolhe a propriedade. Se tiver mais de uma fazenda, é só trocar, e todos os dados mudam para ela.", passos: ["Toque no nome da propriedade", "Escolha outra fazenda ou cadastre uma nova"] },
   { alvo: "[data-tour='busca']", titulo: "Pesquisa", fala: "Esta barra pesquisa na página que está aberta. É o jeito mais rápido de achar um animal ou registro." },
-  { alvo: "[data-tour='nav-perfil']", titulo: "Perfil e configurações", fala: "No Perfil você ajusta seus dados, a foto e o banner da propriedade, e vê o seu plano." },
+  { section: "perfil", alvo: "[data-tour='nav-perfil']", titulo: "Perfil e configurações", fala: "No Perfil você ajusta seus dados, a foto e o banner da propriedade, e vê o seu plano." },
   { section: "inicio", alvo: "[data-tour='yui']", titulo: "Pronto!", fala: "Pronto, terminamos o passeio! Sempre que tiver dúvida, é só tocar em mim aqui no canto e escrever a sua pergunta. Eu estou aqui para ajudar. Bom trabalho na fazenda!" },
 ];
 

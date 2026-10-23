@@ -32,8 +32,10 @@ function baseScopedQuery(
   search: string,
   searchColumns: string[] | undefined,
   filters: FilterBag | undefined,
+  cols = "*",
+  countOnly = false,
 ) {
-  let q = (supabase.from(table as any) as any).select();
+  let q = (supabase.from(table as any) as any).select(cols, countOnly ? { count: "exact", head: true } : undefined);
   q = q.eq("propriedade_id", propertyId);
   for (const f of filters ?? []) {
     if (!f) continue;
@@ -60,8 +62,8 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       searchColumns?: string[];
       filters?: FilterBag;
     }) => {
-      const q = baseScopedQuery(table, propertyId, search, searchColumns, filters);
-      const { count, error } = await (q as any).select("id", { count: "exact", head: true });
+      const q = baseScopedQuery(table, propertyId, search, searchColumns, filters, "id", true);
+      const { count, error } = await q;
       return { count: (count ?? 0) as number, error };
     },
 
@@ -81,9 +83,9 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       filters?: FilterBag;
     }) => {
       const { from, to } = rangeOf(page, pageSize);
-      let q = baseScopedQuery(table, propertyId, search, searchColumns, filters);
+      let q = baseScopedQuery(table, propertyId, search, searchColumns, filters, cols);
       q = q.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
-      const { data, error } = await q.select(cols);
+      const { data, error } = await q;
       return { data: (data ?? []) as Record<string, unknown>[], error };
     },
 
@@ -169,7 +171,7 @@ export function usePagedRows({
     isPending: list.isPending,
     /** true enquanto o total ainda não foi calculado nenhuma vez. */
     totalPending: total.isPending,
-    totalReady: !total.isPending && !total.isError,
+    totalReady: !total.isPending && !total.isError && !total.isPlaceholderData,
     isFetching: list.isFetching,
     isError: list.isError,
     error: (list.error ?? total.error) as unknown as Error | null,
