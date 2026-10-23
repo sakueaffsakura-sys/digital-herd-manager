@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dateNow, type Field, type FormRefs, type Module, type Row } from "./shared";
+import { resolveNoteReference } from "@/lib/noteReference";
 
 export function RecordDialog({
   open,
@@ -43,6 +44,17 @@ export function RecordDialog({
       ]),
     );
   const [form, setForm] = useState<Row>(initial);
+  const [writtenRefs, setWrittenRefs] = useState<Record<string, string>>({});
+  const isNote = config.table === "anotacoes_producao";
+  useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
+  const referenceRows = (f: Field) => f.type === "animal" ? refs?.animals ?? [] : refs?.lots ?? [];
+  const referenceText = (f: Field) => {
+    if (writtenRefs[f.key] !== undefined) return writtenRefs[f.key];
+    const id = form[f.key];
+    const found = referenceRows(f).find((r) => r.id === id);
+    if (!found) return id ? String(id) : "";
+    return "numero_brinco" in found ? String(found.numero_brinco) : found.nome ?? "";
+  };
   useEffect(() => { if (!demo) setForm(initial()); }, [row, open, demo, config]);
   // Demonstração da Yui: digita campo a campo, como uma pessoa faria.
   // A cada passo reescreve o formulário inteiro de forma cumulativa, para que
@@ -104,8 +116,17 @@ export function RecordDialog({
       toast.error(`${invalidNumber.label} deve ser maior que zero.`);
       return;
     }
+    const resolved = { ...form };
+    if (isNote) {
+      for (const f of config.fields.filter((field) => field.type === "animal" || field.type === "lote")) {
+        if (writtenRefs[f.key] === undefined) continue;
+        const result = resolveNoteReference(writtenRefs[f.key], referenceRows(f));
+        if (result.error) { toast.error(`${f.label}: ${result.error}`); return; }
+        resolved[f.key] = result.id;
+      }
+    }
     const cleaned = Object.fromEntries(
-      Object.entries(form).map(([k, v]) => [
+      Object.entries(resolved).map(([k, v]) => [
         k,
         v === "" || v === "none" ? null : config.fields.find((f) => f.key === k)?.type === "number" ? Number(v) : v,
       ]),
@@ -123,9 +144,11 @@ export function RecordDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             {config.fields.map((f) => (
               <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
-                <Label>{f.label}</Label>
+                <Label htmlFor={`record-${f.key}`}>{f.label}</Label>
                 {f.type === "textarea" ? (
                   <Textarea value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                ) : isNote && (f.type === "animal" || f.type === "lote") ? (
+                  <Input id={`record-${f.key}`} type="text" value={referenceText(f)} placeholder={f.type === "animal" ? "Digite o brinco ou nome do animal" : "Digite o nome do lote"} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
                 ) : f.type === "select" || f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
                   <Select value={String(form[f.key] ?? "")} onValueChange={(v) => setForm({ ...form, [f.key]: v })}>
                     <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
@@ -138,6 +161,7 @@ export function RecordDialog({
                   </Select>
                 ) : (
                   <Input
+                    id={`record-${f.key}`}
                     required={f.required}
                     type={f.type ?? "text"}
                     step={f.type === "number" ? "0.01" : undefined}
