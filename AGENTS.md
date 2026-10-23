@@ -11,7 +11,7 @@
 - System admin = `user_roles.role='administrador'`; admin data only via SECURITY DEFINER `admin_*` RPCs that check `private.has_role` — why: server-side authorization, never client flags.
 - Selection lists fetch via `fetchAllRows` (1000-row chunks) — why: PostgREST caps responses at 1000 rows.
 - Record forms share `loadFormRefs` and remount when their property/module scope changes — why: one cache contract prevents missing choices and stale editing targets.
-- Typed note references resolve to existing IDs before saving and reject ambiguous matches — why: writing names must preserve valid animal/lot relationships.
+- All record forms use typed references resolved to existing IDs before validation; categorical text normalizes to configured values and reference eligibility stays enforced — why: writing must preserve valid relationships and database constraints.
 - Tour page setup is separate from narration and waits for mounted targets — why: pausing speech must not reset examples or lose tab navigation.
 - Request rate limiting is in-memory per worker in `src/start.ts` — why: cheap abuse protection; volumetric DDoS is handled by the hosting edge.
 - Security events (rate-limit blocks, global spikes) are aggregated per worker in `src/lib/security-events.server.ts` and flushed to `eventos_seguranca` at most every 15s; admins read them via `admin_alertas` — why: attack visibility without the logger adding load during an attack.
