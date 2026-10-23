@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dateNow, type Field, type FormRefs, type Module, type Row } from "./shared";
-import { resolveNoteReference } from "@/lib/noteReference";
+import { recordReferenceRows, resolveRecordInputs } from "@/lib/recordInput";
 
 export function RecordDialog({
   open,
@@ -45,9 +44,8 @@ export function RecordDialog({
     );
   const [form, setForm] = useState<Row>(initial);
   const [writtenRefs, setWrittenRefs] = useState<Record<string, string>>({});
-  const isNote = config.table === "anotacoes_producao";
   useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
-  const referenceRows = (f: Field) => f.type === "animal" ? refs?.animals ?? [] : refs?.lots ?? [];
+  const referenceRows = (f: Field) => recordReferenceRows(f, refs, row?.[f.key]);
   const referenceText = (f: Field) => {
     if (writtenRefs[f.key] !== undefined) return writtenRefs[f.key];
     const id = form[f.key];
@@ -79,35 +77,28 @@ export function RecordDialog({
     }, 45);
     return () => window.clearInterval(timer);
   }, [open, demo, config]);
-  const options = (f: Field) =>
-    f.type === "animal"
-      ? refs?.animals
-          .filter((a) => (!f.sex || a.sexo === f.sex) && (!f.activeOnly || a.situacao === "ativo" || a.id === form[f.key]))
-          .map((a) => ({ value: a.id, label: a.nome ? `${a.nome} · ${a.numero_brinco}` : a.numero_brinco }))
-      : f.type === "lote"
-        ? refs?.lots.map((x) => ({ value: x.id, label: x.nome }))
-        : f.type === "vacina"
-          ? refs?.vaccines.map((x) => ({ value: x.id, label: x.nome }))
-          : f.options;
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (demo) { toast.info("Isto é só uma demonstração da Yui — nada foi salvo."); onClose(); return; }
+    const result = resolveRecordInputs(config.fields, form, writtenRefs, refs, row);
+    if (result.error) { toast.error(result.error); return; }
+    const resolved = result.values;
     const missing = config.fields.find(
-      (f) => f.required && (form[f.key] === undefined || form[f.key] === null || String(form[f.key]).trim() === ""),
+      (f) => f.required && (resolved[f.key] === undefined || resolved[f.key] === null || String(resolved[f.key]).trim() === ""),
     );
     if (missing) {
       toast.error(`Preencha o campo ${missing.label}.`);
       return;
     }
-    if (config.table === "vacinacoes" && !form["animal_id"] && !form["lote_id"]) {
-      toast.error("Selecione um animal ou um lote.");
+    if (config.table === "vacinacoes" && !resolved["animal_id"] && !resolved["lote_id"]) {
+      toast.error("Informe o brinco ou nome de um animal, ou o nome de um lote.");
       return;
     }
     if (config.table === "inseminacoes" && String(form["previsao_parto"]) <= String(form["data_inseminacao"])) {
       toast.error("A previsão de parto deve ser posterior à data da inseminação.");
       return;
     }
-    if (config.table === "nascimentos" && form["vaca_id"] === form["bezerro_id"]) {
+    if (config.table === "nascimentos" && resolved["vaca_id"] === resolved["bezerro_id"]) {
       toast.error("A vaca e o bezerro devem ser animais diferentes.");
       return;
     }
@@ -115,15 +106,6 @@ export function RecordDialog({
     if (invalidNumber) {
       toast.error(`${invalidNumber.label} deve ser maior que zero.`);
       return;
-    }
-    const resolved = { ...form };
-    if (isNote) {
-      for (const f of config.fields.filter((field) => field.type === "animal" || field.type === "lote")) {
-        if (writtenRefs[f.key] === undefined) continue;
-        const result = resolveNoteReference(writtenRefs[f.key], referenceRows(f));
-        if (result.error) { toast.error(`${f.label}: ${result.error}`); return; }
-        resolved[f.key] = result.id;
-      }
     }
     const cleaned = Object.fromEntries(
       Object.entries(resolved).map(([k, v]) => [
@@ -146,19 +128,11 @@ export function RecordDialog({
               <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
                 <Label htmlFor={`record-${f.key}`}>{f.label}</Label>
                 {f.type === "textarea" ? (
-                  <Textarea value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-                ) : isNote && (f.type === "animal" || f.type === "lote") ? (
-                  <Input id={`record-${f.key}`} type="text" value={referenceText(f)} placeholder={f.type === "animal" ? "Digite o brinco ou nome do animal" : "Digite o nome do lote"} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
-                ) : f.type === "select" || f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
-                  <Select value={String(form[f.key] ?? "")} onValueChange={(v) => setForm({ ...form, [f.key]: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                    <SelectContent>
-                      {!f.required && <SelectItem value="none">Não informado</SelectItem>}
-                      {options(f)?.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Textarea id={`record-${f.key}`} required={f.required} value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                ) : f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
+                  <Input id={`record-${f.key}`} required={f.required} type="text" value={referenceText(f)} placeholder={f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : "Digite o nome do lote"} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
+                ) : f.type === "select" ? (
+                  <Input id={`record-${f.key}`} required={f.required} type="text" value={f.options?.find((option) => option.value === form[f.key])?.label ?? String(form[f.key] ?? "")} placeholder={f.options?.map((option) => option.label).join(" / ")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
                 ) : (
                   <Input
                     id={`record-${f.key}`}
