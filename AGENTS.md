@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 - System admin = `user_roles.role='administrador'`; admin data only via SECURITY DEFINER `admin_*` RPCs that check `private.has_role` — why: server-side authorization, never client flags.
 - Selection lists fetch via `fetchAllRows` (1000-row chunks) — why: PostgREST caps responses at 1000 rows.
+- Record forms share `loadFormRefs` and remount when their property/module scope changes — why: one cache contract prevents missing choices and stale editing targets.
+- Tour page setup is separate from narration and waits for mounted targets — why: pausing speech must not reset examples or lose tab navigation.
 - Request rate limiting is in-memory per worker in `src/start.ts` — why: cheap abuse protection; volumetric DDoS is handled by the hosting edge.
 - Security events (rate-limit blocks, global spikes) are aggregated per worker in `src/lib/security-events.server.ts` and flushed to `eventos_seguranca` at most every 15s; admins read them via `admin_alertas` — why: attack visibility without the logger adding load during an attack.
 - Yui support chat streams via server route `/api/yui` (`src/lib/yui.server.ts`, bearer-verified, per-user rate limit) and persists messages in `suporte_mensagens`; the guided tour preloads AI speech through the authenticated `/api/yui/voz` route with browser speech synthesis as fallback — why: keys stay server-side while the tour remains audible when AI speech fails.

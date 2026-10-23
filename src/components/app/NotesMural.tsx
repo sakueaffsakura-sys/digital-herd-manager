@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAllRows } from "@/lib/fetchAll";
+import { loadFormRefs } from "./formRefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -77,15 +77,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
 
   const refs = useQuery<FormRefs>({
     queryKey: ["form-refs", propertyId],
-    queryFn: async () => {
-      const [animals, lots] = await Promise.all([
-        fetchAllRows((a, b) => supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).order("numero_brinco").range(a, b)).then((data) => ({ data, error: null })),
-        supabase.from("lotes").select("id,nome").eq("propriedade_id", propertyId),
-      ]);
-      const error = animals.error || lots.error;
-      if (error) throw error;
-      return { animals: animals.data ?? [], lots: lots.data ?? [], vaccines: [] };
-    },
+    queryFn: () => loadFormRefs(propertyId),
   });
 
   const paged = usePagedRows({
@@ -290,7 +282,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
                 <Button variant="ghost" size="icon" aria-label="Última página" disabled={page >= last} onClick={() => setPage(last)}><ChevronsRight /></Button>
               </>
             )}
-            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))} disabled={paged.total <= 25}>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
               <SelectContent>{PAGE_SIZES.map((s) => <SelectItem value={String(s)} key={s}>{s} por página</SelectItem>)}</SelectContent>
             </Select>

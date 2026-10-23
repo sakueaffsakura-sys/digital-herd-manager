@@ -43,7 +43,7 @@ export function RecordDialog({
       ]),
     );
   const [form, setForm] = useState<Row>(initial);
-  useEffect(() => { if (!demo) setForm(initial()); }, [row, open, demo]);
+  useEffect(() => { if (!demo) setForm(initial()); }, [row, open, demo, config]);
   // Demonstração da Yui: digita campo a campo, como uma pessoa faria.
   // A cada passo reescreve o formulário inteiro de forma cumulativa, para que
   // nenhum campo preenchido seja perdido por atualizações fora de ordem.
@@ -66,7 +66,7 @@ export function RecordDialog({
       if (pos >= total) window.clearInterval(timer);
     }, 45);
     return () => window.clearInterval(timer);
-  }, [open, demo]);
+  }, [open, demo, config]);
   const options = (f: Field) =>
     f.type === "animal"
       ? refs?.animals
