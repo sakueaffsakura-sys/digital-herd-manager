@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Trocar seleções por escrita em todos os cadastros e testar resolução de vínculos e valores permitidos
 - [x] Analisar telas e corrigir contagem/paginação, referências dos formulários, estado por propriedade, controles da demonstração e duplicatas de anotações (97 testes passaram)
 - [ ] Verificar CRUD de anotações e demonstração completa após correções — bloqueado: acesso de teste não pôde ser renovado; requer login no preview
 - [ ] Verificar respostas e voz realista da Yui — bloqueado: serviço de IA retornou falta de créditos
