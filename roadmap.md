@@ -1,7 +1,8 @@
 # Roadmap
-- [ ] Trocar seleções por escrita em todos os cadastros e testar resolução de vínculos e valores permitidos
+- [x] Trocar seleções por escrita em todos os cadastros — 31 testes passaram; salvamentos verificados em rebanho, lotes, pesagens, vacinas, inseminações, nascimentos, leite, anotações e financeiro
 - [x] Analisar telas e corrigir contagem/paginação, referências dos formulários, estado por propriedade, controles da demonstração e duplicatas de anotações (97 testes passaram)
-- [ ] Verificar CRUD de anotações e demonstração completa após correções — bloqueado: acesso de teste não pôde ser renovado; requer login no preview
+- [x] Verificar criar, ler, editar e excluir anotações com sessão válida; restaurar avisos globais de sucesso e erro
+- [ ] Verificar demonstração completa e voz da Yui — depende da disponibilidade de créditos de IA
 - [ ] Verificar respostas e voz realista da Yui — bloqueado: serviço de IA retornou falta de créditos
 - [ ] Aprofundar retomada de importações: identificada possibilidade de duplicar lote após resposta perdida; não corrigida nesta análise
 - [x] Área Admin: cadastrar nomes e redes sociais dos criadores para exibir em Sobre
