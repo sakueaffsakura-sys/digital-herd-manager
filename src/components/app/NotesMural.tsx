@@ -79,6 +79,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
   const refs = useQuery<FormRefs>({
     queryKey: ["form-refs", propertyId],
     queryFn: () => loadFormRefs(propertyId),
+    staleTime: 5 * 60_000,
   });
 
   const paged = usePagedRows({
