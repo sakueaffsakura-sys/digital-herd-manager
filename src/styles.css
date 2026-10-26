@@ -20,3 +20,32 @@
 *{border-color:var(--border)}html{background:var(--background)}body{margin:0;min-width:320px;background:var(--background);color:var(--foreground);font-family:var(--font-sans);letter-spacing:0}button,input,textarea{letter-spacing:0}::selection{background:color-mix(in oklab,var(--primary) 28%,transparent)}
 .app-shell{--card:oklch(.17 .021 165/.82);--sidebar:oklch(.145 .022 170/.88);--muted:oklch(.215 .02 165/.72);--input:oklch(.3 .025 165/.62)}
 .app-shell [data-radix-popper-content-wrapper]{z-index:60!important}
+
+/* ===== Premium layer ===== */
+@theme inline { --font-display: "Sora", "Manrope", ui-sans-serif, sans-serif; }
+:root,.dark{
+ --radius:.75rem;
+ --primary-glow:oklch(.86 .17 155);
+ --gradient-primary:linear-gradient(135deg,var(--primary),var(--primary-glow));
+ --gradient-card:linear-gradient(160deg,oklch(.2 .025 165/.9),oklch(.155 .02 168/.85));
+ --shadow-card:0 1px 0 oklch(1 0 0/.04) inset,0 12px 32px -16px oklch(0 0 0/.7);
+ --shadow-glow:0 10px 30px -10px color-mix(in oklab,var(--primary) 45%,transparent);
+}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3{font-family:var(--font-display);letter-spacing:-.015em}
+@utility font-display{font-family:var(--font-display)}
+@utility text-gradient-primary{background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;color:transparent}
+@utility premium-panel{background:var(--gradient-card);border:1px solid color-mix(in oklab,var(--primary) 18%,var(--border));box-shadow:var(--shadow-card),0 30px 80px -30px oklch(0 0 0/.8)}
+@utility btn-premium{background:var(--gradient-primary);box-shadow:var(--shadow-glow);transition:transform .15s,box-shadow .2s,filter .2s;&:hover{filter:brightness(1.07);transform:translateY(-1px)}&:active{transform:translateY(0) scale(.99)}}
+.app-shell main .bg-card,.app-shell .rounded-xl.border.bg-card{background:var(--gradient-card);box-shadow:var(--shadow-card);transition:border-color .2s,box-shadow .2s}
+.app-shell main .bg-card:hover{border-color:color-mix(in oklab,var(--primary) 22%,var(--border))}
+input,textarea{transition:border-color .15s,box-shadow .15s,background .15s}
+input:focus-visible,textarea:focus-visible{border-color:color-mix(in oklab,var(--primary) 70%,transparent)!important;box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)!important;outline:none}
+.app-shell table thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);font-weight:700}
+.app-shell table tbody tr{transition:background .15s}
+.app-shell table tbody tr:hover{background:color-mix(in oklab,var(--primary) 6%,transparent)}
+[role=dialog]{border-radius:1rem!important;border-color:color-mix(in oklab,var(--primary) 16%,var(--border))!important;box-shadow:0 40px 100px -30px oklch(0 0 0/.85)!important}
+[role=tablist]{border-radius:.75rem}
+[role=tab][data-state=active]{box-shadow:var(--shadow-glow)}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:color-mix(in oklab,var(--primary) 22%,var(--muted));border-radius:99px;border:2px solid var(--background)}::-webkit-scrollbar-track{background:transparent}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
