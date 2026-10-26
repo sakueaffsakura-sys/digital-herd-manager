@@ -52,15 +52,15 @@ export const friendlyError = (error: unknown) => {
 };
 
 export function PageTitle({ icon: Icon, title, description, action }: { icon: IconType; title: string; description: string; action?: ReactNode }) {
-  return <div className="flex flex-col justify-between gap-4 border-b border-border/60 pb-5 sm:flex-row sm:items-end"><div><div className="mb-2.5 flex items-center gap-2 text-primary"><span className="grid size-7 place-items-center rounded-lg bg-primary/12 ring-1 ring-inset ring-primary/25"><Icon className="size-4" /></span><span className="text-eyebrow">Pecuária Digital</span></div><h1 className="text-3xl font-bold sm:text-4xl">{title}</h1><p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p></div>{action}</div>;
+  return <div className="page-heading flex flex-col justify-between gap-5 border-b border-border/60 pb-6 sm:flex-row sm:items-end"><div className="min-w-0"><div className="mb-3 flex items-center gap-2 text-primary"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/12 ring-1 ring-inset ring-primary/25"><Icon className="size-4" /></span><span className="text-eyebrow">Pecuária Digital</span></div><h1 className="break-words text-3xl font-bold leading-tight sm:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p></div><div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div></div>;
 }
 
 export function Panel({ title, subtitle, children, action, className }: { title: string; subtitle: string; children: ReactNode; action?: ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-border bg-card p-6 ${className ?? ""}`}><div className="mb-6 flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold tracking-tight">{title}</h2><p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p></div>{action}</div>{children}</section>;
+  return <section className={`data-panel min-w-0 border-t border-border py-5 ${className ?? ""}`}><div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h2 className="text-base font-semibold">{title}</h2><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{subtitle}</p></div>{action}</div>{children}</section>;
 }
 
 export function Empty({ message }: { message: string }) {
-  return <div className="grid min-h-40 place-items-center p-6 text-center"><div className="rounded-2xl border border-border bg-card/60 px-10 py-8 backdrop-blur-md"><PackageOpen className="mx-auto mb-3 size-8 text-primary/70" /><p className="text-sm text-muted-foreground">{message}</p></div></div>;
+  return <div className="grid min-h-40 place-items-center px-4 py-8 text-center"><div className="max-w-sm"><span className="mx-auto mb-4 grid size-12 place-items-center rounded-lg bg-muted/60 text-muted-foreground"><PackageOpen className="size-6" /></span><p className="text-sm leading-relaxed text-muted-foreground">{message}</p></div></div>;
 }
 
 export function EmptyProperty({ onCreate }: { onCreate: () => void }) {
@@ -90,12 +90,9 @@ export function Delta({ value, invert, label }: { value: number | null; invert?:
 }
 
 export function Metric({ label, value, icon: Icon, tone = "primary", hint, onClick }: { label: string; value: string | number; icon?: IconType; tone?: Tone; hint?: ReactNode; onClick?: () => void }) {
-  const Tag = onClick ? "button" : "div";
-  return <Tag type={onClick ? "button" : undefined} onClick={onClick} className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-5 text-left transition-all duration-200 ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:border-primary/40" : ""}`}>
-    <div className="flex items-center justify-between gap-2"><span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>{Icon && <span className={`grid size-9 place-items-center rounded-xl ring-1 ring-inset ring-white/5 ${toneCls[tone]}`}><Icon className="size-4" /></span>}</div>
-    <strong className="mt-3 block font-display text-[1.7rem] font-bold tabular-nums tracking-tight">{value}</strong>
-    {hint && <div className="mt-1.5">{hint}</div>}
-  </Tag>;
+  const content = <><div className="flex items-start justify-between gap-3"><span className="min-w-0 whitespace-normal text-xs font-medium leading-relaxed text-muted-foreground">{label}</span>{Icon && <span className={`grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset ring-border/40 ${toneCls[tone]}`}><Icon className="size-4" /></span>}</div><strong className="mt-3 block break-words whitespace-normal font-display text-2xl font-bold tabular-nums leading-tight">{value}</strong>{hint && <div className="mt-2 whitespace-normal text-xs">{hint}</div>}</>;
+  const classes = "metric-tile group relative block h-auto min-w-0 overflow-hidden rounded-lg border border-border bg-card p-5 text-left";
+  return onClick ? <Button variant="outline" onClick={onClick} className={classes}>{content}</Button> : <div className={classes}>{content}</div>;
 }
 
 export function MiniList({ rows, empty, render }: { rows: Row[]; empty: string; render: (r: Row) => ReactNode }) {
