@@ -84,11 +84,17 @@ export function RecordDialog({
     }, 45);
     return () => window.clearInterval(timer);
   }, [open, demo, config]);
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (demo) { toast.info("Isto é só uma demonstração da Yui — nada foi salvo."); onClose(); return; }
-    const result = resolveRecordInputs(config.fields, form, writtenRefs, refs, row);
+    setResolving(true);
+    const result = await ensureRecordReferences(config.fields, form, writtenRefs, refs, row, propertyId);
+    setResolving(false);
     if (result.error) { toast.error(result.error); return; }
+    if (result.created.length) {
+      toast.success(`Cadastro criado automaticamente: ${result.created.join(", ")}.`);
+      void queryClient.invalidateQueries({ queryKey: ["form-refs", propertyId] });
+    }
     const resolved = result.values;
     const missing = config.fields.find(
       (f) => f.required && (resolved[f.key] === undefined || resolved[f.key] === null || String(resolved[f.key]).trim() === ""),
@@ -169,7 +175,7 @@ export function RecordDialog({
           )}
           <DialogFooter className={isNote ? "sticky bottom-0 -mx-5 mt-6 gap-2 border-t border-border bg-card px-5 py-4 sm:-mx-6 sm:px-6" : "mt-6"}>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{isNote && (saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />)}{saving ? "Salvando…" : demo ? "Salvar (demonstração)" : isNote ? "Salvar anotação" : "Salvar"}</Button>
+            <Button type="submit" disabled={saving || resolving}>{isNote && (saving || resolving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />)}{resolving ? "Conferindo cadastros…" : saving ? "Salvando…" : demo ? "Salvar (demonstração)" : isNote ? "Salvar anotação" : "Salvar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
