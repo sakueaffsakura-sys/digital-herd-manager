@@ -15,7 +15,8 @@
     "verificar": "node scripts/verificar-fontes.mjs"
   },
   "overrides": {
-    "rolldown": "1.2.1"
+    "rolldown": "1.2.1",
+    "dompurify": "^3.4.17"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.78",
