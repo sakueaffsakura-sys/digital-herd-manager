@@ -15,6 +15,13 @@
       "when": 1793023692618,
       "tag": "0001_imagens_site_somente_logados",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793023794144,
+      "tag": "0002_indices_listas_formularios",
+      "breakpoints": true
     }
   ]
 }

@@ -13,12 +13,17 @@ export async function fetchAllRowsInfo<T>(
 ): Promise<FetchAllResult<T>> {
   const out: T[] = [];
   const step = 1000;
-  for (let from = 0; from < max; from += step) {
-    const { data, error } = await build(from, from + step - 1);
-    if (error) throw error;
-    const rows = data ?? [];
-    out.push(...rows);
-    if (rows.length < step) return { rows: out, truncated: false };
+  const paralelo = 4; // busca 4 páginas ao mesmo tempo: listas grandes carregam ~4x mais rápido
+  for (let base = 0; base < max; base += step * paralelo) {
+    const inicios: number[] = [];
+    for (let f = base; f < Math.min(base + step * paralelo, max); f += step) inicios.push(f);
+    const paginas = await Promise.all(inicios.map((f) => build(f, f + step - 1)));
+    for (const { data, error } of paginas) {
+      if (error) throw error;
+      const rows = data ?? [];
+      out.push(...rows);
+      if (rows.length < step) return { rows: out, truncated: false };
+    }
   }
   // chegou ao teto com a última página cheia: pode haver mais linhas no servidor
   return { rows: out, truncated: true };
