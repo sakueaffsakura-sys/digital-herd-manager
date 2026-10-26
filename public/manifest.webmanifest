@@ -1,0 +1,17 @@
+{
+  "name": "Pecuária Digital",
+  "short_name": "Pecuária",
+  "description": "Gestão pecuária da sua propriedade.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07110b",
+  "theme_color": "#07110b",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
