@@ -33,11 +33,13 @@ export function resolveRecordInputs(fields: readonly Field[], form: Row, written
 
 const referenceColumns = "id,nome,numero_brinco,sexo,situacao,data_nascimento";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+type LiveReference = { id: string; nome: string | null; numero_brinco?: string; sexo?: string; situacao?: string; ativo?: boolean };
+type LookupResult = { data: LiveReference[] | null; error: { message: string } | null };
 
 /** Consulta a fonte oficial, inclusive quando a lista local está desatualizada. */
 async function findReference(field: Field, text: string, propertyId: string, currentId: unknown): Promise<{ id?: string; error?: string }> {
   const pattern = text.replace(/[\\%_]/g, "\\$&");
-  const queries = field.type === "animal"
+  const queries: PromiseLike<LookupResult>[] = field.type === "animal"
     ? [supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("numero_brinco", pattern).limit(2),
        supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("nome", pattern).limit(2)]
     : [supabase.from(field.type === "vacina" ? "tipos_vacinas" : "lotes").select("id,nome,ativo").eq("propriedade_id", propertyId).ilike("nome", pattern).limit(2)];
