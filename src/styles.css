@@ -24,7 +24,12 @@
 /* ===== Premium layer ===== */
 @theme inline { --font-display: "Sora", "Manrope", ui-sans-serif, sans-serif; }
 :root,.dark{
- --radius:.75rem;
+ --radius:.5rem;
+ --surface-field:color-mix(in oklab,var(--background) 65%,var(--card));
+ --surface-hover:color-mix(in oklab,var(--primary) 8%,var(--card));
+ --shadow-interactive:0 6px 18px -12px color-mix(in oklab,var(--primary) 30%,transparent);
+ --shadow-dialog:0 32px 80px -24px color-mix(in oklab,var(--background) 90%,transparent);
+ --ease-ui:cubic-bezier(.22,1,.36,1);
  --primary-glow:oklch(.86 .17 155);
  --gradient-primary:linear-gradient(135deg,var(--primary),var(--primary-glow));
  --gradient-card:linear-gradient(160deg,oklch(.2 .025 165/.9),oklch(.155 .02 168/.85));
@@ -32,42 +37,38 @@
  --shadow-glow:0 10px 30px -10px color-mix(in oklab,var(--primary) 45%,transparent);
 }
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-h1,h2,h3{font-family:var(--font-display);letter-spacing:-.015em}
+h1,h2,h3{font-family:var(--font-display);letter-spacing:0}
 @utility font-display{font-family:var(--font-display)}
 @utility text-gradient-primary{background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;color:transparent}
 @utility premium-panel{background:var(--gradient-card);border:1px solid color-mix(in oklab,var(--primary) 18%,var(--border));box-shadow:var(--shadow-card),0 30px 80px -30px oklch(0 0 0/.8)}
 @utility btn-premium{background:var(--gradient-primary);box-shadow:var(--shadow-glow);transition:transform .15s,box-shadow .2s,filter .2s;&:hover{filter:brightness(1.07);transform:translateY(-1px)}&:active{transform:translateY(0) scale(.99)}}
 .app-shell main .bg-card,.app-shell .rounded-xl.border.bg-card{background:var(--gradient-card);box-shadow:var(--shadow-card);transition:border-color .2s,box-shadow .2s}
-.app-shell main .bg-card:hover{border-color:color-mix(in oklab,var(--primary) 22%,var(--border))}
 input,textarea{transition:border-color .15s,box-shadow .15s,background .15s}
 input:focus-visible,textarea:focus-visible{border-color:color-mix(in oklab,var(--primary) 70%,transparent)!important;box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)!important;outline:none}
-.app-shell table thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-foreground);font-weight:700}
+.app-shell table thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:0;color:var(--muted-foreground);font-weight:700}
 .app-shell table tbody tr{transition:background .15s}
 .app-shell table tbody tr:hover{background:color-mix(in oklab,var(--primary) 6%,transparent)}
-[role=dialog]{border-radius:1rem!important;border-color:color-mix(in oklab,var(--primary) 16%,var(--border))!important;box-shadow:0 40px 100px -30px oklch(0 0 0/.85)!important}
+[role=dialog]{border-radius:.75rem!important;border-color:color-mix(in oklab,var(--primary) 16%,var(--border))!important;box-shadow:var(--shadow-dialog)!important}
 [role=tablist]{border-radius:.75rem}
 [role=tab][data-state=active]{box-shadow:var(--shadow-glow)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:color-mix(in oklab,var(--primary) 22%,var(--muted));border-radius:99px;border:2px solid var(--background)}::-webkit-scrollbar-track{background:transparent}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== Detail layer ===== */
-.app-shell main{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in oklab,var(--primary) 7%,transparent),transparent 60%),radial-gradient(900px 400px at -10% 110%,color-mix(in oklab,var(--chart-2) 6%,transparent),transparent 60%)}
+.app-shell main{background:transparent}
 .app-shell main h1{background:linear-gradient(90deg,var(--foreground),color-mix(in oklab,var(--primary) 55%,var(--foreground)));-webkit-background-clip:text;background-clip:text;color:transparent}
-.app-shell main .bg-card{position:relative;overflow:hidden}
-.app-shell main .bg-card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,color-mix(in oklab,var(--primary) 45%,transparent),transparent);pointer-events:none}
-.app-shell main .bg-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-card),0 18px 40px -22px color-mix(in oklab,var(--primary) 35%,transparent)}
-.app-shell main .bg-card{transition:transform .2s,border-color .2s,box-shadow .2s}
+.app-shell main .metric-tile{position:relative;transition:background-color .2s,border-color .2s}
+.app-shell main button.metric-tile:hover{background:var(--surface-hover);border-color:var(--primary)}
 .app-shell table thead th{background:color-mix(in oklab,var(--card) 92%,var(--primary))}
 .app-shell table tbody tr:nth-child(even){background:color-mix(in oklab,var(--muted) 35%,transparent)}
 .app-shell table tbody td{font-variant-numeric:tabular-nums}
 .app-shell main button{transition:transform .12s,filter .15s,background .15s,box-shadow .15s}
 .app-shell main button:active{transform:scale(.98)}
-.app-shell main [data-slot=badge],.app-shell main .rounded-full.border{backdrop-filter:blur(6px)}
 @media (prefers-reduced-motion:reduce){.app-shell main .bg-card:hover{transform:none}}
 
 /* ===== Premium v2 — hierarquia, profundidade e microinterações ===== */
-@utility text-eyebrow{font-size:.68rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--primary)}
-.app-shell main>div{animation:page-in .35s cubic-bezier(.22,1,.36,1) both}
+@utility text-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:0;text-transform:uppercase;color:var(--primary)}
+.app-shell .page-heading{animation:page-in .3s var(--ease-ui) both}
 @keyframes page-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .app-shell main button.bg-primary{box-shadow:0 6px 20px -8px color-mix(in oklab,var(--primary) 60%,transparent)}
 .app-shell main button.bg-primary:hover{box-shadow:0 10px 28px -8px color-mix(in oklab,var(--primary) 70%,transparent);filter:brightness(1.06)}
@@ -76,4 +77,34 @@ input:focus-visible,textarea:focus-visible{border-color:color-mix(in oklab,var(-
 .app-shell :focus-visible{outline:2px solid color-mix(in oklab,var(--primary) 70%,transparent);outline-offset:2px}
 .app-shell main [role=tablist]{background:color-mix(in oklab,var(--muted) 55%,transparent);padding:4px;gap:2px}
 .app-shell main [role=tab]{border-radius:.6rem}
-@media (prefers-reduced-motion:reduce){.app-shell main>div{animation:none}}
+/* Deliberate microinteractions: no animation on datasets or table containers. */
+.app-shell aside nav button{min-height:44px;letter-spacing:0}
+.app-shell aside nav button[aria-current=page]{box-shadow:var(--shadow-interactive)}
+.app-shell aside nav button:focus-visible{outline-offset:-2px}
+.app-shell table tbody tr:nth-child(even):hover{background:var(--surface-hover)}
+.app-shell table tbody td{line-height:1.5}
+.app-shell .data-panel h2{color:var(--foreground)}
+.app-shell input:not([type=checkbox]):not([type=radio]),.app-shell textarea,.auth-panel input{background:var(--surface-field)}
+input:disabled,textarea:disabled{cursor:not-allowed}
+.auth-panel{animation:page-in .4s var(--ease-ui) both;border-radius:.75rem}
+.auth-panel form label{display:inline-block;margin-bottom:.5rem}
+.auth-panel input{min-height:44px}
+.auth-panel button{transition:background-color .18s,box-shadow .18s,transform .18s var(--ease-ui)}
+.auth-panel button:active:not(:disabled){transform:scale(.98)}
+.auth-page :focus-visible{outline:2px solid var(--ring);outline-offset:3px}
+.auth-page [class*=tracking-],.app-shell [class*=tracking-]{letter-spacing:0}
+@media (max-width:639px){
+ .app-shell .page-heading{padding-bottom:1.25rem}
+ .app-shell .metric-tile{padding:1rem}
+ .app-shell [role=tablist]{max-width:100%;overflow-x:auto;justify-content:flex-start}
+ .app-shell [role=tab]{flex-shrink:0;min-height:40px}
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+ .auth-panel .btn-premium:hover{transform:translateY(-2px)}
+ .app-shell aside nav button:hover svg{transform:translateY(-1px);transition:transform .2s var(--ease-ui)}
+}
+@media (prefers-reduced-motion:reduce){
+ .app-shell .page-heading,.auth-panel{animation:none}
+ .app-shell button:active,.auth-panel button:active,.btn-premium:hover,.btn-premium:active{transform:none!important}
+ [data-state=open][role=dialog],[data-state=closed][role=dialog]{animation:none!important}
+}
