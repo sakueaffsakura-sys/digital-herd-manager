@@ -4,6 +4,7 @@ import { resolveNoteReference } from "./noteReference";
 
 const normalize = (text: string) => text.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLocaleLowerCase("pt-BR").replace(/[_\s]+/g, " ");
 
+
 export function recordReferenceRows(field: Field, refs: FormRefs | undefined, currentId: unknown) {
   if (field.type === "animal") return (refs?.animals ?? []).filter((animal) =>
     (!field.sex || animal.sexo === field.sex) && (!field.activeOnly || animal.situacao === "ativo" || animal.id === currentId));
