@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { CalendarDays, FileText, LoaderCircle, NotebookPen, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { dateNow, type Field, type FormRefs, type Module, type Row } from "./shared";
-import { ensureRecordReferences, recordReferenceRows } from "@/lib/recordInput";
+import { ensureRecordReferences, recordReferenceRows, vaccinationTarget } from "@/lib/recordInput";
 
 export function RecordDialog({
   open,
@@ -49,6 +49,7 @@ export function RecordDialog({
   const [form, setForm] = useState<Row>(initial);
   const [writtenRefs, setWrittenRefs] = useState<Record<string, string>>({});
   const [resolving, setResolving] = useState(false);
+  const submitLock = useRef(false);
   const queryClient = useQueryClient();
   const isNote = config.table === "anotacoes_producao";
   useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
@@ -86,16 +87,27 @@ export function RecordDialog({
   }, [open, demo, config]);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (submitLock.current || saving) return;
     if (demo) { toast.info("Isto é só uma demonstração da Yui — nada foi salvo."); onClose(); return; }
+    submitLock.current = true;
     setResolving(true);
-    const result = await ensureRecordReferences(config.fields, form, writtenRefs, refs, row, propertyId);
-    setResolving(false);
+    let result: Awaited<ReturnType<typeof ensureRecordReferences>>;
+    try {
+      result = await ensureRecordReferences(config.fields, form, writtenRefs, refs, row, propertyId);
+    } catch {
+      toast.error("Não foi possível conferir os cadastros. Tente salvar novamente.");
+      return;
+    } finally {
+      setResolving(false);
+      submitLock.current = false;
+      void queryClient.invalidateQueries({ queryKey: ["form-refs", propertyId] });
+    }
     if (result.error) { toast.error(result.error); return; }
     if (result.created.length) {
       toast.success(`Cadastro criado automaticamente: ${result.created.join(", ")}.`);
       void queryClient.invalidateQueries({ queryKey: ["form-refs", propertyId] });
     }
-    const resolved = result.values;
+    const resolved = config.table === "vacinacoes" ? vaccinationTarget(result.values) : result.values;
     const missing = config.fields.find(
       (f) => f.required && (resolved[f.key] === undefined || resolved[f.key] === null || String(resolved[f.key]).trim() === ""),
     );
