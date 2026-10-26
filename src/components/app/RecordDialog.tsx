@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { dateNow, type Field, type FormRefs, type Module, type Row } from "./shared";
-import { recordReferenceRows, resolveRecordInputs } from "@/lib/recordInput";
+import { ensureRecordReferences, recordReferenceRows } from "@/lib/recordInput";
 
 export function RecordDialog({
   open,
@@ -17,6 +18,7 @@ export function RecordDialog({
   refs,
   onSave,
   saving,
+  propertyId,
   demo,
   /** Exemplos que a Yui oferece durante a demonstração; escolher um preenche o formulário de novo. */
   demoExemplos,
@@ -30,6 +32,7 @@ export function RecordDialog({
   refs: FormRefs | undefined;
   onSave: (r: Row) => void;
   saving: boolean;
+  propertyId: string;
   /** Valores digitados automaticamente pela Yui; nunca são salvos. */
   demo?: Row | null;
   demoExemplos?: { rotulo: string; valores: Record<string, string> }[];
@@ -45,6 +48,8 @@ export function RecordDialog({
     );
   const [form, setForm] = useState<Row>(initial);
   const [writtenRefs, setWrittenRefs] = useState<Record<string, string>>({});
+  const [resolving, setResolving] = useState(false);
+  const queryClient = useQueryClient();
   const isNote = config.table === "anotacoes_producao";
   useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
   const referenceRows = (f: Field) => recordReferenceRows(f, refs, row?.[f.key]);
@@ -79,11 +84,17 @@ export function RecordDialog({
     }, 45);
     return () => window.clearInterval(timer);
   }, [open, demo, config]);
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (demo) { toast.info("Isto é só uma demonstração da Yui — nada foi salvo."); onClose(); return; }
-    const result = resolveRecordInputs(config.fields, form, writtenRefs, refs, row);
+    setResolving(true);
+    const result = await ensureRecordReferences(config.fields, form, writtenRefs, refs, row, propertyId);
+    setResolving(false);
     if (result.error) { toast.error(result.error); return; }
+    if (result.created.length) {
+      toast.success(`Cadastro criado automaticamente: ${result.created.join(", ")}.`);
+      void queryClient.invalidateQueries({ queryKey: ["form-refs", propertyId] });
+    }
     const resolved = result.values;
     const missing = config.fields.find(
       (f) => f.required && (resolved[f.key] === undefined || resolved[f.key] === null || String(resolved[f.key]).trim() === ""),
@@ -164,7 +175,7 @@ export function RecordDialog({
           )}
           <DialogFooter className={isNote ? "sticky bottom-0 -mx-5 mt-6 gap-2 border-t border-border bg-card px-5 py-4 sm:-mx-6 sm:px-6" : "mt-6"}>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{isNote && (saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />)}{saving ? "Salvando…" : demo ? "Salvar (demonstração)" : isNote ? "Salvar anotação" : "Salvar"}</Button>
+            <Button type="submit" disabled={saving || resolving}>{isNote && (saving || resolving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />)}{resolving ? "Conferindo cadastros…" : saving ? "Salvando…" : demo ? "Salvar (demonstração)" : isNote ? "Salvar anotação" : "Salvar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

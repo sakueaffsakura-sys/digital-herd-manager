@@ -306,6 +306,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
         refs={refs.data}
         onSave={(p) => save.mutate(p)}
         saving={save.isPending}
+        propertyId={propertyId}
         demo={demo}
         demoExemplos={EXEMPLOS_NOTA}
         demoExemploAtual={demoIndice}
