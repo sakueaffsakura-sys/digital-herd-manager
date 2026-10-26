@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Corrigir falhas atuais ao carregar e salvar anotações; verificar disponibilidade do banco e preservar escrita dos campos
 - [x] Trocar seleções por escrita em todos os cadastros — 31 testes passaram; salvamentos verificados em rebanho, lotes, pesagens, vacinas, inseminações, nascimentos, leite, anotações e financeiro
 - [x] Analisar telas e corrigir contagem/paginação, referências dos formulários, estado por propriedade, controles da demonstração e duplicatas de anotações (97 testes passaram)
 - [x] Verificar criar, ler, editar e excluir anotações com sessão válida; restaurar avisos globais de sucesso e erro
