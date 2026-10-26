@@ -15,6 +15,11 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as ApiYuiRouteImport } from './routes/api/yui'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app/$section'
 import { Route as ApiYuiVozRouteImport } from './routes/api/yui/voz'
+import { Route as ApiPublicAppEuRouteImport } from './routes/api/public/app/eu'
+import { Route as ApiPublicAppLoginRouteImport } from './routes/api/public/app/login'
+import { Route as ApiPublicAppResumoRouteImport } from './routes/api/public/app/resumo'
+import { Route as ApiPublicAppSincronizarRouteImport } from './routes/api/public/app/sincronizar'
+import { Route as ApiPublicAppStatusRouteImport } from './routes/api/public/app/status'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +50,31 @@ const ApiYuiVozRoute = ApiYuiVozRouteImport.update({
   path: '/voz',
   getParentRoute: () => ApiYuiRoute,
 } as any)
+const ApiPublicAppEuRoute = ApiPublicAppEuRouteImport.update({
+  id: '/api/public/app/eu',
+  path: '/api/public/app/eu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAppLoginRoute = ApiPublicAppLoginRouteImport.update({
+  id: '/api/public/app/login',
+  path: '/api/public/app/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAppResumoRoute = ApiPublicAppResumoRouteImport.update({
+  id: '/api/public/app/resumo',
+  path: '/api/public/app/resumo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAppSincronizarRoute = ApiPublicAppSincronizarRouteImport.update({
+  id: '/api/public/app/sincronizar',
+  path: '/api/public/app/sincronizar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAppStatusRoute = ApiPublicAppStatusRouteImport.update({
+  id: '/api/public/app/status',
+  path: '/api/public/app/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +82,11 @@ export interface FileRoutesByFullPath {
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
+  '/api/public/app/eu': typeof ApiPublicAppEuRoute
+  '/api/public/app/login': typeof ApiPublicAppLoginRoute
+  '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
+  '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
+  '/api/public/app/status': typeof ApiPublicAppStatusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +94,11 @@ export interface FileRoutesByTo {
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
+  '/api/public/app/eu': typeof ApiPublicAppEuRoute
+  '/api/public/app/login': typeof ApiPublicAppLoginRoute
+  '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
+  '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
+  '/api/public/app/status': typeof ApiPublicAppStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +108,37 @@ export interface FileRoutesById {
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
+  '/api/public/app/eu': typeof ApiPublicAppEuRoute
+  '/api/public/app/login': typeof ApiPublicAppLoginRoute
+  '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
+  '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
+  '/api/public/app/status': typeof ApiPublicAppStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/api/yui' | '/app/$section' | '/api/yui/voz'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/api/yui'
+    | '/app/$section'
+    | '/api/yui/voz'
+    | '/api/public/app/eu'
+    | '/api/public/app/login'
+    | '/api/public/app/resumo'
+    | '/api/public/app/sincronizar'
+    | '/api/public/app/status'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/api/yui' | '/app/$section' | '/api/yui/voz'
+  to:
+    | '/'
+    | '/admin'
+    | '/api/yui'
+    | '/app/$section'
+    | '/api/yui/voz'
+    | '/api/public/app/eu'
+    | '/api/public/app/login'
+    | '/api/public/app/resumo'
+    | '/api/public/app/sincronizar'
+    | '/api/public/app/status'
   id:
     | '__root__'
     | '/'
@@ -82,12 +147,22 @@ export interface FileRouteTypes {
     | '/api/yui'
     | '/_authenticated/app/$section'
     | '/api/yui/voz'
+    | '/api/public/app/eu'
+    | '/api/public/app/login'
+    | '/api/public/app/resumo'
+    | '/api/public/app/sincronizar'
+    | '/api/public/app/status'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ApiYuiRoute: typeof ApiYuiRouteWithChildren
+  ApiPublicAppEuRoute: typeof ApiPublicAppEuRoute
+  ApiPublicAppLoginRoute: typeof ApiPublicAppLoginRoute
+  ApiPublicAppResumoRoute: typeof ApiPublicAppResumoRoute
+  ApiPublicAppSincronizarRoute: typeof ApiPublicAppSincronizarRoute
+  ApiPublicAppStatusRoute: typeof ApiPublicAppStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -134,6 +209,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiYuiVozRouteImport
       parentRoute: typeof ApiYuiRoute
     }
+    '/api/public/app/eu': {
+      id: '/api/public/app/eu'
+      path: '/api/public/app/eu'
+      fullPath: '/api/public/app/eu'
+      preLoaderRoute: typeof ApiPublicAppEuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app/login': {
+      id: '/api/public/app/login'
+      path: '/api/public/app/login'
+      fullPath: '/api/public/app/login'
+      preLoaderRoute: typeof ApiPublicAppLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app/resumo': {
+      id: '/api/public/app/resumo'
+      path: '/api/public/app/resumo'
+      fullPath: '/api/public/app/resumo'
+      preLoaderRoute: typeof ApiPublicAppResumoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app/sincronizar': {
+      id: '/api/public/app/sincronizar'
+      path: '/api/public/app/sincronizar'
+      fullPath: '/api/public/app/sincronizar'
+      preLoaderRoute: typeof ApiPublicAppSincronizarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app/status': {
+      id: '/api/public/app/status'
+      path: '/api/public/app/status'
+      fullPath: '/api/public/app/status'
+      preLoaderRoute: typeof ApiPublicAppStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -165,6 +275,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ApiYuiRoute: ApiYuiRouteWithChildren,
+  ApiPublicAppEuRoute: ApiPublicAppEuRoute,
+  ApiPublicAppLoginRoute: ApiPublicAppLoginRoute,
+  ApiPublicAppResumoRoute: ApiPublicAppResumoRoute,
+  ApiPublicAppSincronizarRoute: ApiPublicAppSincronizarRoute,
+  ApiPublicAppStatusRoute: ApiPublicAppStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
