@@ -1,5 +1,6 @@
 # Roadmap
-- [ ] Refinar visual compartilhado, login e animações leves; conferir telas com login e em celular.
+- [x] Refinar CSS compartilhado e login com animações leves — cadastro, mostrar senha, ausência de transbordamento no celular e redução de movimento verificados; build OK.
+- [ ] Conferir ajustes visuais em anotações com login — sessão própria não disponível: nenhuma conta corresponde ao e-mail do solicitante.
 - [x] Restabelecer carregamento e salvamento de anotações — banco reativado e CRUD verificado com login.
 - [x] Corrigir reconhecimento de referências existentes em todos os formulários e salvamento de vacinação com animal e lote — 23 testes passaram; criar, repetir com mesmos cadastros e editar vacinação verificados com login.
 - [x] Trocar seleções por escrita em todos os cadastros — 31 testes passaram; salvamentos verificados em rebanho, lotes, pesagens, vacinas, inseminações, nascimentos, leite, anotações e financeiro
