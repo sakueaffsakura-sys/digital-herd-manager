@@ -24,3 +24,4 @@
 - Typed references are checked against property-scoped live rows before auto-creation, and unique conflicts re-read the winner; eligibility still applies — why: stale form caches and retries must not duplicate animals, lots or vaccines.
 - External/native app API lives under `/api/public/app/*` (`src/lib/app-api.server.ts`), each handler verifies the bearer and acts as the user so RLS applies — why: public prefix bypasses site auth, so authorization must be per-handler.
 - Offline app shell uses vite-plugin-pwa registered only via `src/lib/pwa-register.ts` (never in dev/preview/iframe, `?sw=off` kill switch) — why: service workers in preview serve stale builds.
+- Shared visual styling lives in src/styles.css; motion targets headings and interactive controls, never entire tables or all rows, and respects reduced motion — why: consistent presentation without adding cost to large datasets.
