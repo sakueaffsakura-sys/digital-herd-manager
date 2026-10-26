@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { CalendarDays, FileText, LoaderCircle, NotebookPen, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,7 @@ export function RecordDialog({
     );
   const [form, setForm] = useState<Row>(initial);
   const [writtenRefs, setWrittenRefs] = useState<Record<string, string>>({});
+  const isNote = config.table === "anotacoes_producao";
   useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
   const referenceRows = (f: Field) => recordReferenceRows(f, refs, row?.[f.key]);
   const referenceText = (f: Field) => {
@@ -117,25 +119,29 @@ export function RecordDialog({
   };
   return (
     <Dialog open={open} modal={!demo} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className={`dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl ${demo ? "z-[80]" : ""}`}>
-        <DialogHeader>
-          <DialogTitle>{row ? "Editar" : "Novo"} {config.singular}</DialogTitle>
+      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className={`dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl ${isNote ? "w-[calc(100%-2rem)] gap-0 rounded-lg p-0" : ""} ${demo ? "z-[80]" : ""}`}>
+        <DialogHeader className={isNote ? "border-b border-border px-5 py-5 pr-12 text-left sm:px-6" : ""}>
+          {isNote && <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-primary"><NotebookPen className="size-4" />Produção · Anotações</div>}
+          <DialogTitle className={isNote ? "text-2xl leading-tight" : ""}>{isNote ? row ? "Editar anotação" : "Nova anotação" : `${row ? "Editar" : "Novo"} ${config.singular}`}</DialogTitle>
           <DialogDescription>{demo ? "Demonstração da Yui: os campos estão sendo preenchidos sozinhos e nada será salvo." : "Os dados serão gravados na propriedade selecionada."}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit}>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <form onSubmit={submit} className={isNote ? "px-5 pt-5 sm:px-6" : ""}>
+          <div className={`grid gap-4 sm:grid-cols-2 ${isNote ? "gap-y-5" : ""}`}>
+            {isNote && <div className="flex items-center gap-2 border-b border-border pb-2 text-sm font-semibold sm:col-span-2"><CalendarDays className="size-4 text-chart-2" />Registro da produção</div>}
             {config.fields.map((f) => (
-              <div key={f.key} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
-                <Label htmlFor={`record-${f.key}`}>{f.label}</Label>
+              <div key={f.key} className={`${f.type === "textarea" ? "sm:col-span-2" : ""} ${isNote ? "min-w-0 space-y-2" : ""}`}>
+                {isNote && f.key === "observacao" && <div className="mb-4 mt-1 flex items-center gap-2 border-b border-border pb-2 text-sm font-semibold"><FileText className="size-4 text-chart-4" />Observações do dia</div>}
+                <Label htmlFor={`record-${f.key}`} className={isNote ? "text-xs font-medium text-muted-foreground" : ""}>{f.label}{isNote && f.required && <span className="ml-1 text-primary" aria-hidden="true">*</span>}</Label>
                 {f.type === "textarea" ? (
-                  <Textarea id={`record-${f.key}`} required={f.required} value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                  <Textarea id={`record-${f.key}`} className={isNote ? `resize-y bg-background/50 leading-relaxed ${f.key === "observacao" ? "min-h-32" : "min-h-20"}` : undefined} required={f.required} value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
                 ) : f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
-                  <Input id={`record-${f.key}`} required={f.required} type="text" value={referenceText(f)} placeholder={f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : "Digite o nome do lote"} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
+                  <Input id={`record-${f.key}`} className={isNote ? "h-11 bg-background/50" : undefined} required={f.required} type="text" value={referenceText(f)} placeholder={f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : "Digite o nome do lote"} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
                 ) : f.type === "select" ? (
                   <Input id={`record-${f.key}`} required={f.required} type="text" value={f.options?.find((option) => option.value === form[f.key])?.label ?? String(form[f.key] ?? "")} placeholder={f.options?.map((option) => option.label).join(" / ")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
                 ) : (
                   <Input
                     id={`record-${f.key}`}
+                    className={isNote ? "h-11 bg-background/50" : undefined}
                     required={f.required}
                     type={f.type ?? "text"}
                     step={f.type === "number" ? "0.01" : undefined}
@@ -156,9 +162,9 @@ export function RecordDialog({
               </div>
             </div>
           )}
-          <DialogFooter className="mt-6">
+          <DialogFooter className={isNote ? "sticky bottom-0 -mx-5 mt-6 gap-2 border-t border-border bg-card px-5 py-4 sm:-mx-6 sm:px-6" : "mt-6"}>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Salvando…" : demo ? "Salvar (demonstração)" : "Salvar"}</Button>
+            <Button type="submit" disabled={saving}>{isNote && (saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />)}{saving ? "Salvando…" : demo ? "Salvar (demonstração)" : isNote ? "Salvar anotação" : "Salvar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

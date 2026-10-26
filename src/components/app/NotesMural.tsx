@@ -7,6 +7,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Milk,
+  AlertCircle,
   NotebookPen,
   Pencil,
   Plus,
@@ -146,7 +147,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
   const rows = useMemo(() => paged.rows, [paged.rows]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageTitle
         icon={NotebookPen}
         title="Anotações da Produção"
@@ -158,36 +159,44 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex min-w-56 flex-1 items-center gap-2 sm:max-w-md">
-          <Search className="size-4 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-3 border-y border-border py-4">
+        <div className="relative min-w-0 basis-full sm:max-w-lg sm:flex-1 sm:basis-auto">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            className="h-11 bg-card pl-10"
+            aria-label="Buscar anotações"
             value={local}
             onChange={(e) => setLocal(e.target.value)}
-            placeholder="Buscar por observação, comportamento ou alimentação…"
+            placeholder="Buscar anotações…"
           />
         </div>
-        <span className="text-xs text-muted-foreground">
-          {paged.totalReady ? `${summary.total.toLocaleString("pt-BR")} anotações` : "contando…"}
+        <span className="flex items-center gap-2 text-xs text-muted-foreground sm:ml-auto">
+          <NotebookPen className="size-4 text-primary" />
+          {paged.totalReady ? <><strong className="text-foreground">{summary.total.toLocaleString("pt-BR")}</strong> anotações</> : "contando…"}
         </span>
       </div>
 
       {paged.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="h-40 animate-pulse rounded-lg border border-border bg-muted/30" />
+            <div key={i} className="h-60 animate-pulse rounded-lg border border-border bg-muted/30" />
           ))}
         </div>
       ) : paged.error ? (
-        <div className="grid place-items-center gap-3 py-12 text-sm text-muted-foreground">
+        <div role="alert" className="grid place-items-center gap-4 py-16 text-sm text-muted-foreground">
+          <span className="grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive"><AlertCircle className="size-6" /></span>
           <div className="grid place-items-center gap-1 text-center">
-            <span>Erro ao carregar as anotações.</span>
+            <span className="text-base font-semibold text-foreground">Não foi possível carregar as anotações</span>
             <span className="max-w-xl text-xs text-destructive">{paged.error.message}</span>
           </div>
           <Button variant="outline" size="sm" onClick={() => paged.refetch()}><RefreshCw />Tentar novamente</Button>
         </div>
       ) : rows.length === 0 ? (
-        <Empty message="Nenhuma anotação encontrada. Crie a primeira pelo botão 'Nova anotação'." />
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <span className="mb-1 grid size-14 place-items-center rounded-lg border border-primary/20 bg-primary/10 text-primary"><NotebookPen className="size-6" /></span>
+          <h2 className="text-lg font-semibold">{search ? "Nenhuma anotação encontrada" : "Suas anotações aparecem aqui"}</h2>
+          {!search && <Button variant="outline" onClick={() => { setEditing(null); setOpen(true); }}><Plus />Nova anotação</Button>}
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {rows.map((row) => {
@@ -198,7 +207,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
             return (
               <article
                 key={String(row["id"])}
-                className="group flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm transition hover:border-primary/40"
+                className="group flex min-w-0 flex-col gap-4 rounded-lg border border-border border-t-2 border-t-primary/45 bg-card p-5 shadow-sm transition-colors motion-reduce:transition-none hover:border-primary/40"
               >
                 <header className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -212,36 +221,34 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
                   )}
                 </header>
 
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">{String(row["observacao"] ?? "")}</p>
+                {quem && <p className="break-words text-sm font-semibold text-primary">{quem}</p>}
+                <p className="break-words whitespace-pre-wrap text-sm leading-7">{String(row["observacao"] ?? "")}</p>
 
                 {!!(row["comportamento"] || row["alimentacao"]) && (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="grid gap-2 border-l-2 border-border pl-3">
                     {!!row["comportamento"] && (
-                      <span className="rounded-full bg-chart-4/15 px-2 py-0.5 text-[10px] font-semibold text-chart-4">
-                        Comportamento: {pretty(row["comportamento"])}
-                      </span>
+                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-[10px] font-semibold uppercase text-chart-4">Comportamento</span>{pretty(row["comportamento"])}</p>
                     )}
                     {!!row["alimentacao"] && (
-                      <span className="rounded-full bg-chart-3/15 px-2 py-0.5 text-[10px] font-semibold text-chart-3">
-                        Alimentação: {pretty(row["alimentacao"])}
-                      </span>
+                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-[10px] font-semibold uppercase text-chart-2">Alimentação</span>{pretty(row["alimentacao"])}</p>
                     )}
                   </div>
                 )}
 
                 {!!row["informacoes_adicionais"] && (
-                  <p className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+                  <p className="break-words whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
                     {String(row["informacoes_adicionais"])}
                   </p>
                 )}
 
                 <footer className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
-                  <span className="truncate text-xs text-muted-foreground">{quem || "—"}</span>
-                  <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                  <span className="text-[10px] font-medium uppercase text-muted-foreground">Anotação da produção</span>
+                  <div className="flex shrink-0 gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7"
+                      className="size-9 text-muted-foreground hover:text-primary"
+                      title="Editar anotação"
                       aria-label="Editar anotação"
                       onClick={() => { setEditing(row); setOpen(true); }}
                     >
@@ -250,7 +257,8 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7 text-destructive"
+                      className="size-9 text-muted-foreground hover:text-destructive"
+                      title="Excluir anotação"
                       aria-label="Excluir anotação"
                       onClick={() => remove(row)}
                     >
