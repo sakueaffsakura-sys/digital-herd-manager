@@ -52,7 +52,7 @@ export const friendlyError = (error: unknown) => {
 };
 
 export function PageTitle({ icon: Icon, title, description, action }: { icon: IconType; title: string; description: string; action?: ReactNode }) {
-  return <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="mb-2 flex items-center gap-2 text-primary"><Icon className="size-5" /><span className="text-xs font-bold uppercase">Pecuária Digital</span></div><h1 className="text-3xl font-bold">{title}</h1><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>{action}</div>;
+  return <div className="flex flex-col justify-between gap-4 border-b border-border/60 pb-5 sm:flex-row sm:items-end"><div><div className="mb-2.5 flex items-center gap-2 text-primary"><span className="grid size-7 place-items-center rounded-lg bg-primary/12 ring-1 ring-inset ring-primary/25"><Icon className="size-4" /></span><span className="text-eyebrow">Pecuária Digital</span></div><h1 className="text-3xl font-bold sm:text-4xl">{title}</h1><p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p></div>{action}</div>;
 }
 
 export function Panel({ title, subtitle, children, action, className }: { title: string; subtitle: string; children: ReactNode; action?: ReactNode; className?: string }) {

@@ -64,3 +64,16 @@ input:focus-visible,textarea:focus-visible{border-color:color-mix(in oklab,var(-
 .app-shell main button:active{transform:scale(.98)}
 .app-shell main [data-slot=badge],.app-shell main .rounded-full.border{backdrop-filter:blur(6px)}
 @media (prefers-reduced-motion:reduce){.app-shell main .bg-card:hover{transform:none}}
+
+/* ===== Premium v2 — hierarquia, profundidade e microinterações ===== */
+@utility text-eyebrow{font-size:.68rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--primary)}
+.app-shell main>div{animation:page-in .35s cubic-bezier(.22,1,.36,1) both}
+@keyframes page-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.app-shell main button.bg-primary{box-shadow:0 6px 20px -8px color-mix(in oklab,var(--primary) 60%,transparent)}
+.app-shell main button.bg-primary:hover{box-shadow:0 10px 28px -8px color-mix(in oklab,var(--primary) 70%,transparent);filter:brightness(1.06)}
+.app-shell main span.rounded-full{box-shadow:inset 0 0 0 1px color-mix(in oklab,currentColor 22%,transparent)}
+.app-shell header{box-shadow:0 1px 0 color-mix(in oklab,var(--primary) 8%,transparent)}
+.app-shell :focus-visible{outline:2px solid color-mix(in oklab,var(--primary) 70%,transparent);outline-offset:2px}
+.app-shell main [role=tablist]{background:color-mix(in oklab,var(--muted) 55%,transparent);padding:4px;gap:2px}
+.app-shell main [role=tab]{border-radius:.6rem}
+@media (prefers-reduced-motion:reduce){.app-shell main>div{animation:none}}
