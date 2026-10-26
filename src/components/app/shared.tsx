@@ -56,7 +56,7 @@ export function PageTitle({ icon: Icon, title, description, action }: { icon: Ic
 }
 
 export function Panel({ title, subtitle, children, action, className }: { title: string; subtitle: string; children: ReactNode; action?: ReactNode; className?: string }) {
-  return <section className={`rounded-xl border border-border bg-card p-5 ${className ?? ""}`}><div className="mb-5 flex items-start justify-between gap-3"><div><h2 className="font-semibold">{title}</h2><p className="text-xs text-muted-foreground">{subtitle}</p></div>{action}</div>{children}</section>;
+  return <section className={`rounded-2xl border border-border bg-card p-6 ${className ?? ""}`}><div className="mb-6 flex items-start justify-between gap-3"><div><h2 className="text-lg font-semibold tracking-tight">{title}</h2><p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p></div>{action}</div>{children}</section>;
 }
 
 export function Empty({ message }: { message: string }) {
@@ -91,10 +91,10 @@ export function Delta({ value, invert, label }: { value: number | null; invert?:
 
 export function Metric({ label, value, icon: Icon, tone = "primary", hint, onClick }: { label: string; value: string | number; icon?: IconType; tone?: Tone; hint?: ReactNode; onClick?: () => void }) {
   const Tag = onClick ? "button" : "div";
-  return <Tag type={onClick ? "button" : undefined} onClick={onClick} className={`group relative overflow-hidden rounded-xl border border-border bg-card p-4 text-left transition-colors ${onClick ? "cursor-pointer hover:border-primary/40" : ""}`}>
-    <div className="flex items-center justify-between gap-2"><span className="text-xs font-medium text-muted-foreground">{label}</span>{Icon && <span className={`grid size-8 place-items-center rounded-lg ${toneCls[tone]}`}><Icon className="size-4" /></span>}</div>
-    <strong className="mt-3 block text-2xl font-bold tabular-nums tracking-tight">{value}</strong>
-    {hint && <div className="mt-1">{hint}</div>}
+  return <Tag type={onClick ? "button" : undefined} onClick={onClick} className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-5 text-left transition-all duration-200 ${onClick ? "cursor-pointer hover:-translate-y-0.5 hover:border-primary/40" : ""}`}>
+    <div className="flex items-center justify-between gap-2"><span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>{Icon && <span className={`grid size-9 place-items-center rounded-xl ring-1 ring-inset ring-white/5 ${toneCls[tone]}`}><Icon className="size-4" /></span>}</div>
+    <strong className="mt-3 block font-display text-[1.7rem] font-bold tabular-nums tracking-tight">{value}</strong>
+    {hint && <div className="mt-1.5">{hint}</div>}
   </Tag>;
 }
 
