@@ -2,7 +2,7 @@ import type { Field, FormRefs, Row } from "@/components/app/shared";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveNoteReference } from "./noteReference";
 
-const normalize = (text: string) => text.trim().normalize("NFD").replace(/[̀-ͯ]/g, "").toLocaleLowerCase("pt-BR").replace(/[_\s]+/g, " ");
+const normalize = (text: string) => text.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").replace(/[_\s]+/g, " ");
 
 
 export function recordReferenceRows(field: Field, refs: FormRefs | undefined, currentId: unknown) {
