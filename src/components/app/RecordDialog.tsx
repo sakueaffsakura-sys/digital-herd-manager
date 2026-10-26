@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { dateNow, type Field, type FormRefs, type Module, type Row } from "./shared";
-import { recordReferenceRows, resolveRecordInputs } from "@/lib/recordInput";
+import { ensureRecordReferences, recordReferenceRows } from "@/lib/recordInput";
 
 export function RecordDialog({
   open,
@@ -17,6 +18,7 @@ export function RecordDialog({
   refs,
   onSave,
   saving,
+  propertyId,
   demo,
   /** Exemplos que a Yui oferece durante a demonstração; escolher um preenche o formulário de novo. */
   demoExemplos,
@@ -30,6 +32,7 @@ export function RecordDialog({
   refs: FormRefs | undefined;
   onSave: (r: Row) => void;
   saving: boolean;
+  propertyId: string;
   /** Valores digitados automaticamente pela Yui; nunca são salvos. */
   demo?: Row | null;
   demoExemplos?: { rotulo: string; valores: Record<string, string> }[];
@@ -45,6 +48,8 @@ export function RecordDialog({
     );
   const [form, setForm] = useState<Row>(initial);
   const [writtenRefs, setWrittenRefs] = useState<Record<string, string>>({});
+  const [resolving, setResolving] = useState(false);
+  const queryClient = useQueryClient();
   const isNote = config.table === "anotacoes_producao";
   useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
   const referenceRows = (f: Field) => recordReferenceRows(f, refs, row?.[f.key]);
