@@ -49,3 +49,18 @@ input:focus-visible,textarea:focus-visible{border-color:color-mix(in oklab,var(-
 [role=tab][data-state=active]{box-shadow:var(--shadow-glow)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:color-mix(in oklab,var(--primary) 22%,var(--muted));border-radius:99px;border:2px solid var(--background)}::-webkit-scrollbar-track{background:transparent}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== Detail layer ===== */
+.app-shell main{background:radial-gradient(1200px 500px at 85% -10%,color-mix(in oklab,var(--primary) 7%,transparent),transparent 60%),radial-gradient(900px 400px at -10% 110%,color-mix(in oklab,var(--chart-2) 6%,transparent),transparent 60%)}
+.app-shell main h1{background:linear-gradient(90deg,var(--foreground),color-mix(in oklab,var(--primary) 55%,var(--foreground)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.app-shell main .bg-card{position:relative;overflow:hidden}
+.app-shell main .bg-card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,color-mix(in oklab,var(--primary) 45%,transparent),transparent);pointer-events:none}
+.app-shell main .bg-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-card),0 18px 40px -22px color-mix(in oklab,var(--primary) 35%,transparent)}
+.app-shell main .bg-card{transition:transform .2s,border-color .2s,box-shadow .2s}
+.app-shell table thead th{background:color-mix(in oklab,var(--card) 92%,var(--primary))}
+.app-shell table tbody tr:nth-child(even){background:color-mix(in oklab,var(--muted) 35%,transparent)}
+.app-shell table tbody td{font-variant-numeric:tabular-nums}
+.app-shell main button{transition:transform .12s,filter .15s,background .15s,box-shadow .15s}
+.app-shell main button:active{transform:scale(.98)}
+.app-shell main [data-slot=badge],.app-shell main .rounded-full.border{backdrop-filter:blur(6px)}
+@media (prefers-reduced-motion:reduce){.app-shell main .bg-card:hover{transform:none}}
