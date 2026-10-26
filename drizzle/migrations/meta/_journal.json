@@ -8,6 +8,13 @@
       "when": 1792531692613,
       "tag": "0000_escala_e_sincronizacao_app",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793023692618,
+      "tag": "0001_imagens_site_somente_logados",
+      "breakpoints": true
     }
   ]
 }
