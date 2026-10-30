@@ -29,6 +29,13 @@
       "when": 1793319181329,
       "tag": "0003_modo_manutencao_protecao",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793319199788,
+      "tag": "0004_bloqueios_expirados_renovam",
+      "breakpoints": true
     }
   ]
 }
