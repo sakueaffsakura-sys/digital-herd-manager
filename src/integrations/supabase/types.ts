@@ -242,6 +242,59 @@ export type Database = {
           },
         ]
       }
+      bloqueios_acesso: {
+        Row: {
+          ativo: boolean
+          criado_em: string
+          expira_em: string | null
+          id: string
+          incidente_id: string | null
+          motivo: string
+          removido_em: string | null
+          removido_por: string | null
+          tentativas: number
+          tipo: string
+          ultima_tentativa: string | null
+          valor: string
+        }
+        Insert: {
+          ativo?: boolean
+          criado_em?: string
+          expira_em?: string | null
+          id?: string
+          incidente_id?: string | null
+          motivo: string
+          removido_em?: string | null
+          removido_por?: string | null
+          tentativas?: number
+          tipo: string
+          ultima_tentativa?: string | null
+          valor: string
+        }
+        Update: {
+          ativo?: boolean
+          criado_em?: string
+          expira_em?: string | null
+          id?: string
+          incidente_id?: string | null
+          motivo?: string
+          removido_em?: string | null
+          removido_por?: string | null
+          tentativas?: number
+          tipo?: string
+          ultima_tentativa?: string | null
+          valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloqueios_acesso_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "incidentes_seguranca"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compras: {
         Row: {
           categoria: string
@@ -468,6 +521,57 @@ export type Database = {
           },
         ]
       }
+      incidentes_seguranca: {
+        Row: {
+          agente: string | null
+          bloqueou: boolean
+          caminho: string | null
+          criado_em: string
+          detalhes: Json
+          dispositivo: string | null
+          id: string
+          ip: string | null
+          metodo: string | null
+          motivo: string
+          repeticoes: number
+          severidade: string
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          agente?: string | null
+          bloqueou?: boolean
+          caminho?: string | null
+          criado_em?: string
+          detalhes?: Json
+          dispositivo?: string | null
+          id?: string
+          ip?: string | null
+          metodo?: string | null
+          motivo: string
+          repeticoes?: number
+          severidade?: string
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          agente?: string | null
+          bloqueou?: boolean
+          caminho?: string | null
+          criado_em?: string
+          detalhes?: Json
+          dispositivo?: string | null
+          id?: string
+          ip?: string | null
+          metodo?: string | null
+          motivo?: string
+          repeticoes?: number
+          severidade?: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       inseminacoes: {
         Row: {
           animal_id: string
@@ -616,6 +720,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      manutencao_config: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          duracao_bloqueio_min: number
+          id: number
+          mensagem: string
+          modulos: string[]
+          status: string
+          titulo: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          duracao_bloqueio_min?: number
+          id?: number
+          mensagem?: string
+          modulos?: string[]
+          status?: string
+          titulo?: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          duracao_bloqueio_min?: number
+          id?: number
+          mensagem?: string
+          modulos?: string[]
+          status?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      manutencao_historico: {
+        Row: {
+          criado_em: string
+          detalhes: Json
+          email: string | null
+          id: string
+          ip: string | null
+          status_anterior: string | null
+          status_novo: string
+          user_id: string | null
+        }
+        Insert: {
+          criado_em?: string
+          detalhes?: Json
+          email?: string | null
+          id?: string
+          ip?: string | null
+          status_anterior?: string | null
+          status_novo: string
+          user_id?: string | null
+        }
+        Update: {
+          criado_em?: string
+          detalhes?: Json
+          email?: string | null
+          id?: string
+          ip?: string | null
+          status_anterior?: string | null
+          status_novo?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       movimentacoes_financeiras: {
         Row: {
@@ -1657,9 +1827,32 @@ export type Database = {
         Args: { _payload: Json; _user_id: string }
         Returns: undefined
       }
+      admin_desbloquear: { Args: { _id: string }; Returns: Json }
       admin_excluir_conta: { Args: { _user_id: string }; Returns: Json }
+      admin_manutencao_definir: {
+        Args: {
+          _dispositivo?: string
+          _duracao_bloqueio_min: number
+          _mensagem: string
+          _modulos: string[]
+          _status: string
+          _titulo: string
+        }
+        Returns: Json
+      }
       admin_metricas: { Args: never; Returns: Json }
       admin_saude: { Args: never; Returns: Json }
+      admin_seguranca_painel: {
+        Args: {
+          _ate?: string
+          _desde?: string
+          _dispositivo?: string
+          _ip?: string
+          _status?: string
+          _tipo?: string
+        }
+        Returns: Json
+      }
       admin_sistema: { Args: never; Returns: Json }
       admin_tempo_real: { Args: never; Returns: Json }
       app_diagnostico: { Args: { p_propriedade_id: string }; Returns: Json }
@@ -1686,6 +1879,7 @@ export type Database = {
         Args: { _propriedade_id: string }
         Returns: Json
       }
+      estado_manutencao: { Args: never; Returns: Json }
       minha_assinatura: { Args: { _propriedade_id: string }; Returns: Json }
       pode_gerenciar_planos: { Args: never; Returns: boolean }
       registros_inconsistentes: {
@@ -1695,6 +1889,26 @@ export type Database = {
       relatorio_indicadores: {
         Args: { _ate?: string; _de?: string; _propriedade_id: string }
         Returns: Json
+      }
+      seg_registrar_incidente: {
+        Args: {
+          _agente: string
+          _bloquear: boolean
+          _caminho: string
+          _detalhes: Json
+          _disp: string
+          _ip: string
+          _metodo: string
+          _motivo: string
+          _severidade: string
+          _tipo: string
+          _user: string
+        }
+        Returns: string
+      }
+      seg_tentativa_bloqueado: {
+        Args: { _tipo: string; _valor: string }
+        Returns: undefined
       }
       setar_plano_demonstracao: {
         Args: {
