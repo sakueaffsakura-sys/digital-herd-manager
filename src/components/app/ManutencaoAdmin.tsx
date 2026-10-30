@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, Eye, Fingerprint, Globe, Hammer, History, Power, ShieldAlert, ShieldCheck, Unlock, UserX } from "lucide-react";
 import { toast } from "sonner";
@@ -232,7 +232,7 @@ export function MonitoramentoSeguranca() {
           {detalhe && (
             <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-sm">
               {([["Motivo", detalhe.motivo], ["Gravidade", detalhe.severidade], ["IP", detalhe.ip], ["Dispositivo", detalhe.dispositivo], ["Conta", detalhe.email ?? detalhe.user_id], ["Endereço", detalhe.caminho], ["Método", detalhe.metodo], ["Navegador", detalhe.agente], ["Bloqueio", detalhe.bloqueou ? "Sim" : "Não"]] as const).map(([k, v]) => (
-                <><dt key={k} className="text-muted-foreground">{k}</dt><dd className="break-all">{v || "—"}</dd></>
+                <Fragment key={k}><dt className="text-muted-foreground">{k}</dt><dd className="break-all">{v || "—"}</dd></Fragment>
               ))}
               <dt className="text-muted-foreground">Detalhes</dt><dd><pre className="max-h-40 overflow-auto rounded bg-muted p-2 text-xs">{JSON.stringify(detalhe.detalhes, null, 2)}</pre></dd>
             </dl>
