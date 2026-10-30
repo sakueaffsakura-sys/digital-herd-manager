@@ -22,6 +22,13 @@
       "when": 1793023794144,
       "tag": "0002_indices_listas_formularios",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793319181329,
+      "tag": "0003_modo_manutencao_protecao",
+      "breakpoints": true
     }
   ]
 }
