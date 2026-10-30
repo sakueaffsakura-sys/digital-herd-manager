@@ -14,6 +14,8 @@ import { YuiFotoAdmin } from "@/components/app/yui/YuiFotoAdmin";
 import { YuiWallpaperAdmin } from "@/components/app/yui/YuiWallpaperAdmin";
 import { CriadoresAdmin } from "@/components/app/CriadoresAdmin";
 import { ImagensSiteAdmin } from "@/components/app/ImagensSiteAdmin";
+import { ManutencaoAdmin, MonitoramentoSeguranca } from "@/components/app/ManutencaoAdmin";
+import { Hammer, Siren } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -82,6 +84,15 @@ function AdminPage() {
   const [latencia, setLatencia] = useState<number | null>(null);
   const [detalheId, setDetalheId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const LIMITE = 30 * 60_000;
+    let t = setTimeout(sair, LIMITE);
+    function sair() { void supabase.auth.signOut().then(() => { window.location.replace("/?motivo=sessao-expirada"); }); }
+    const reset = () => { clearTimeout(t); t = setTimeout(sair, LIMITE); };
+    const ev = ["pointerdown", "keydown", "scroll", "visibilitychange"] as const;
+    ev.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    return () => { clearTimeout(t); ev.forEach((e) => window.removeEventListener(e, reset)); };
+  }, []);
   const isAdmin = useQuery({ queryKey: ["sou-admin"], queryFn: async () => { const r = await rpc("sou_admin"); if (r.error) throw r.error; return r.data === true; } });
   const sistema = useQuery({
     queryKey: ["admin-sistema"], enabled: isAdmin.data === true, refetchInterval: 30000,
@@ -116,7 +127,7 @@ function AdminPage() {
   if (!isAdmin.data) return <Shell><div className="rounded-xl border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
 
   const s = sistema.data;
-   const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] } as const;
+   const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] } as const;
   return (
     <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length}>
       <div>
@@ -134,6 +145,8 @@ function AdminPage() {
       )}
 
       {tab === "tempo" && <TempoRealTab />}
+      {tab === "manutencao" && <ManutencaoAdmin />}
+      {tab === "protecao" && <MonitoramentoSeguranca />}
       {tab === "seguranca" && <SegurancaTab dados={alertas.data} carregando={alertas.isLoading} />}
       {tab === "contas" && <ContasTab filtradas={filtradas} contas={contas} busca={busca} setBusca={setBusca} acao={acao} onDetalhe={setDetalheId} />}
       {tab === "metricas" && <MetricasTab />}
@@ -540,9 +553,11 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui" | "criadores" | "imagens";
+type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui" | "criadores" | "imagens";
 const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
   { k: "tempo", label: "Tempo real", icon: Radio },
+  { k: "manutencao", label: "Manutenção", icon: Hammer },
+  { k: "protecao", label: "Proteção e bloqueios", icon: Siren },
   { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
   { k: "contas", label: "Contas", icon: Users },
   { k: "metricas", label: "Métricas", icon: BarChart3 },

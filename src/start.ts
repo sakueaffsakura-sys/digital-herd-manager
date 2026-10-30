@@ -30,10 +30,17 @@ const protectionMiddleware = createMiddleware().server(async ({ next, request })
     return new Response("Envio muito grande.", { status: 413 });
   }
 
+  const { guardaManutencao, dispositivoDe, novoDispositivo, COOKIE_DISPOSITIVO } = await import("./lib/manutencao.server");
+  const barrado = await guardaManutencao(request, ip);
+  if (barrado) return barrado;
+
   const result = await next();
   const res = (result as { response?: Response }).response;
   if (res?.headers) {
     try {
+      if (!dispositivoDe(request) && !isFn) {
+        res.headers.append("Set-Cookie", `${COOKIE_DISPOSITIVO}=${novoDispositivo()}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`);
+      }
       res.headers.set("X-Content-Type-Options", "nosniff");
       res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
       res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");

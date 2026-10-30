@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/rea
 import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { lerEstadoManutencao, secaoBloqueada, TelaManutencao, useEstadoManutencao } from "@/components/app/Manutencao";
 
 function VerificandoSessao() {
   return (
@@ -33,14 +34,16 @@ export const Route = createFileRoute("/_authenticated")({
       await supabase.auth.signOut();
       throw redirect({ to: "/", search: { motivo: "conta-bloqueada" } });
     }
-    return { user };
+    const manutencao = await lerEstadoManutencao();
+    return { user, manutencao };
   },
   component: AreaLogada,
 });
 
 function AreaLogada() {
-  const { user } = Route.useRouteContext();
+  const { user, manutencao } = Route.useRouteContext();
   const pagina = useRouterState({ select: (s) => s.location.pathname });
+  const estado = useEstadoManutencao(manutencao);
   const paginaRef = useRef(pagina);
   paginaRef.current = pagina;
   useEffect(() => {
@@ -53,5 +56,10 @@ function AreaLogada() {
     document.addEventListener("visibilitychange", ping);
     return () => { clearInterval(id); document.removeEventListener("visibilitychange", ping); };
   }, [user.id]);
+  const secao = pagina.startsWith("/app/") ? pagina.split("/")[2] ?? null : null;
+  const ehAdmin = pagina === "/admin" || pagina.startsWith("/admin/");
+  if (!ehAdmin && estado.data && secaoBloqueada(estado.data, secao)) {
+    return <TelaManutencao estado={estado.data} onTentar={() => void estado.refetch()} />;
+  }
   return <Outlet />;
 }
