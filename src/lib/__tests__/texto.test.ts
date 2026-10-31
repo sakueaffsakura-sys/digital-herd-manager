@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   emailValido,
   normalizarUrl,
+  palavraPlural,
+  plural,
   sanitizarLinha,
   sanitizarTexto,
   telefoneValido,
@@ -83,5 +85,22 @@ describe("normalizarUrl / urlValida", () => {
 
   it("rejeita URL inválida", () => {
     expect(urlValida("não é uma url")).toBe(false);
+  });
+});
+describe("plural", () => {
+  it("usa o singular só para um", () => {
+    expect(plural(1, "vaca")).toBe("1 vaca");
+    expect(plural(0, "vaca")).toBe("0 vacas");
+    expect(plural(3, "vaca")).toBe("3 vacas");
+  });
+  it("aceita plural irregular e formata o número", () => {
+    expect(plural(2, "matriz", "matrizes")).toBe("2 matrizes");
+    expect(plural(1, "matriz", "matrizes")).toBe("1 matriz");
+    expect(plural(1500, "animal", "animais")).toBe("1.500 animais");
+  });
+  it("trata vazio como zero", () => {
+    expect(plural(null, "dia")).toBe("0 dias");
+    expect(palavraPlural(1, "dia")).toBe("dia");
+    expect(palavraPlural(4, "dia")).toBe("dias");
   });
 });

@@ -9,6 +9,7 @@ import {
   previsaoParto, quadradoPearson, racaoPorDia, valorDaVenda,
 } from "@/lib/calculos";
 import { dataLocalISO, formatarDataBR } from "@/lib/datas";
+import { palavraPlural, plural } from "@/lib/texto";
 
 const n = (v: number | null | undefined, casas = 2) =>
   v == null ? "—" : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: casas });
@@ -93,7 +94,7 @@ function Racao() {
       titulo="Ração por dia" icone={Wheat}
       explica="Pelo peso vivo. Gado de corte no cocho costuma comer de 2% a 3% do peso."
       resultado={r == null ? "—" : `${n(r.total, 1)} kg/dia`}
-      detalhe={r == null ? "Preencha peso e porcentagem." : `${n(r.porAnimal, 2)} kg por animal, por dia.`}
+      detalhe={r == null ? "Preencha peso e porcentagem." : `${n(r.porAnimal, 2)} kg por animal, por dia, para ${plural(Math.max(1, Math.round(lerNumero(animais) ?? 1)), "animal", "animais")}.`}
     >
       <Campo id="rac-peso" rotulo="Peso médio" sufixo="kg" valor={peso} aoMudar={setPeso} />
       <Campo id="rac-pct" rotulo="Do peso vivo" sufixo="%" valor={pct} aoMudar={setPct} />
@@ -160,7 +161,7 @@ function Arroba() {
       resultado={ida == null ? "—" : `${n(ida.arrobas, 2)} @`}
       detalhe={ida == null
         ? "Preencha o peso vivo e o rendimento."
-        : `${n(ida.carcacaKg, 1)} kg de carcaça${valor == null ? "" : ` · ${money(valor)} a ${money(lerNumero(preco))} a arroba`}. ${volta == null ? "" : `Na volta: ${n(arrobas ? lerNumero(arrobas) : null, 1)} @ equivalem a ${n(volta, 0)} kg vivos.`}`}
+        : `${n(ida.carcacaKg, 1)} kg de carcaça${valor == null ? "" : ` · ${money(valor)} com a arroba a ${money(lerNumero(preco))}`}. ${volta == null ? "" : `Na volta: ${n(lerNumero(arrobas), 1)} @ equivalem a ${n(volta, 0)} kg de peso vivo.`}`}
     >
       <Campo id="arr-peso" rotulo="Peso vivo" sufixo="kg" valor={peso} aoMudar={setPeso} />
       <Campo id="arr-rend" rotulo="Rendimento de carcaça" sufixo="%" valor={rend} aoMudar={setRend} />
@@ -185,7 +186,7 @@ function Parto({ diasGestacao }: { diasGestacao: number }) {
       titulo="Data do parto" icone={CalendarHeart}
       explica={`Dia da cobertura mais os dias de gestação (${diasGestacao} dias nesta propriedade).`}
       resultado={prevista ? formatarDataBR(prevista) : "—"}
-      detalhe={prevista == null ? "Confira a data e os dias de gestação." : faltam == null ? "" : faltam >= 0 ? `Faltam ${faltam} dia(s).` : `Já passou ${-faltam} dia(s) da previsão.`}
+      detalhe={prevista == null ? "Confira a data e os dias de gestação." : faltam == null ? "" : faltam === 0 ? "É hoje." : faltam > 0 ? `${faltam === 1 ? "Falta" : "Faltam"} ${plural(faltam, "dia")}.` : `Já passou ${plural(-faltam, "dia")} da previsão.`}
     >
       <Campo id="par-data" rotulo="Dia da cobertura" valor={data} aoMudar={setData} tipo="date" />
       <Campo id="par-dias" rotulo="Dias de gestação" valor={dias} aoMudar={setDias} modo="numeric" />
@@ -203,7 +204,7 @@ export default function Ferramentas({ diasGestacao, cidade, estado }: { diasGest
         <Clima cidade={cidade} estado={estado} />
       </section>
       <h2 className="titulo-secao flex items-center gap-2"><Droplets className="size-6 text-primary" />Calculadoras</h2>
-      <div className="mt-3 grid gap-4 xl:grid-cols-2">
+      <div className="mt-3 grid items-start gap-4 xl:grid-cols-2">
         <Dose />
         <Parto diasGestacao={diasGestacao} />
         <Mistura />

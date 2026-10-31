@@ -3,7 +3,8 @@ import { Baby, Droplets, Scale, Wallet } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarDataBR } from "@/lib/datas";
-import { Empty, EmptyProperty, PageTitle, money } from "./shared";
+import { palavraPlural, plural } from "@/lib/texto";
+import { Empty, PageTitle, money } from "./shared";
 
 type Indicadores = {
   hoje: string;
@@ -67,7 +68,6 @@ export default function Indicadores({ propertyId }: { propertyId: string | null 
       return (data ?? null) as unknown as Indicadores | null;
     },
   });
-  if (!propertyId) return <><PageTitle title="Indicadores" description="As contas que mostram se a fazenda está indo bem." /><EmptyProperty onCreate={() => undefined} /></>;
   const d = q.data;
   const r = d?.reproducao, p = d?.peso, l = d?.leite, m = d?.dinheiro, reb = d?.rebanho;
   const semDados = !!d && (reb?.ativos ?? 0) === 0;
@@ -92,7 +92,7 @@ export default function Indicadores({ propertyId }: { propertyId: string | null 
           <Secao titulo="Reprodução" icone={Baby}>
             <Indicador
               titulo="Taxa de prenhez (12 meses)" valor={pct(r!.taxa_prenhez)}
-              explica={`De ${r!.inseminacoes_ano} inseminação(ões) no ano, ${r!.confirmadas} deram prenhez e ${r!.falhou} falharam. ${r!.em_andamento} ainda aguardam resultado.`}
+              explica={`De ${plural(r!.inseminacoes_ano, "inseminação", "inseminações")} no ano, ${r!.confirmadas} ${palavraPlural(r!.confirmadas, "deu", "deram")} prenhez e ${r!.falhou} ${palavraPlural(r!.falhou, "falhou", "falharam")}. ${r!.em_andamento} ainda ${palavraPlural(r!.em_andamento, "aguarda", "aguardam")} resultado.`}
               leitura={r!.taxa_prenhez == null ? undefined : r!.taxa_prenhez >= 50 ? "Bom: metade ou mais das coberturas pegou." : "Abaixo de 50%: vale rever a hora do cio, o sêmen e a nutrição."}
               bom={r!.taxa_prenhez == null ? null : r!.taxa_prenhez >= 50}
             />
@@ -109,8 +109,8 @@ export default function Indicadores({ propertyId }: { propertyId: string | null 
               bom={r!.idade_primeiro_parto_meses == null ? null : r!.idade_primeiro_parto_meses <= 30}
             />
             <Indicador
-              titulo="Crias no ano" valor={num(r!.nascidos_ano, 0)} unidade="crias"
-              explica={`Nascimentos registrados nos últimos 12 meses, com ${num(reb!.matrizes, 0)} matriz(es) no rebanho.`}
+              titulo="Crias no ano" valor={num(r!.nascidos_ano, 0)} unidade={palavraPlural(r!.nascidos_ano, "cria")}
+              explica={`Nascimentos registrados nos últimos 12 meses, com ${plural(reb!.matrizes, "matriz", "matrizes")} no rebanho.`}
               leitura={r!.taxa_natalidade == null ? undefined : `${pct(r!.taxa_natalidade)} em relação às matrizes.`}
               bom={r!.taxa_natalidade == null ? null : r!.taxa_natalidade >= 70}
             />
@@ -119,13 +119,13 @@ export default function Indicadores({ propertyId }: { propertyId: string | null 
           <Secao titulo="Peso" icone={Scale}>
             <Indicador
               titulo="Ganho de peso por dia" valor={num(p!.ganho_kg_dia, 3)} unidade="kg/dia"
-              explica={`Média entre a primeira e a última pesagem de ${num(p!.animais_pesados, 0)} animal(is) no último ano.`}
+              explica={`Média entre a primeira e a última pesagem de ${plural(p!.animais_pesados, "animal", "animais")} no último ano.`}
               leitura={p!.ganho_kg_dia == null ? "Pese cada animal pelo menos duas vezes, com 20 dias ou mais de diferença." : p!.ganho_kg_dia >= 0.5 ? "Bom: meio quilo por dia ou mais é um ganho firme." : "Abaixo de 0,5 kg/dia: vale olhar pasto, ração e vermifugação."}
               bom={p!.ganho_kg_dia == null ? null : p!.ganho_kg_dia >= 0.5}
             />
             <Indicador titulo="Peso médio atual" valor={num(p!.peso_medio_kg, 1)} unidade="kg" explica="Média da última pesagem de cada animal pesado no ano." />
             <Indicador
-              titulo="Mortes e perdas no ano" valor={num(reb!.perdas_ano, 0)} unidade="animais"
+              titulo="Mortes e perdas no ano" valor={num(reb!.perdas_ano, 0)} unidade={palavraPlural(reb!.perdas_ano, "animal", "animais")}
               explica="Animais marcados como mortos ou perdidos nos últimos 12 meses."
               leitura={reb!.taxa_mortalidade == null ? undefined : `${pct(reb!.taxa_mortalidade)} do rebanho.`}
               bom={reb!.taxa_mortalidade == null ? null : reb!.taxa_mortalidade <= 3}
@@ -135,7 +135,7 @@ export default function Indicadores({ propertyId }: { propertyId: string | null 
           <Secao titulo="Leite" icone={Droplets}>
             <Indicador
               titulo="Litros por vaca por dia" valor={num(l!.litros_por_vaca_dia, 1)} unidade="L"
-              explica={`${num(l!.vacas_ordenhadas, 0)} vaca(s) ordenhada(s) nos últimos 30 dias.`}
+              explica={`${plural(l!.vacas_ordenhadas, "vaca")} ${palavraPlural(l!.vacas_ordenhadas, "ordenhada")} nos últimos 30 dias.`}
               leitura={l!.litros_por_vaca_dia == null ? "Lance o leite por animal para ver a média por vaca." : l!.litros_por_vaca_dia >= 12 ? "Bom para rebanho leiteiro mestiço." : "Abaixo de 12 L: olhe alimentação, água e intervalo entre ordenhas."}
               bom={l!.litros_por_vaca_dia == null ? null : l!.litros_por_vaca_dia >= 12}
             />

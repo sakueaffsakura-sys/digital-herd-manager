@@ -25,3 +25,9 @@
 - External/native app API lives under `/api/public/app/*` (`src/lib/app-api.server.ts`), each handler verifies the bearer and acts as the user so RLS applies — why: public prefix bypasses site auth, so authorization must be per-handler.
 - Offline app shell uses vite-plugin-pwa registered only via `src/lib/pwa-register.ts` (never in dev/preview/iframe, `?sw=off` kill switch) — why: service workers in preview serve stale builds.
 - Shared visual styling lives in src/styles.css; motion targets headings and interactive controls, never entire tables or all rows, and respects reduced motion — why: consistent presentation without adding cost to large datasets.
+- Assinatura: o site só cria a cobrança; quem libera o Premium é o aviso do Mercado Pago, com assinatura HMAC conferida em `src/lib/mercadopago.ts` e aplicada por `mp_*` (service role) — why: o navegador nunca pode decidir que um pagamento foi aprovado.
+- eBooks: o PDF sai por `/api/ebooks/$id/arquivo`, que confere assinatura, registra o acesso e repassa um link assinado de 60s; o leitor desenha em canvas com marca d'água — why: o arquivo não pode virar link público nem cair no cache do navegador.
+- Indicadores e avisos usam uma função SECURITY INVOKER por tela (`indicadores_propriedade`, `central_avisos`, `agenda_periodo`) — why: uma leitura só, com as regras de acesso de quem olha.
+- Tudo que o administrador publica (eBook, APK, imagens) vai para bucket privado com política de escrita só para `administrador` e leitura para `authenticated` — why: conteúdo pago ou interno nunca fica em URL pública.
+- QR Code é gerado por `src/lib/qr.ts` (versões 1–10, correção M), sem dependência nova — why: o registro npm não está acessível no ambiente de desenvolvimento.
+- Visual: nada abaixo de 14px, sem CAIXA ALTA em rótulo, sem cor fixa em hex no JSX (use os tokens de src/styles.css) e sem `dark` preso em diálogo ou menu — why: o site é usado no sol, no celular, e tem tema claro e escuro.
