@@ -135,7 +135,8 @@ export function Leitor({ ebook, aoFechar }: { ebook: Ebook; aoFechar: () => void
       </div>
       <footer className="flex shrink-0 items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-white/75">
         <ShieldCheck className="size-4 shrink-0" />
-        Conteúdo licenciado para você. É proibido copiar ou repassar; as páginas levam o seu nome e e-mail.
+        <span className="sm:hidden">Licenciado para você: as páginas levam o seu nome.</span>
+        <span className="hidden sm:inline">Conteúdo licenciado para você. É proibido copiar ou repassar; as páginas levam o seu nome e e-mail.</span>
       </footer>
     </div>
   );
