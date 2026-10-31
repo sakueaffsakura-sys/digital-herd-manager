@@ -275,10 +275,10 @@ function GraficoMeses({
       ) : (
         <div className="mt-4 h-56" role="img" aria-label={`${titulo}: ${dados.map((m) => `${m.mes} ${formato(m[campo])}`).join("; ")}`}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dados} margin={{ left: -12, right: 4, top: 4, bottom: 0 }} barCategoryGap="22%">
+            <BarChart data={dados} margin={{ left: 0, right: 4, top: 4, bottom: 0 }} barCategoryGap="22%">
               <CartesianGrid stroke="var(--linha)" vertical={false} />
-              <XAxis dataKey="mes" tick={{ fill: "var(--muted-foreground)", fontSize: 13 }} axisLine={false} tickLine={false} interval={0} tickMargin={6} />
-              <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 13 }} axisLine={false} tickLine={false} tickFormatter={(x: number) => compacto(x)} width={48} />
+              <XAxis dataKey="mes" ticks={[dados[0]?.mes, dados[4]?.mes, dados[8]?.mes, dados[11]?.mes].filter(Boolean) as string[]} tick={{ fill: "var(--muted-foreground)", fontSize: 13 }} axisLine={false} tickLine={false} tickMargin={6} />
+              <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 13 }} axisLine={false} tickLine={false} tickFormatter={(x: number) => compacto(x)} width={60} />
               {campo === "resultado" && <ReferenceLine y={0} stroke="var(--linha-forte)" />}
               <Tooltip
                 cursor={{ fill: "var(--muted)", opacity: 0.6 }}

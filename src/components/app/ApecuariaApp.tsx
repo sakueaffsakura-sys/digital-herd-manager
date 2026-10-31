@@ -63,6 +63,7 @@ const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina
 
 const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "assinatura", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
 const GRUPOS = filtrarMenu((chave) => IMPLEMENTADAS.has(chave));
+const GRUPOS_LATERAL = filtrarMenu((chave) => IMPLEMENTADAS.has(chave), { lateral: true });
 const CHAVE_PROPRIEDADE = "pd-propriedade";
 const lerPropriedadeSalva = () => { try { return localStorage.getItem(CHAVE_PROPRIEDADE); } catch { return null; } };
 
@@ -120,15 +121,13 @@ export function ApecuariaApp() {
     <div className="min-h-screen bg-background text-foreground">
       <a href="#conteudo" className="sr-only z-[70] rounded-[10px] bg-primary px-4 py-3 font-bold text-primary-foreground focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Pular para o conteúdo</a>
       <MenuLateral
-        grupos={GRUPOS}
+        grupos={GRUPOS_LATERAL}
         secao={section}
         aberto={menuAberto}
         ehAdmin={isAdminQuery.data === true}
         aoIr={(c) => void go(c)}
         aoFechar={() => setMenuAberto(false)}
         aoAdmin={() => navigate({ to: "/admin" })}
-        aoSobre={() => { setMenuAberto(false); setAboutOpen(true); }}
-        aoSair={() => void signOut()}
       />
       <div className="lg:pl-[248px]">
         <BarraTopo
@@ -139,6 +138,7 @@ export function ApecuariaApp() {
           aoBuscar={() => setBuscaAberta(true)}
           aoIr={(c) => void go(c)}
           aoSair={() => void signOut()}
+          aoSobre={() => setAboutOpen(true)}
           userId={userQuery.data?.id}
           email={userQuery.data?.email}
           ehAdmin={isAdminQuery.data === true}
@@ -489,7 +489,7 @@ function AnimalDetails({ open, animal, propertyId, refs, onClose }: { open: bool
         <DialogHeader className="flex-row items-center gap-4 space-y-0 text-left">
           {!!animal?.["numero_brinco"] && <Brinco tamanho="grande" valor={String(animal["numero_brinco"])} rotulo={`Brinco ${String(animal["numero_brinco"])}`} />}
           <div className="min-w-0">
-            <DialogTitle className="titulo-pagina break-words">{String(animal?.["nome"] || `Brinco ${String(animal?.["numero_brinco"] ?? "")}`)}</DialogTitle>
+            <DialogTitle className="break-words text-[2rem] lg:text-[2.5rem]">{String(animal?.["nome"] || `Brinco ${String(animal?.["numero_brinco"] ?? "")}`)}</DialogTitle>
             <DialogDescription>Ficha do animal: cadastro, família e tudo que aconteceu com ele.</DialogDescription>
           </div>
         </DialogHeader>

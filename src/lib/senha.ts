@@ -26,7 +26,7 @@ export function avaliarSenha(senha: string, email?: string | null): { ok: boolea
   const s = normalizar(senha);
   const semNumerosNoFim = s.replace(/[\d\W_]+$/, "");
   const usuario = normalizar(email ?? "").split("@")[0] ?? "";
-  const ehComum = COMUNS.has(s) || COMUNS.has(semNumerosNoFim) || BASES.some((b) => semNumerosNoFim === b) || /^(.)\1+$/.test(s) || /^(\d+)$/.test(s);
+  const ehComum = COMUNS.has(s) || COMUNS.has(semNumerosNoFim) || BASES.some((b) => semNumerosNoFim === b) || /^(.)\1*$/.test(semNumerosNoFim) || /^(\d+)$/.test(s);
   const ehEmail = !!usuario && usuario.length >= 4 && (s === normalizar(email ?? "") || s.includes(usuario));
   const regras: RegraSenha[] = [
     { id: "tamanho", texto: `Pelo menos ${SENHA_MINIMO} caracteres`, ok: senha.length >= SENHA_MINIMO && senha.length <= SENHA_MAXIMO },

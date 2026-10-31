@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Crown, KeyRound, LogOut, Monitor, Moon, Plus, Search, Sun, UserRound } from "lucide-react";
+import { Check, ChevronDown, Crown, Gauge, Info, KeyRound, LogOut, Monitor, Moon, Pencil, Plus, Search, Sun, UserRound } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -11,7 +11,7 @@ import { Avisos } from "./Avisos";
 type Propriedade = { id: string; nome: string };
 
 export function BarraTopo({
-  propriedades, propriedadeId, aoTrocarPropriedade, aoNovaPropriedade, aoBuscar, aoIr, aoSair, userId, email, ehAdmin,
+  propriedades, propriedadeId, aoTrocarPropriedade, aoNovaPropriedade, aoBuscar, aoIr, aoSair, aoSobre, userId, email, ehAdmin,
 }: {
   propriedades: Propriedade[];
   propriedadeId: string | null;
@@ -20,6 +20,7 @@ export function BarraTopo({
   aoBuscar: () => void;
   aoIr: (secao: string) => void;
   aoSair: () => void;
+  aoSobre: () => void;
   userId?: string;
   email?: string;
   ehAdmin: boolean;
@@ -48,6 +49,10 @@ export function BarraTopo({
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => aoIr("perfil-propriedade")} className="min-h-11 gap-2 text-[15px]">
+            <Pencil className="size-4" />
+            Editar dados da propriedade
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={aoNovaPropriedade} className="min-h-11 gap-2 text-[15px]">
             <Plus className="size-4" />
             Cadastrar outra propriedade
@@ -70,7 +75,7 @@ export function BarraTopo({
       <div className="flex shrink-0 items-center gap-0.5 sm:gap-1 lg:ml-auto">
         <BotaoYui ehAdmin={ehAdmin} />
         <Avisos propriedadeId={propriedadeId} aoIr={aoIr} />
-        <ContaMenu userId={userId} email={email} aoIr={aoIr} aoSair={aoSair} />
+        <ContaMenu userId={userId} email={email} aoIr={aoIr} aoSair={aoSair} aoSobre={aoSobre} />
       </div>
     </header>
   );
@@ -98,7 +103,7 @@ const TEMAS: { valor: Tema; rotulo: string; icone: typeof Sun }[] = [
   { valor: "automatico", rotulo: "Igual ao aparelho", icone: Monitor },
 ];
 
-function ContaMenu({ userId, email, aoIr, aoSair }: { userId?: string; email?: string; aoIr: (s: string) => void; aoSair: () => void }) {
+function ContaMenu({ userId, email, aoIr, aoSair, aoSobre }: { userId?: string; email?: string; aoIr: (s: string) => void; aoSair: () => void; aoSobre: () => void }) {
   const perfil = useMyProfile(userId);
   const tema = useTema();
   const nome = perfil.data?.nome_exibicao || perfil.data?.nome_completo || "Minha conta";
@@ -116,6 +121,8 @@ function ContaMenu({ userId, email, aoIr, aoSair }: { userId?: string; email?: s
         <DropdownMenuItem onSelect={() => aoIr("perfil")} className="min-h-11 gap-2 text-[15px]"><UserRound className="size-4" />Meu perfil</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => aoIr("seguranca")} className="min-h-11 gap-2 text-[15px]"><KeyRound className="size-4" />Senha e segurança</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => aoIr("assinatura")} className="min-h-11 gap-2 text-[15px]"><Crown className="size-4" />Assinatura</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => aoIr("diagnostico")} className="min-h-11 gap-2 text-[15px]"><Gauge className="size-4" />Diagnóstico dos dados</DropdownMenuItem>
+        <DropdownMenuItem onSelect={aoSobre} className="min-h-11 gap-2 text-[15px]"><Info className="size-4" />Sobre o sistema</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-sm text-muted-foreground">Aparência</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={tema} onValueChange={(v) => escolherTema(v as Tema)}>

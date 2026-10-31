@@ -27,7 +27,7 @@ function dataDos(d: Date) {
 
 export type ArquivoZip = { nome: string; dados: Uint8Array };
 
-export function criarZip(arquivos: ArquivoZip[], quando: Date = new Date()): Uint8Array {
+export function criarZip(arquivos: ArquivoZip[], quando: Date = new Date()): Uint8Array<ArrayBuffer> {
   const enc = new TextEncoder();
   const { hora, dia } = dataDos(quando);
   const locais: Uint8Array[] = [];

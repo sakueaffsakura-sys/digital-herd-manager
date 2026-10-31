@@ -17,9 +17,9 @@ const CHAVE_SESSAO = `sb-${new URL(MOCK).hostname.split(".")[0]}-auth-token`;
 mkdirSync(SAIDA, { recursive: true });
 
 const TAMANHOS = {
-  computador: { width: 1440, height: 900 },
-  celular: { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
-  celular360: { width: 360, height: 780, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
+  computador: { viewport: { width: 1440, height: 900 } },
+  celular: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
+  celular360: { viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
 };
 
 /** Cada cena: caminho, se está logado, se é admin, tamanhos, temas e uma ação opcional antes da foto. */
@@ -51,7 +51,7 @@ for (const cena of CENAS) {
   for (const tamanho of cena.tamanhos) {
     for (const tema of cena.temas) {
       const arquivo = `${cena.nome}--${tamanho}--${tema === "dark" ? "escuro" : "claro"}.png`;
-      const info = { arquivo, caminho: cena.caminho, erros: [], falhas: [], estouroHorizontal: false, fontes: {} };
+      const info = { arquivo, caminho: cena.caminho, erros: [], falhas: [], estouroHorizontal: false, fontes: [] };
       const context = await browser.newContext({
         ...TAMANHOS[tamanho], colorScheme: tema, locale: "pt-BR", timezoneId: "America/Sao_Paulo",
       });
@@ -81,7 +81,10 @@ for (const cena of CENAS) {
           const fam = new Set();
           document.fonts.forEach((f) => { if (f.status === "loaded") fam.add(f.family.replace(/"/g, "")); });
           return [...fam];
-        });
+        }).catch(() => []);
+        // Largura real do conteúdo: no celular, maior que a tela = rolagem para o lado.
+        info.larguraPagina = await page.evaluate(() => document.documentElement.scrollWidth);
+        if (TAMANHOS[tamanho].viewport.width < info.larguraPagina - 1) info.estouroHorizontal = true;
         await page.screenshot({ path: join(SAIDA, arquivo), fullPage: true });
       } catch (e) {
         info.erros.push(`captura: ${String(e).slice(0, 300)}`);

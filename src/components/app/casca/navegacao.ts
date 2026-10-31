@@ -1,5 +1,5 @@
 import {
-  BookOpenText, Calculator, CalendarDays, CircleDollarSign, CloudSun, Crown, FlaskConical, Gauge, HeartPulse,
+  BookOpenText, Calculator, CalendarDays, CircleDollarSign, Crown, FlaskConical, Gauge, HeartPulse,
   KeyRound, LayoutDashboard, LifeBuoy, LineChart, Milk, ScrollText, ShoppingCart, Smartphone, Syringe, UserRound, Warehouse,
 } from "lucide-react";
 import { HerdIcon } from "../HerdIcon";
@@ -7,7 +7,7 @@ import { CalfIcon } from "../CalfIcon";
 import type { IconType } from "../shared";
 
 export type ItemMenu = { chave: string; rotulo: string; icone: IconType; frase: string };
-export type GrupoMenu = { rotulo: string | null; itens: ItemMenu[] };
+export type GrupoMenu = { rotulo: string | null; itens: ItemMenu[]; oculto?: boolean };
 
 /** Menu do site, agrupado como o produtor pensa a fazenda. */
 export const GRUPOS_MENU: GrupoMenu[] = [
@@ -45,23 +45,24 @@ export const GRUPOS_MENU: GrupoMenu[] = [
     ],
   },
   {
-    rotulo: "Ferramentas",
+    rotulo: "Mais",
     itens: [
-      { chave: "calculadoras", rotulo: "Calculadoras", icone: Calculator, frase: "Dose pelo peso, ração, calagem, lotação e mais." },
-      { chave: "clima", rotulo: "Clima", icone: CloudSun, frase: "Previsão de 7 dias para a cidade da propriedade." },
+      { chave: "ferramentas", rotulo: "Calculadoras e clima", icone: Calculator, frase: "Dose pelo peso, ração, calagem, lotação e a previsão do tempo." },
       { chave: "biblioteca", rotulo: "Biblioteca", icone: BookOpenText, frase: "eBooks para assinantes." },
+      { chave: "assinatura", rotulo: "Assinatura", icone: Crown, frase: "Seu plano, pagamentos e benefícios." },
       { chave: "aplicativo", rotulo: "Use no celular", icone: Smartphone, frase: "O aplicativo Android, que funciona sem internet." },
+      { chave: "ajuda", rotulo: "Ajuda", icone: LifeBuoy, frase: "Perguntas frequentes e falar com o suporte." },
     ],
   },
   {
+    // Ficam no menu da conta (avatar) e na busca, não na barra lateral.
     rotulo: "Conta",
+    oculto: true,
     itens: [
-      { chave: "assinatura", rotulo: "Assinatura", icone: Crown, frase: "Seu plano, pagamentos e benefícios." },
-      { chave: "perfil", rotulo: "Perfil", icone: UserRound, frase: "Seus dados e a foto do perfil." },
-      { chave: "perfil-propriedade", rotulo: "Perfil da propriedade", icone: Warehouse, frase: "Nome, logo, banner e contato da fazenda." },
-      { chave: "seguranca", rotulo: "Segurança", icone: KeyRound, frase: "Senha, duas etapas e aparelhos conectados." },
-      { chave: "ajuda", rotulo: "Ajuda", icone: LifeBuoy, frase: "Perguntas frequentes e falar com o suporte." },
-      { chave: "diagnostico", rotulo: "Diagnóstico", icone: Gauge, frase: "Conferência técnica dos dados da propriedade." },
+      { chave: "perfil", rotulo: "Meu perfil", icone: UserRound, frase: "Seus dados e a foto do perfil." },
+      { chave: "perfil-propriedade", rotulo: "Dados da propriedade", icone: Warehouse, frase: "Nome, cidade, logo, banner e contato da fazenda." },
+      { chave: "seguranca", rotulo: "Senha e segurança", icone: KeyRound, frase: "Senha, duas etapas, aparelhos conectados e seus dados." },
+      { chave: "diagnostico", rotulo: "Diagnóstico dos dados", icone: Gauge, frase: "Conferência técnica dos dados da propriedade." },
     ],
   },
 ];
@@ -72,7 +73,9 @@ export function itemDoMenu(chave: string): ItemMenu | undefined {
   return PORCHAVE.get(chave);
 }
 
-/** Seções que existem nesta versão (as outras não aparecem no menu). */
-export function filtrarMenu(existe: (chave: string) => boolean): GrupoMenu[] {
-  return GRUPOS_MENU.map((g) => ({ ...g, itens: g.itens.filter((i) => existe(i.chave)) })).filter((g) => g.itens.length);
+/** Seções que existem nesta versão (as outras não aparecem). `lateral` tira os grupos ocultos da barra lateral. */
+export function filtrarMenu(existe: (chave: string) => boolean, { lateral = false } = {}): GrupoMenu[] {
+  return GRUPOS_MENU.filter((g) => !(lateral && g.oculto))
+    .map((g) => ({ ...g, itens: g.itens.filter((i) => existe(i.chave)) }))
+    .filter((g) => g.itens.length);
 }

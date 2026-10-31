@@ -349,7 +349,7 @@ export function SegurancaPage({ email }: { email: string }) {
   return (
     <div>
       <PageTitle title="Senha e segurança" description="Proteja a conta: troque a senha, ligue o código do celular e veja onde a conta está aberta." />
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid items-start gap-6 xl:grid-cols-2">
         <TrocarSenha email={email} />
         <DuasEtapas />
         <Aparelhos />

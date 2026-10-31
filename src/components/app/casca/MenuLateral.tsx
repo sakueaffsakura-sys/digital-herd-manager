@@ -1,4 +1,4 @@
-import { Info, LogOut, ShieldCheck, X } from "lucide-react";
+import { ShieldCheck, X } from "lucide-react";
 import marcaBranca from "@/assets/marca/marca-branca.webp";
 import type { GrupoMenu } from "./navegacao";
 
@@ -10,8 +10,6 @@ type Props = {
   aoIr: (chave: string) => void;
   aoFechar: () => void;
   aoAdmin: () => void;
-  aoSobre: () => void;
-  aoSair: () => void;
 };
 
 /**
@@ -19,7 +17,7 @@ type Props = {
  * pelo botão "Mais" da barra de baixo. É o mesmo elemento nos dois casos (o passeio da Yui
  * aponta para os itens pelo atributo data-tour).
  */
-export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, aoAdmin, aoSobre, aoSair }: Props) {
+export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, aoAdmin }: Props) {
   return (
     <>
       <aside
@@ -41,8 +39,8 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
         </div>
         <nav aria-label="Áreas da fazenda" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
           {grupos.map((g, i) => (
-            <div key={g.rotulo ?? `g${i}`} className={i === 0 ? "mt-1" : "mt-5"}>
-              {g.rotulo && <p className="px-3 pb-1 text-sm font-bold text-sidebar-foreground/65">{g.rotulo}</p>}
+            <div key={g.rotulo ?? `g${i}`} className={i === 0 ? "mt-1" : "mt-4"}>
+              {g.rotulo && <p className="px-3 pb-0.5 text-sm font-bold text-sidebar-foreground/65">{g.rotulo}</p>}
               <ul className="space-y-0.5">
                 {g.itens.map(({ chave, rotulo, icone: Icone }) => {
                   const ativo = secao === chave;
@@ -53,7 +51,7 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
                         data-tour={`nav-${chave}`}
                         aria-current={ativo ? "page" : undefined}
                         onClick={() => aoIr(chave)}
-                        className={`relative flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[15px] transition-colors ${
+                        className={`relative flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[15px] transition-colors lg:min-h-11 ${
                           ativo ? "marca-ativa bg-sidebar-accent font-bold text-white" : "text-sidebar-foreground/90 hover:bg-white/[0.07] hover:text-white"
                         }`}
                       >
@@ -67,22 +65,14 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
             </div>
           ))}
         </nav>
-        <div className="shrink-0 space-y-0.5 border-t border-sidebar-border px-3 py-3">
-          {ehAdmin && (
-            <button type="button" onClick={aoAdmin} className="flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-[15px] font-bold text-white hover:bg-white/[0.07]">
+        {ehAdmin && (
+          <div className="shrink-0 border-t border-sidebar-border px-3 py-2.5">
+            <button type="button" onClick={aoAdmin} className="flex min-h-11 w-full items-center gap-3 rounded-[10px] px-3 text-[15px] font-bold text-white hover:bg-white/[0.07]">
               <ShieldCheck className="size-5" />
               Área do administrador
             </button>
-          )}
-          <button type="button" onClick={aoSobre} className="flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-[15px] text-sidebar-foreground/90 hover:bg-white/[0.07] hover:text-white">
-            <Info className="size-5" />
-            Sobre o sistema
-          </button>
-          <button type="button" onClick={aoSair} className="flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-[15px] text-sidebar-foreground/90 hover:bg-white/[0.07] hover:text-white">
-            <LogOut className="size-5" />
-            Sair
-          </button>
-        </div>
+          </div>
+        )}
       </aside>
       {aberto && <div aria-hidden className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={aoFechar} />}
     </>
