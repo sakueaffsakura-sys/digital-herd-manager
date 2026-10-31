@@ -40,6 +40,7 @@
   --color-brinco: var(--brinco); --color-brinco-borda: var(--brinco-borda);
   --color-alerta: var(--alerta); --color-aviso: var(--aviso-texto); --color-aviso-fundo: var(--aviso-fundo);
   --color-alerta-fundo: var(--alerta-fundo); --color-sucesso-fundo: var(--sucesso-fundo);
+  --color-capa: var(--capa);
 
   --font-sans: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Big Shoulders Display", "Big Shoulders", "Arial Narrow", ui-sans-serif, sans-serif;
@@ -57,6 +58,8 @@
   --linha: #d9e1d6; --linha-forte: #7a887d;
   --pasto: #1f6b45; --pasto-escuro: #154d31; --curral: #12301f;
   --brinco: #f2c318; --brinco-borda: #c99a00; --brinco-tinta: #15231a;
+  /* Fundo da capa de eBook sem imagem: precisa se destacar do fundo da página nos dois temas. */
+  --capa: #12301f;
   --alerta: #c2412d; --alerta-fundo: #fbe9e5;
   --aviso-texto: #8a5a00; --aviso-fundo: #fdf3d7;
   --sucesso-fundo: #e2f0e7;
@@ -88,6 +91,7 @@
   color-scheme: dark;
   --campo: #0e1712; --folha: #15211a; --tinta: #e7eee5; --tinta-suave: #a7b6aa;
   --linha: #26382c; --linha-forte: #5a725f;
+  --capa: #1d3528;
   --pasto: #58c08a; --pasto-escuro: #7fd3a6; --curral: #0b140f;
   --alerta: #f07a63; --alerta-fundo: #3a1e18;
   --aviso-texto: #f2c94c; --aviso-fundo: #2c2714;

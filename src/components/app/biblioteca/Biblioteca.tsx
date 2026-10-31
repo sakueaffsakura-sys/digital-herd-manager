@@ -23,7 +23,7 @@ export function Capa({ caminho, titulo, className, pequena }: { caminho: string 
   });
   if (!caminho || !url.data) {
     return (
-      <div className={`grid place-items-center overflow-hidden bg-curral text-center text-white ${pequena ? "p-1.5" : "p-4"} ${className ?? ""}`} aria-hidden={!!titulo}>
+      <div className={`grid place-items-center overflow-hidden bg-capa text-center text-white ${pequena ? "p-1.5" : "p-4"} ${className ?? ""}`} aria-hidden={!!titulo}>
         <span className={`font-display font-extrabold leading-[1.05] ${pequena ? "line-clamp-5 text-sm" : "text-2xl"}`}>{titulo}</span>
       </div>
     );
