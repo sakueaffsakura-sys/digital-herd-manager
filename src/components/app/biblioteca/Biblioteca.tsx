@@ -10,7 +10,7 @@ import { Leitor } from "./Leitor";
 export type Ebook = { id: string; titulo: string; autor: string | null; descricao: string | null; categoria: string | null; paginas: number | null; capa_path: string | null; publicado_em: string | null };
 
 /** Capa vinda do armazenamento privado (link curto, só para quem está logado). */
-export function Capa({ caminho, titulo, className }: { caminho: string | null; titulo: string; className?: string }) {
+export function Capa({ caminho, titulo, className, pequena }: { caminho: string | null; titulo: string; className?: string; pequena?: boolean }) {
   const url = useQuery({
     queryKey: ["capa-ebook", caminho],
     enabled: !!caminho,
@@ -23,8 +23,8 @@ export function Capa({ caminho, titulo, className }: { caminho: string | null; t
   });
   if (!caminho || !url.data) {
     return (
-      <div className={`grid place-items-center bg-curral p-4 text-center text-white ${className ?? ""}`} aria-hidden={!!titulo}>
-        <span className="font-display text-2xl font-extrabold leading-tight">{titulo}</span>
+      <div className={`grid place-items-center overflow-hidden bg-curral text-center text-white ${pequena ? "p-1.5" : "p-4"} ${className ?? ""}`} aria-hidden={!!titulo}>
+        <span className={`font-display font-extrabold leading-[1.05] ${pequena ? "line-clamp-5 text-sm" : "text-2xl"}`}>{titulo}</span>
       </div>
     );
   }

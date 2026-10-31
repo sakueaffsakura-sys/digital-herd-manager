@@ -34,6 +34,8 @@ import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/pu
 import { Route as ApiAdminPagamentosEstadoRouteImport } from './routes/api/admin/pagamentos-estado'
 import { Route as ApiEbooksIdArquivoRouteImport } from './routes/api/ebooks/$id/arquivo'
 import { Route as ApiAdminExclusaoRouteImport } from './routes/api/admin/exclusao'
+import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
+import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -159,6 +161,16 @@ const ApiAdminExclusaoRoute = ApiAdminExclusaoRouteImport.update({
   path: '/api/admin/exclusao',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiClimaAgoraRoute = ApiClimaAgoraRouteImport.update({
+  id: '/api/clima/agora',
+  path: '/api/clima/agora',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiClimaLugaresRoute = ApiClimaLugaresRouteImport.update({
+  id: '/api/clima/lugares',
+  path: '/api/clima/lugares',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,6 +197,8 @@ export interface FileRoutesByFullPath {
   '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
   '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
+  '/api/clima/agora': typeof ApiClimaAgoraRoute
+  '/api/clima/lugares': typeof ApiClimaLugaresRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -211,6 +225,8 @@ export interface FileRoutesByTo {
   '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
   '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
+  '/api/clima/agora': typeof ApiClimaAgoraRoute
+  '/api/clima/lugares': typeof ApiClimaLugaresRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -239,6 +255,8 @@ export interface FileRoutesById {
   '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
   '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
+  '/api/clima/agora': typeof ApiClimaAgoraRoute
+  '/api/clima/lugares': typeof ApiClimaLugaresRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -267,6 +285,8 @@ export interface FileRouteTypes {
     | '/api/admin/pagamentos-estado'
     | '/api/ebooks/$id/arquivo'
     | '/api/admin/exclusao'
+    | '/api/clima/agora'
+    | '/api/clima/lugares'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -320,6 +340,10 @@ export interface FileRouteTypes {
     | '/api/ebooks/$id/arquivo'
     | '/api/admin/exclusao'
     | '/api/admin/exclusao'
+    | '/api/clima/agora'
+    | '/api/clima/agora'
+    | '/api/clima/lugares'
+    | '/api/clima/lugares'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -345,6 +369,8 @@ export interface RootRouteChildren {
   ApiAdminPagamentosEstadoRoute: typeof ApiAdminPagamentosEstadoRoute
   ApiEbooksIdArquivoRoute: typeof ApiEbooksIdArquivoRoute
   ApiAdminExclusaoRoute: typeof ApiAdminExclusaoRoute
+  ApiClimaAgoraRoute: typeof ApiClimaAgoraRoute
+  ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -524,6 +550,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminExclusaoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/clima/agora': {
+      id: '/api/clima/agora'
+      path: '/api/clima/agora'
+      fullPath: '/api/clima/agora'
+      preLoaderRoute: typeof ApiClimaAgoraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/clima/lugares': {
+      id: '/api/clima/lugares'
+      path: '/api/clima/lugares'
+      fullPath: '/api/clima/lugares'
+      preLoaderRoute: typeof ApiClimaLugaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -574,6 +614,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminPagamentosEstadoRoute: ApiAdminPagamentosEstadoRoute,
   ApiEbooksIdArquivoRoute: ApiEbooksIdArquivoRoute,
   ApiAdminExclusaoRoute: ApiAdminExclusaoRoute,
+  ApiClimaAgoraRoute: ApiClimaAgoraRoute,
+  ApiClimaLugaresRoute: ApiClimaLugaresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

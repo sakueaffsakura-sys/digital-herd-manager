@@ -235,7 +235,15 @@ export const TABELAS = {
   assinaturas: [], propriedade_perfil: [], configuracoes: [], notificacoes: [
     { id: uuid(), user_id: USUARIO.id, propriedade_id: P, titulo: "Bem-vinda ao novo visual", mensagem: "As telas foram reorganizadas para ficar mais fáceis de usar no celular.", lida: false, created_at: iso(hoje.getTime() - DIA) },
   ],
-  suporte_mensagens: [], imagens_site: [], configuracoes_sistema: [{ chave: "exigir_2fa_admin", valor: "nao", atualizado_em: iso(hoje), atualizado_por: null }], presenca_usuarios: [], registros_excluidos: [], importacoes: [], user_roles: [], plano_auditoria: [],
+  suporte_mensagens: [],
+  suporte_contatos: [
+    { id: uuid(), user_id: USUARIO.id, email: USUARIO.email, assunto: "Não consigo lançar o leite da tarde", mensagem: "Quando eu escolho a vaca e boto os litros, aparece uma bolinha rodando e não salva.", propriedade_id: P, status: "respondido", resposta: "Oi, Maria! Isso acontecia quando a data ficava em branco. Já corrigimos — pode tentar de novo.", respondido_por: null, respondido_em: iso(hoje.getTime() - 2 * DIA), criado_em: iso(hoje.getTime() - 3 * DIA) },
+    { id: uuid(), user_id: USUARIO.id, email: USUARIO.email, assunto: "Dá para importar a planilha do veterinário?", mensagem: "Tenho uma planilha com as vacinas de 2025 e queria subir tudo de uma vez.", propriedade_id: P, status: "aberto", resposta: null, respondido_por: null, respondido_em: null, criado_em: iso(hoje.getTime() - 6 * 3600e3) },
+  ],
+  imagens_site: [], configuracoes_sistema: [
+    { chave: "exigir_2fa_admin", valor: "nao", atualizado_em: iso(hoje), atualizado_por: null },
+    { chave: "app_android", valor: JSON.stringify({ versao: "7.4", arquivo: "apecuaria-digital-7.4.apk", tamanho: 18_900_000, publicado_em: iso(hoje.getTime() - 9 * DIA), novidades: "Lança peso e leite sem internet.\nMapa da fazenda com satélite." }), atualizado_em: iso(hoje), atualizado_por: null },
+  ], presenca_usuarios: [], registros_excluidos: [], importacoes: [], user_roles: [], plano_auditoria: [],
   manutencao_config: [{ id: 1, status: "ativo", titulo: "", mensagem: "", modulos: [], duracao_bloqueio_min: 60, termina_em: null, atualizado_em: iso(hoje), atualizado_por: null }],
   bloqueios_acesso: [], solicitacoes_exclusao: solicitacoes, eventos_seguranca: [], incidentes_seguranca: [], manutencao_historico: [], rate_limits: [],
   propriedade_membros: [{ id: uuid(), propriedade_id: P, user_id: USUARIO.id, role: "proprietario", created_at: iso(hoje.getTime() - 400 * DIA) }],
@@ -263,6 +271,18 @@ export function rpc(nome, { admin, assinante = false }) {
       ];
     case "admin_ebooks_resumo":
       return ebooks.filter((e) => e.publicado).slice(0, 4).map((e, i) => ({ ebook_id: e.id, aberturas: [42, 17, 9, 3][i], leitores: [11, 6, 4, 2][i], ultima: iso(hoje.getTime() - i * DIA) }));
+    case "indicadores_propriedade":
+      return {
+        hoje: dataISO(0),
+        reproducao: { inseminacoes_ano: 6, confirmadas: 4, falhou: 1, em_andamento: 1, taxa_prenhez: 80.0, intervalo_partos_dias: 398, idade_primeiro_parto_meses: 28.4, nascidos_ano: 6, taxa_natalidade: 75.0 },
+        peso: { ganho_kg_dia: 0.642, animais_pesados: 24, peso_medio_kg: 318.4 },
+        leite: { litros_30d: 7380.0, litros_dia: 246.0, vacas_ordenhadas: 18, litros_por_vaca_dia: 13.7, preco_medio_litro: 2.45, litros_mes: 7140.0, custo_por_litro: 1.72 },
+        dinheiro: { receitas_mes: 18420.5, despesas_mes: 12280.9, investimentos_mes: 3200, resultado_mes: 6139.6 },
+        rebanho: { ativos: 48, femeas: 31, machos: 17, matrizes: 8, crias_ano: 6, perdas_ano: 1, taxa_mortalidade: 2.04 },
+      };
+    case "admin_suporte":
+      return (TABELAS.suporte_contatos ?? []).map((m) => ({ ...m, propriedade: "Fazenda Boa Vista" }));
+    case "admin_responder_suporte": return true;
     case "admin_2fa_resumo":
       return [{ email: USUARIO.email, tem_2fa: false, eu: true }, { email: "suporte@exemplo.com.br", tem_2fa: true, eu: false }];
     case "estado_manutencao":

@@ -148,24 +148,24 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
             <button type="button" onClick={() => { setModo("funcao"); setEtapa("chat"); setEscolhendoFuncao((v) => !v); }} aria-expanded={escolhendoFuncao}
               className={`flex items-center gap-2 rounded-xl border p-2 text-left transition ${escolhendoFuncao ? "border-primary bg-primary/15" : "border-border bg-background/60 hover:border-primary/60"}`}>
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary"><BookOpen className="size-4" /></span>
-              <span className="min-w-0"><span className="block text-xs font-semibold">Uma função</span><span className="block truncate text-[11px] text-muted-foreground">Aprender só uma área</span></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold">Uma função</span><span className="block truncate text-xs text-muted-foreground">Aprender só uma área</span></span>
             </button>
             <button type="button" onClick={() => { setModo("completo"); setEscolhendoFuncao(false); setEtapa("pergunta1"); }}
               className="flex items-center gap-2 rounded-xl border border-border bg-background/60 p-2 text-left transition hover:border-primary/60">
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary"><Compass className="size-4" /></span>
-              <span className="min-w-0"><span className="block text-xs font-semibold">Tour completo</span><span className="block truncate text-[11px] text-muted-foreground">Ver o sistema todo</span></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold">Tour completo</span><span className="block truncate text-xs text-muted-foreground">Ver o sistema todo</span></span>
             </button>
           </div>
-          {!escolhendoFuncao && <Button type="button" size="sm" variant="ghost" className="mt-2 h-8 w-full justify-start gap-2 border border-border bg-background/40 px-3 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground" onClick={demonstrarAnotacao}><NotebookPen className="size-4 text-primary" />Simular uma anotação<span className="ml-auto text-[10px]">Sem salvar dados</span></Button>}
+          {!escolhendoFuncao && <Button type="button" size="sm" variant="ghost" className="mt-2 h-8 w-full justify-start gap-2 border border-border bg-background/40 px-3 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground" onClick={demonstrarAnotacao}><NotebookPen className="size-4 text-primary" />Simular uma anotação<span className="ml-auto text-xs">Sem salvar dados</span></Button>}
           {escolhendoFuncao && <div className="mt-2.5 animate-in fade-in slide-in-from-top-1">
-            <p className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">O que você quer aprender?</p>
+            <p className="mb-1.5 px-1 text-xs font-medium text-muted-foreground">O que você quer aprender?</p>
             <div className="grid max-h-48 grid-cols-3 gap-1.5 overflow-y-auto pr-0.5">
               {TOPICOS_TOUR.map((t) => {
                 const ativo = t.id === topicoId;
                 return <button key={t.id} type="button" onClick={() => setTopicoId(t.id)} aria-pressed={ativo}
-                  className={`flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center text-[11px] leading-tight transition ${ativo ? "border-primary bg-primary/15 text-foreground" : "border-border bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>
+                  className={`flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center text-xs leading-tight transition ${ativo ? "border-primary bg-primary/15 text-foreground" : "border-border bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>
                   <span className="font-medium">{t.nome}</span>
-                  <span className="text-[10px] opacity-70">{t.passos.length} passo{t.passos.length === 1 ? "" : "s"}</span>
+                  <span className="text-xs opacity-70">{t.passos.length} passo{t.passos.length === 1 ? "" : "s"}</span>
                 </button>;
               })}
             </div>
@@ -207,7 +207,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
                     ? <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />
                     : <span className="size-7 shrink-0" />)}
                   <div className="group min-w-0 max-w-[85%]">
-                    {novoGrupo && <p className={`mb-1 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
+                    {novoGrupo && <p className={`mb-1 px-1 text-xs font-medium text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
                     <Message from={m.role} className="max-w-full">
                       <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "px-1 py-1 text-foreground"}>
                         {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
@@ -225,7 +225,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
               );
             })}
             {status === "submitted" && <div className="flex gap-2"><img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 rounded-full border border-primary/40 object-cover" /><div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-border bg-card/85 px-4 py-3"><span className="size-1.5 animate-bounce rounded-full bg-primary" /><span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" /><span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" /><Shimmer className="ml-2 text-xs">Yui está digitando…</Shimmer></div></div>}
-            {error && status !== "streaming" && <div className="flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">Não consegui responder.<Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => void regenerate()}><RefreshCw className="size-3.5" />Tentar de novo</Button></div>}
+            {error && status !== "streaming" && <div className="flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-alerta-fundo p-2 text-xs text-alerta">Não consegui responder.<Button size="sm" variant="ghost" className="h-7 text-alerta" onClick={() => void regenerate()}><RefreshCw className="size-3.5" />Tentar de novo</Button></div>}
 
             {etapa !== "chat" && (
               <div className="rounded-2xl border border-primary/40 bg-card p-4">
@@ -250,7 +250,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
           <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")} className="rounded-lg border-border bg-card shadow-lg focus-within:border-primary/60 focus-within:shadow-[0_0_20px_-8px_var(--primary)]">
               <PromptInputTextarea placeholder="Pergunte à Yui…" autoFocus maxLength={4000} />
             <PromptInputFooter className="justify-between">
-              <span className="px-2 text-[11px] text-muted-foreground">Respostas geradas por IA</span>
+              <span className="px-2 text-xs text-muted-foreground">Respostas geradas por IA</span>
               <PromptInputSubmit status={status} onStop={stop} className="size-8 shrink-0 rounded-md" />
             </PromptInputFooter>
           </PromptInput>

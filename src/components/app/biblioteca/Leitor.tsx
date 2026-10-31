@@ -14,14 +14,14 @@ type PdfPagina = {
 /** Marca d'água desenhada DENTRO da página (vai junto em qualquer captura de tela). */
 function marcaDagua(ctx: CanvasRenderingContext2D, largura: number, altura: number, texto: string) {
   ctx.save();
-  ctx.globalAlpha = 0.13;
+  ctx.globalAlpha = 0.085;
   ctx.fillStyle = "#15231a";
-  const tam = Math.max(14, Math.round(largura / 32));
+  const tam = Math.max(12, Math.round(largura / 46));
   ctx.font = `700 ${tam}px "Atkinson Hyperlegible Next", Arial, sans-serif`;
   ctx.translate(largura / 2, altura / 2);
   ctx.rotate(-Math.PI / 6);
-  const passoY = tam * 7;
-  const passoX = ctx.measureText(texto).width + tam * 4;
+  const passoY = tam * 11;
+  const passoX = ctx.measureText(texto).width + tam * 7;
   for (let y = -altura; y < altura; y += passoY) {
     for (let x = -largura * 1.2; x < largura * 1.2; x += passoX) ctx.fillText(texto, x + ((y / passoY) % 2) * (passoX / 2), y);
   }

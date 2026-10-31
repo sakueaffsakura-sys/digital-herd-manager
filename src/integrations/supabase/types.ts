@@ -1554,6 +1554,48 @@ export type Database = {
         }
         Relationships: []
       }
+      suporte_contatos: {
+        Row: {
+          assunto: string
+          criado_em: string
+          email: string | null
+          id: string
+          mensagem: string
+          propriedade_id: string | null
+          respondido_em: string | null
+          respondido_por: string | null
+          resposta: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          assunto: string
+          criado_em?: string
+          email?: string | null
+          id?: string
+          mensagem: string
+          propriedade_id?: string | null
+          respondido_em?: string | null
+          respondido_por?: string | null
+          resposta?: string | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          assunto?: string
+          criado_em?: string
+          email?: string | null
+          id?: string
+          mensagem?: string
+          propriedade_id?: string | null
+          respondido_em?: string | null
+          respondido_por?: string | null
+          resposta?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       solicitacoes_exclusao: {
         Row: {
           atendida_por: string | null
@@ -2079,6 +2121,25 @@ export type Database = {
       admin_2fa_resumo: {
         Args: never
         Returns: { email: string; eu: boolean; tem_2fa: boolean }[]
+      }
+      indicadores_propriedade: { Args: { _propriedade_id: string }; Returns: Json }
+      admin_suporte: {
+        Args: { _limite?: number; _status?: string }
+        Returns: {
+          assunto: string
+          criado_em: string
+          email: string | null
+          id: string
+          mensagem: string
+          propriedade: string | null
+          respondido_em: string | null
+          resposta: string | null
+          status: string
+        }[]
+      }
+      admin_responder_suporte: {
+        Args: { _fechar?: boolean; _id: string; _resposta: string }
+        Returns: boolean
       }
       admin_exigir_2fa: { Args: { _ligar: boolean }; Returns: boolean }
       agenda_periodo: {

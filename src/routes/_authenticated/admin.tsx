@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImageIcon, Bot, AlertTriangle, BellRing, BookOpenText, ShieldAlert, Activity, ArrowLeft, BarChart3, Contact, CreditCard, Database, Eye, Gauge, HardDrive, KeyRound, Lock, Menu, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, UserX, Users, X, Zap } from "lucide-react";
+import { ImageIcon, Bot, AlertTriangle, BellRing, BookOpenText, ShieldAlert, Activity, ArrowLeft, BarChart3, Contact, CreditCard, Database, Eye, Gauge, HardDrive, KeyRound, LifeBuoy, Lock, Menu, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, UserX, Users, X, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -21,6 +21,7 @@ import { AssinaturasAdmin } from "@/components/app/admin/AssinaturasAdmin";
 import { EbooksAdmin } from "@/components/app/admin/EbooksAdmin";
 import { ExclusoesAdmin } from "@/components/app/admin/ExclusoesAdmin";
 import { AcessoAdmin } from "@/components/app/admin/AcessoAdmin";
+import { SuporteAdmin } from "@/components/app/admin/SuporteAdmin";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -127,6 +128,10 @@ function AdminPage() {
     });
   }, [alertas.data]);
   const contas = useQuery({ queryKey: ["admin-contas"], enabled: isAdmin.data === true, queryFn: async () => { const r = await rpc("admin_contas"); if (r.error) throw r.error; return (r.data ?? []) as Conta[]; } });
+  const suporteAberto = useQuery({
+    queryKey: ["admin-suporte", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
+    queryFn: async () => { const { count, error } = await supabase.from("suporte_contatos").select("id", { count: "exact", head: true }).eq("status", "aberto"); if (error) throw error; return count ?? 0; },
+  });
   const pedidosAbertos = useQuery({
     queryKey: ["admin-exclusoes", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
     queryFn: async () => { const { count, error } = await supabase.from("solicitacoes_exclusao").select("id", { count: "exact", head: true }).eq("status", "pendente"); if (error) throw error; return count ?? 0; },
@@ -160,9 +165,9 @@ function AdminPage() {
   );
 
   const s = sistema.data;
-  const titulos: Record<Aba, readonly [string, string]> = { exclusoes: ["Pedidos de exclusão", "Contas que pediram para ser apagadas (LGPD). Atenda em até 15 dias."], acesso: ["Duas etapas", "Exija o código do celular de quem administra o sistema."], assinaturas: ["Assinaturas", "Mercado Pago, planos, preços e pagamentos recebidos."], ebooks: ["eBooks", "Envie, publique e acompanhe a leitura dos eBooks dos assinantes."], tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] };
+  const titulos: Record<Aba, readonly [string, string]> = { exclusoes: ["Pedidos de exclusão", "Contas que pediram para ser apagadas (LGPD). Atenda em até 15 dias."], acesso: ["Duas etapas", "Exija o código do celular de quem administra o sistema."], suporte: ["Suporte e aplicativo", "Responda as mensagens de quem usa e publique a versão do aplicativo Android."], assinaturas: ["Assinaturas", "Mercado Pago, planos, preços e pagamentos recebidos."], ebooks: ["eBooks", "Envie, publique e acompanhe a leitura dos eBooks dos assinantes."], tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] };
   return (
-    <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length} pedidosCount={pedidosAbertos.data ?? 0}>
+    <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length} pedidosCount={pedidosAbertos.data ?? 0} suporteCount={suporteAberto.data ?? 0}>
       <div>
         <h1 className="titulo-pagina">{titulos[tab][0]}</h1>
         <p className="mt-1 max-w-prose text-muted-foreground">{titulos[tab][1]}</p>
@@ -191,6 +196,7 @@ function AdminPage() {
       {tab === "ebooks" && <EbooksAdmin />}
       {tab === "exclusoes" && <ExclusoesAdmin />}
       {tab === "acesso" && <AcessoAdmin />}
+      {tab === "suporte" && <SuporteAdmin />}
 
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
@@ -605,7 +611,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "yui" | "criadores" | "imagens";
+type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "suporte" | "yui" | "criadores" | "imagens";
 type ItemAba = { k: Aba; label: string; icon: typeof Users };
 const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
   { rotulo: "Agora", abas: [
@@ -625,6 +631,7 @@ const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
     { k: "metricas", label: "Métricas", icon: BarChart3 },
   ] },
   { rotulo: "Site", abas: [
+    { k: "suporte", label: "Suporte e aplicativo", icon: LifeBuoy },
     { k: "desempenho", label: "Desempenho", icon: Gauge },
     { k: "yui", label: "Yui (assistente)", icon: Bot },
     { k: "criadores", label: "Criadores", icon: Contact },
@@ -633,7 +640,7 @@ const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
 ];
 
 /** Casca do painel: menu verde-curral (fixo no computador, gaveta no celular), igual ao do sistema. */
-function Shell({ children, tab, setTab, alertaCount = 0, pedidosCount = 0 }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number; pedidosCount?: number }) {
+function Shell({ children, tab, setTab, alertaCount = 0, pedidosCount = 0, suporteCount = 0 }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number; pedidosCount?: number; suporteCount?: number }) {
   const [aberto, setAberto] = useState(false);
   useEffect(() => {
     if (!aberto) return;
@@ -671,11 +678,12 @@ function Shell({ children, tab, setTab, alertaCount = 0, pedidosCount = 0 }: { c
                   return (
                     <li key={k}>
                       <button type="button" aria-current={ativo ? "page" : undefined} onClick={() => ir(k)}
-                        className={`relative flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[15px] transition-colors lg:min-h-11 ${ativo ? "marca-ativa bg-sidebar-accent font-bold text-white" : "text-sidebar-foreground/90 hover:bg-white/[0.07] hover:text-white"}`}>
+                        className={`relative flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left text-[15px] leading-tight transition-colors lg:min-h-11 ${ativo ? "marca-ativa bg-sidebar-accent font-bold text-white" : "text-sidebar-foreground/90 hover:bg-white/[0.07] hover:text-white"}`}>
                         <Icon className="size-5 shrink-0" />
-                        <span className="min-w-0 truncate">{label}</span>
+                        <span className="min-w-0 flex-1">{label}</span>
                         {k === "seguranca" && selo(alertaCount, true)}
                         {k === "exclusoes" && selo(pedidosCount, false)}
+                        {k === "suporte" && selo(suporteCount, false)}
                       </button>
                     </li>
                   );

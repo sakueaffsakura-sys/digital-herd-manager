@@ -142,9 +142,9 @@ export function RecordDialog({
   };
   return (
     <Dialog open={open} modal={!demo} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className={`dark max-h-[90vh] overflow-y-auto border-border bg-card sm:max-w-2xl ${isNote ? "w-[calc(100%-2rem)] gap-0 rounded-lg p-0" : ""} ${demo ? "z-[80]" : ""}`}>
+      <DialogContent data-tour={demo ? "demo-dialog" : undefined} className={`max-h-[90vh] overflow-y-auto sm:max-w-2xl ${isNote ? "w-[calc(100%-2rem)] gap-0 rounded-lg p-0" : ""} ${demo ? "z-[80]" : ""}`}>
         <DialogHeader className={isNote ? "border-b border-border px-5 py-5 pr-12 text-left sm:px-6" : ""}>
-          {isNote && <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-primary"><NotebookPen className="size-4" />Produção · Anotações</div>}
+          {isNote && <div className="mb-2 flex items-center gap-2 text-xs font-bold text-primary"><NotebookPen className="size-4" />Produção · Anotações</div>}
           <DialogTitle className={isNote ? "text-2xl leading-tight" : ""}>{isNote ? row ? "Editar anotação" : "Nova anotação" : `${row ? "Editar" : "Novo"} ${config.singular}`}</DialogTitle>
           <DialogDescription>{demo ? "Demonstração da Yui: os campos estão sendo preenchidos sozinhos e nada será salvo." : "Os dados serão gravados na propriedade selecionada."}</DialogDescription>
         </DialogHeader>

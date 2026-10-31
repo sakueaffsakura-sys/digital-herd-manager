@@ -156,7 +156,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
             {falando && <span className="absolute -bottom-0.5 -right-0.5 flex h-4 items-end gap-0.5 rounded-full bg-primary px-1 py-0.5">{[0, 1, 2].map((i) => <span key={i} className="w-0.5 animate-bounce rounded bg-primary-foreground" style={{ height: 5 + i * 2, animationDelay: `${i * 120}ms` }} />)}</span>}
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Yui · {idx + 1}/{passos.length}</p>
+            <p className="text-xs font-bold text-primary">Yui · {idx + 1}/{passos.length}</p>
             <p className="max-w-40 truncate text-xs font-semibold leading-tight">{carregandoVoz ? "Preparando voz…" : passo.titulo}</p>
           </div>
           <div className="hidden sm:block h-1 w-14 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary transition-all duration-500" style={{ width: `${((idx + 1) / passos.length) * 100}%` }} /></div>
@@ -176,7 +176,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                 <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Yui · passo {idx + 1} de {passos.length}</p>
+                 <p className="text-xs font-bold text-primary">Yui · passo {idx + 1} de {passos.length}</p>
                  <Button type="button" size="icon-sm" variant="ghost" onClick={() => setMinimizadoManual(true)} className="ml-auto" aria-label="Minimizar explicação"><Minimize2 className="size-4" /></Button>
                  <Button type="button" size="icon-sm" variant="ghost" onClick={sair} aria-label="Sair do tour"><X className="size-4" /></Button>
               </div>
@@ -185,7 +185,7 @@ export function YuiTour({ go, abrirMenu, onSair, passos, isAdmin }: { go: (s: st
               {passo.passos && (
                 <ol className="mt-2.5 space-y-1 rounded-lg border border-border bg-card/60 p-2.5 text-xs">
                   <li className="mb-1 font-semibold text-primary">Como fazer:</li>
-                  {passo.passos.map((t, i) => <li key={i} className="flex gap-2"><span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">{i + 1}</span><span className="text-foreground/85">{t}</span></li>)}
+                  {passo.passos.map((t, i) => <li key={i} className="flex gap-2"><span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">{i + 1}</span><span className="text-foreground/85">{t}</span></li>)}
                 </ol>
               )}
               {passo.dica && <p className="mt-2 text-xs text-muted-foreground"><span className="font-semibold text-chart-4">Dica: </span>{passo.dica}</p>}

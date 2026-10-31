@@ -425,7 +425,7 @@ export function PremiumBadge({ plan, compact = false }: { plan: PlanView; compac
   const r = avaliarPlano(plan);
   if (!r.premium_ativo) return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#f59e0b]/15 px-2.5 py-1 text-[11px] font-bold uppercase text-[#f59e0b]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-aviso-fundo px-2.5 py-1 text-xs font-bold text-aviso">
       <Crown className="size-3.5" />
       {!compact && "Premium"}
       {!!plan.demonstracao && <span title="Modo demonstração">· demo</span>}
@@ -437,7 +437,7 @@ export function DemoSeal({ plan }: { plan: PlanView }) {
   if (!plan?.demonstracao) return null;
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-md border border-[#f59e0b]/30 bg-[#f59e0b]/10 px-2 py-1 text-[10px] font-bold uppercase text-[#f59e0b]"
+      className="inline-flex items-center gap-1 rounded-md border border-aviso/40 bg-aviso-fundo px-2 py-1 text-xs font-bold text-aviso"
       title="Ativado sem cobrança, para avaliação"
     >
       <Sparkles className="size-3.5" />
@@ -667,7 +667,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
             <p className="mt-3 text-sm text-muted-foreground">Carregando perfil…</p>
           )}
           {profile.isError && (
-            <div className="mt-3 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="mt-3 flex items-start gap-2 rounded-md border border-destructive/30 bg-alerta-fundo p-3 text-sm text-alerta">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />
               Não foi possível carregar os dados do perfil. Tente novamente em instantes.
             </div>
@@ -874,7 +874,7 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
         <div className="flex items-center justify-between gap-3">
           <Label>{label}</Label>
           {!premium && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#f59e0b]/15 px-2 py-0.5 text-[10px] font-bold uppercase text-[#f59e0b]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-aviso-fundo px-2 py-0.5 text-xs font-bold text-aviso">
               <Lock className="size-3" /> Premium
             </span>
           )}
@@ -1115,7 +1115,7 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
               return (
                 <li key={feat} className="flex items-start gap-3 text-sm">
                   {on ? (
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#f59e0b]" />
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-aviso" />
                   ) : (
                     <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   )}
@@ -1144,9 +1144,9 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
       </section>
 
       {canManage.data && (
-        <section className="rounded-lg border border-[#f59e0b]/30 bg-card p-5">
+        <section className="rounded-lg border border-aviso/40 bg-card p-5">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-[#f59e0b]" />
+            <AlertTriangle className="size-5 text-aviso" />
             <h2 className="font-semibold">Administração — modo de demonstração</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -1263,7 +1263,7 @@ export function PlanPage({ propertyId }: { propertyId: string }) {
                     {a.motivo ? ` · ${a.motivo}` : ""} · por {a.alterado_por.slice(0, 8)}
                   </span>
                 </div>
-                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase text-primary">
+                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
                   {a.origem}
                 </span>
               </div>

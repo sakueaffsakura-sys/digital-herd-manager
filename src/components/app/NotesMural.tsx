@@ -194,10 +194,10 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
         </div>
       ) : paged.error ? (
         <div role="alert" className="grid place-items-center gap-4 py-16 text-sm text-muted-foreground">
-          <span className="grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive"><AlertCircle className="size-6" /></span>
+          <span className="grid size-12 place-items-center rounded-full bg-alerta-fundo text-alerta"><AlertCircle className="size-6" /></span>
           <div className="grid place-items-center gap-1 text-center">
             <span className="text-base font-semibold text-foreground">Não foi possível carregar as anotações</span>
-            <span className="max-w-xl text-xs text-destructive">{paged.error.message}</span>
+            <span className="max-w-xl text-xs text-alerta">{paged.error.message}</span>
           </div>
           <Button variant="outline" size="sm" onClick={() => paged.refetch()}><RefreshCw />Tentar novamente</Button>
         </div>
@@ -225,7 +225,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
                     {formatarDataBR(row["data"])}
                   </span>
                   {producao > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                       <Milk className="size-3.5" />{producao.toLocaleString("pt-BR")} L
                     </span>
                   )}
@@ -237,10 +237,10 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
                 {!!(row["comportamento"] || row["alimentacao"]) && (
                   <div className="grid gap-2 border-l-2 border-border pl-3">
                     {!!row["comportamento"] && (
-                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-[10px] font-semibold uppercase text-chart-4">Comportamento</span>{pretty(row["comportamento"])}</p>
+                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-xs font-bold text-chart-4">Comportamento</span>{pretty(row["comportamento"])}</p>
                     )}
                     {!!row["alimentacao"] && (
-                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-[10px] font-semibold uppercase text-chart-2">Alimentação</span>{pretty(row["alimentacao"])}</p>
+                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-xs font-bold text-chart-2">Alimentação</span>{pretty(row["alimentacao"])}</p>
                     )}
                   </div>
                 )}
@@ -252,7 +252,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
                 )}
 
                 <footer className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
-                  <span className="text-[10px] font-medium uppercase text-muted-foreground">Anotação da produção</span>
+                  <span className="text-xs font-bold text-muted-foreground">Anotação da produção</span>
                   <div className="flex shrink-0 gap-1">
                     <Button
                       variant="ghost"
@@ -267,7 +267,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-9 text-muted-foreground hover:text-destructive"
+                      className="size-9 text-muted-foreground hover:text-alerta"
                       title="Excluir anotação"
                       aria-label="Excluir anotação"
                       onClick={() => remove(row)}

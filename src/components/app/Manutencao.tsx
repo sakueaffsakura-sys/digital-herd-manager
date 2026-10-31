@@ -55,13 +55,13 @@ export function TelaManutencao({ estado, onTentar }: { estado: EstadoManutencao;
   const Icon = bloqueio ? ShieldX : Hammer;
   const sair = async () => { await supabase.auth.signOut(); window.location.href = "/"; };
   return (
-    <main className="dark relative grid min-h-screen place-items-center overflow-hidden bg-background px-4 py-10 text-foreground">
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-background px-4 py-10 text-foreground">
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 size-[640px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       <section className="relative w-full max-w-xl rounded-3xl border border-border bg-card/80 p-8 text-center shadow-2xl backdrop-blur sm:p-12">
-        <span className={`mx-auto grid size-16 place-items-center rounded-2xl ${bloqueio ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary"}`}>
+        <span className={`mx-auto grid size-16 place-items-center rounded-2xl ${bloqueio ? "bg-alerta-fundo text-alerta" : "bg-primary/15 text-primary"}`}>
           <Icon className="size-8" />
         </span>
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        <p className="mt-6 text-xs font-bold tracking-[0.2em] text-muted-foreground">
           {bloqueio ? "Sistema bloqueado" : "Manutenção programada"}
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{titulo}</h1>

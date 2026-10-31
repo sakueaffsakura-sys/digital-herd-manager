@@ -1,6 +1,6 @@
-import type { ComponentType, ReactNode } from "react";
+import { useRef, useState, type ComponentType, type ReactNode, type RefObject } from "react";
 import {
-  AlertTriangle, ArrowDownLeft, ArrowRightLeft, ArrowUpRight, Check, ClipboardList, Clock3, Info, Plus, Repeat2, Tag, Tractor, TrendingUp, XCircle,
+  AlertTriangle, ArrowDownLeft, ArrowRightLeft, ArrowUpRight, Check, ClipboardList, Clock3, Info, Plus, Repeat2, Tag, Tractor, TrendingUp, Upload, XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/integrations/supabase/types";
@@ -140,6 +140,10 @@ const SELOS: Record<string, SeloInfo> = {
   pendente: { rotulo: "Em análise", cor: "aviso", icone: Clock3 },
   recusado: { rotulo: "Recusado", cor: "alerta", icone: XCircle },
   estornado: { rotulo: "Estornado", cor: "cinza", icone: Repeat2 },
+  expirado: { rotulo: "Vencido", cor: "aviso", icone: Clock3 },
+  aberto: { rotulo: "Aguardando resposta", cor: "aviso", icone: Clock3 },
+  respondido: { rotulo: "Respondido", cor: "pasto", icone: Check },
+  fechado: { rotulo: "Encerrado", cor: "cinza", icone: Check },
 };
 const COR_SELO: Record<SeloInfo["cor"], string> = {
   alerta: "bg-alerta-fundo text-alerta",
@@ -228,6 +232,35 @@ export function Abas<T extends string>({ valor, opcoes, aoMudar, rotulo }: { val
           {o.rotulo}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Escolher arquivo: botão em português com o nome do arquivo ao lado (o campo nativo fica escondido). */
+export function CampoArquivo({
+  id, rotulo, ajuda, accept, obrigatorio, aoEscolher, inputRef,
+}: {
+  id: string; rotulo: string; ajuda?: string; accept: string; obrigatorio?: boolean;
+  aoEscolher?: (arquivo: File | null) => void; inputRef?: RefObject<HTMLInputElement | null>;
+}) {
+  const proprio = useRef<HTMLInputElement>(null);
+  const campo = inputRef ?? proprio;
+  const [nome, setNome] = useState<string | null>(null);
+  return (
+    <div>
+      <span id={`${id}-rotulo`} className="mb-1.5 block text-[15px] font-bold">{rotulo}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="outline" className="h-12" onClick={() => campo.current?.click()} aria-describedby={`${id}-rotulo`}>
+          <Upload />{nome ? "Trocar arquivo" : "Escolher arquivo"}
+        </Button>
+        <span className="min-w-0 flex-1 truncate text-muted-foreground">{nome ?? "Nenhum arquivo escolhido"}</span>
+      </div>
+      {ajuda && <p className="mt-1 text-sm text-muted-foreground">{ajuda}</p>}
+      <input
+        ref={campo} id={id} type="file" accept={accept} required={obrigatorio} className="sr-only"
+        aria-labelledby={`${id}-rotulo`}
+        onChange={(e) => { const f = e.target.files?.[0] ?? null; setNome(f?.name ?? null); aoEscolher?.(f); }}
+      />
     </div>
   );
 }

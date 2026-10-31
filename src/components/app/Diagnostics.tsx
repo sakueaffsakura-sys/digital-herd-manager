@@ -60,7 +60,7 @@ export default function Diagnostics({ propertyId }: { propertyId: string }) {
             <div className="space-y-5">
               {diagnostic.data?.checagens.map((c) => (
                 <div key={c.checagem} className="rounded-lg border border-border bg-muted/20 p-4">
-                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldAlert className="size-4 text-amber-500" />{c.checagem} <span className="ml-auto rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">{Number(c.qtd ?? 0).toLocaleString("pt-BR")}</span></p>
+                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldAlert className="size-4 text-amber-500" />{c.checagem} <span className="ml-auto rounded-full bg-alerta-fundo px-2 py-0.5 text-xs text-alerta">{Number(c.qtd ?? 0).toLocaleString("pt-BR")}</span></p>
                   {c.exemplos?.length ? (
                     <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
                       {c.exemplos.slice(0, 5).map((r, i) => (

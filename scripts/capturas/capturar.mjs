@@ -24,7 +24,7 @@ const TAMANHOS = {
 
 /** Abre uma aba do painel do administrador pelo menu lateral. */
 const abaAdmin = (nome) => async (page) => {
-  await page.getByRole("button", { name: nome, exact: true }).click();
+  await page.getByRole("button", { name: new RegExp(`^${nome}`) }).first().click();
   await page.waitForTimeout(1500);
 };
 
@@ -50,12 +50,17 @@ const CENAS = [
   { nome: "biblioteca-bloqueada", caminho: "/app/biblioteca", logado: true, tamanhos: ["celular360"], temas: ["light"] },
   { nome: "biblioteca", caminho: "/app/biblioteca", logado: true, assinante: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
   { nome: "leitor-ebook", caminho: "/app/biblioteca?ebook=00000000-0000-4000-8000-000000000101", logado: true, assinante: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "indicadores", caminho: "/app/indicadores", logado: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
+  { nome: "ferramentas", caminho: "/app/ferramentas", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "aplicativo", caminho: "/app/aplicativo", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "ajuda", caminho: "/app/ajuda", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
   { nome: "admin", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
   { nome: "admin-assinaturas", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Assinaturas") },
   { nome: "admin-ebooks", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("eBooks") },
   { nome: "admin-exclusoes", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Pedidos de exclusão") },
   { nome: "admin-acesso", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Duas etapas") },
   { nome: "admin-contas", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["dark"], acao: abaAdmin("Contas") },
+  { nome: "admin-suporte", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Suporte e aplicativo") },
 ];
 
 const filtro = process.env.CENAS ? new Set(process.env.CENAS.split(",")) : null;

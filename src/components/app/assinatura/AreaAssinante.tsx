@@ -143,7 +143,9 @@ export default function AreaAssinante({
                         {a.origem === "demonstracao" ? " · liberado pelo administrador" : ""}
                       </p>
                     </div>
-                    <Status value={a.ativa ? "ativo" : "cancelada"} />
+                    {a.ativa ? <Status value="ativo" /> : a.plano === "premium" ? <Status value="expirado" /> : (
+                      <span className="rounded-full bg-muted px-3 py-1 text-sm font-bold text-muted-foreground">Sem assinatura</span>
+                    )}
                   </li>
                 ))}
               </ul>

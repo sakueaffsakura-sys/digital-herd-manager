@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { diaBR } from "@/lib/datas";
 import { Capa } from "../biblioteca/Biblioteca";
+import { CampoArquivo } from "../shared";
 
 const MAX_PDF = 100 * 1024 * 1024;
 const MAX_CAPA = 5 * 1024 * 1024;
@@ -115,8 +116,8 @@ function NovoEbook() {
         <div><Label htmlFor="eb-autor">Autor</Label><Input id="eb-autor" maxLength={120} value={autor} onChange={(e) => setAutor(e.target.value)} /></div>
         <div><Label htmlFor="eb-cat">Assunto</Label><Input id="eb-cat" maxLength={60} value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Ex.: Sanidade" /></div>
         <div className="sm:col-span-2"><Label htmlFor="eb-desc">Descrição</Label><Textarea id="eb-desc" maxLength={2000} value={descricao} onChange={(e) => setDescricao(e.target.value)} /></div>
-        <div><Label htmlFor="eb-pdf">Arquivo PDF (até 100 MB)</Label><Input id="eb-pdf" ref={pdfRef} type="file" accept="application/pdf,.pdf" required className="pt-2.5" /></div>
-        <div><Label htmlFor="eb-capa">Capa (opcional; sem capa, usamos a 1ª página)</Label><Input id="eb-capa" ref={capaRef} type="file" accept="image/jpeg,image/png,image/webp" className="pt-2.5" /></div>
+        <CampoArquivo id="eb-pdf" rotulo="Arquivo PDF" ajuda="Até 100 MB." accept="application/pdf,.pdf" obrigatorio inputRef={pdfRef} />
+        <CampoArquivo id="eb-capa" rotulo="Capa (opcional)" ajuda="JPG, PNG ou WEBP até 5 MB. Sem capa, usamos a primeira página do PDF." accept="image/jpeg,image/png,image/webp" inputRef={capaRef} />
         <div className="sm:col-span-2"><Button type="submit" className="h-12" disabled={!!etapa}>{etapa ? <><LoaderCircle className="animate-spin" />{etapa}</> : <><FileUp />Enviar eBook</>}</Button></div>
       </form>
     </section>
@@ -163,7 +164,7 @@ function Lista() {
             const r = resumo.data?.get(l.id);
             return (
               <li key={l.id} className="flex flex-wrap items-center gap-4 py-3">
-                <Capa caminho={l.capa_path} titulo={l.titulo} className="h-24 w-[4.5rem] shrink-0 rounded-lg border border-border text-xs" />
+                <Capa caminho={l.capa_path} titulo={l.titulo} pequena className="h-24 w-[4.5rem] shrink-0 rounded-lg border border-border" />
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{l.titulo}</p>
                   <p className="text-sm text-muted-foreground">{[l.autor, l.categoria, l.paginas ? `${l.paginas} páginas` : null, mb(l.tamanho_bytes)].filter(Boolean).join(" · ")}</p>

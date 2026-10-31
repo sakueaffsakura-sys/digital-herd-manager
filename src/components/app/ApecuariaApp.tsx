@@ -47,6 +47,10 @@ const Diagnostics = lazy(() => import("./Diagnostics"));
 const Agenda = lazy(() => import("./Agenda"));
 const AreaAssinante = lazy(() => import("./assinatura/AreaAssinante"));
 const Biblioteca = lazy(() => import("./biblioteca/Biblioteca"));
+const Indicadores = lazy(() => import("./Indicadores"));
+const Ferramentas = lazy(() => import("./ferramentas/Ferramentas"));
+const Aplicativo = lazy(() => import("./aplicativo/Aplicativo"));
+const Ajuda = lazy(() => import("./ajuda/Ajuda"));
 
 const modules: Record<string, Module> = {
   rebanho: { title: "Meu rebanho", singular: "animal", novo: "Novo animal", primeiro: "Cadastrar o primeiro animal", table: "animais", icon: HerdIcon, description: "Todos os animais, com brinco, lote e situação. Toque num animal para ver a ficha.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
@@ -63,7 +67,7 @@ const modules: Record<string, Module> = {
 
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", novo:"Novo tipo de vacina", primeiro:"Cadastrar a primeira vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"As vacinas que você usa e de quantos em quantos dias repetir.", searchColumns:["nome"], columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
 
-const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "biblioteca", "assinatura", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
+const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "indicadores", "ferramentas", "biblioteca", "assinatura", "aplicativo", "ajuda", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
 const GRUPOS = filtrarMenu((chave) => IMPLEMENTADAS.has(chave));
 const GRUPOS_LATERAL = filtrarMenu((chave) => IMPLEMENTADAS.has(chave), { lateral: true });
 const CHAVE_PROPRIEDADE = "pd-propriedade";
@@ -105,10 +109,14 @@ export function ApecuariaApp() {
   let conteudo: ReactNode;
   if (section === "perfil") conteudo = userQuery.data?.id ? <MyProfilePage userId={userQuery.data.id} email={userQuery.data.email} /> : <SectionLoading />;
   else if (section === "seguranca") conteudo = userQuery.data ? <SegurancaPage email={userQuery.data.email ?? ""} /> : <SectionLoading />;
+  else if (section === "aplicativo") conteudo = <Suspense fallback={<SectionLoading />}><Aplicativo /></Suspense>;
+  else if (section === "ajuda") conteudo = <Suspense fallback={<SectionLoading />}><Ajuda propriedadeId={propertyId} /></Suspense>;
   else if (!propertyId) conteudo = propertiesQuery.isLoading ? <SectionLoading /> : <EmptyProperty onCreate={() => setPropertyDialog(true)} />;
   else if (section === "inicio") conteudo = <Suspense fallback={<SectionLoading />}><Dashboard propertyId={propertyId} propertyName={currentProperty?.nome ?? "Propriedade"} go={go} lancar={lancar} /></Suspense>;
   else if (section === "agenda") conteudo = <Suspense fallback={<SectionLoading />}><Agenda propertyId={propertyId} propertyName={currentProperty?.nome ?? "Propriedade"} go={go} abrirRegistro={abrirRegistro} /></Suspense>;
   else if (section === "relatorios") conteudo = <Suspense fallback={<SectionLoading />}><Reports propertyId={propertyId} /></Suspense>;
+  else if (section === "indicadores") conteudo = <Suspense fallback={<SectionLoading />}><Indicadores propertyId={propertyId} /></Suspense>;
+  else if (section === "ferramentas") conteudo = <Suspense fallback={<SectionLoading />}><Ferramentas diasGestacao={currentProperty?.periodo_gestacao_dias ?? 283} cidade={currentProperty?.cidade ?? null} estado={currentProperty?.estado ?? null} /></Suspense>;
   else if (section === "diagnostico") conteudo = <Suspense fallback={<SectionLoading />}><Diagnostics propertyId={propertyId} /></Suspense>;
   else if (section === "comercial") conteudo = <Commerce key={propertyId} propertyId={propertyId} pedido={pedido} />;
   else if (section === "vacinacao") conteudo = <VaccinationArea key={propertyId} propertyId={propertyId} pedido={pedido} />;
