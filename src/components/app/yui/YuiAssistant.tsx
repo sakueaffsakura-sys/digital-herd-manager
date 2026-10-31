@@ -80,6 +80,12 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
     return () => clearTimeout(t);
   }, []);
   const fecharConvite = () => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); };
+  // O botão da Yui fica na barra do topo (casca/BarraTopo): ele avisa por evento.
+  useEffect(() => {
+    const alternar = () => { setAberto((a) => !a); setConvite(false); };
+    window.addEventListener("yui:abrir", alternar);
+    return () => window.removeEventListener("yui:abrir", alternar);
+  }, []);
 
   const topico = TOPICOS_TOUR.find((t) => t.id === topicoId) ?? TOPICOS_TOUR[0];
   const passosTour = modo === "funcao" ? topico.passos : TOUR;
@@ -118,24 +124,15 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
     {tour && <YuiTour passos={passosTour} go={go} abrirMenu={abrirMenu} isAdmin={isAdmin} onSair={() => { setTour(false); setAberto(true); }} />}
 
     {convite && !aberto && !tour && (
-      <div className="fixed bottom-24 right-4 z-40 w-[min(320px,calc(100vw-32px))] animate-in fade-in slide-in-from-bottom-4 rounded-2xl border border-primary/40 bg-popover p-4 shadow-2xl sm:right-6">
+      <div role="dialog" aria-label="Convite da Yui" className="fixed right-3 top-[72px] z-40 w-[min(340px,calc(100vw-24px))] animate-in fade-in slide-in-from-top-2 rounded-2xl border border-border bg-popover p-4 lg:top-[80px] lg:right-5">
         <Button type="button" size="icon-sm" variant="ghost" onClick={fecharConvite} className="absolute right-2 top-2" aria-label="Fechar"><X className="size-4" /></Button>
-        <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="text-sm font-semibold">Oi! 👋</p><p className="mt-1 text-sm text-muted-foreground">Sou a assistente virtual do Pecuária Digital, criada para dar suporte quando você tiver dificuldade ou dúvidas. Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
+        <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="font-bold">Oi!</p><p className="mt-1 text-sm text-muted-foreground">Sou a assistente virtual do Pecuária Digital, criada para dar suporte quando você tiver dificuldade ou dúvidas. Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
         <div className="mt-3 flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={fecharConvite}>Agora não</Button><Button size="sm" onClick={() => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); setEtapa("pergunta2"); setAberto(true); }}>Quero sim</Button></div>
       </div>
     )}
 
-    {!tour && (
-      <Button type="button" data-tour="yui" onClick={() => { setAberto((a) => !a); setConvite(false); }} aria-label={aberto ? "Fechar suporte da Yui" : "Abrir suporte da Yui"}
-        className="group fixed bottom-4 right-4 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card shadow-[0_8px_30px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)] transition-transform hover:scale-105 sm:bottom-6 sm:right-6">
-        <img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" />
-        <span className="absolute -top-1 right-0 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">Ajuda</span>
-      </Button>
-    )}
-    {tour && <span data-tour="yui" className="fixed bottom-6 right-6 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card"><img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" /></span>}
-
     {aberto && !tour && (
-      <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(680px,calc(100vh-120px))] sm:w-[430px] sm:rounded-lg sm:border">
+      <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:right-4 sm:top-[80px] sm:h-[min(680px,calc(100vh-96px))] sm:w-[430px] sm:rounded-2xl sm:border">
         {wallpaper && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
           <div className="absolute inset-0 bg-background/55" />

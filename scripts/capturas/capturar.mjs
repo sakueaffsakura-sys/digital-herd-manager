@@ -1,17 +1,19 @@
 // Fotos das telas para conferir o visual (roda no GitHub Actions, workflow "Capturas").
 // Uso: BASE_URL=http://127.0.0.1:5173 PW_DIR=/tmp/pw node scripts/capturas/capturar.mjs
-// O Supabase é simulado (scripts/capturas/mock.mjs): nenhuma chamada chega ao banco real.
+// O Supabase é simulado (scripts/capturas/servidor-mock.mjs): nenhuma chamada chega ao banco real.
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { responderRest, sessaoFalsa, usuarioAuth } from "./mock.mjs";
+import { sessaoFalsa } from "./mock.mjs";
 
 const require = createRequire(`${process.env.PW_DIR ?? "/tmp/pw"}/`);
 const { chromium } = require("playwright");
 
 const BASE = process.env.BASE_URL ?? "http://127.0.0.1:5173";
 const SAIDA = process.env.SAIDA ?? "capturas";
-const REF = "ccdctoudetbyfpwqdiip";
+// O site aponta para o Supabase de mentira (servidor-mock.mjs); a chave da sessão usa o "nome" do host.
+const MOCK = process.env.MOCK_URL ?? "http://127.0.0.1:54321";
+const CHAVE_SESSAO = `sb-${new URL(MOCK).hostname.split(".")[0]}-auth-token`;
 mkdirSync(SAIDA, { recursive: true });
 
 const TAMANHOS = {
@@ -27,6 +29,11 @@ const CENAS = [
   { nome: "redefinir-senha", caminho: "/redefinir-senha", logado: false, tamanhos: ["celular360"], temas: ["light"] },
   { nome: "inicio", caminho: "/app/inicio", logado: true, tamanhos: ["computador", "celular", "celular360"], temas: ["light", "dark"] },
   { nome: "rebanho", caminho: "/app/rebanho", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "agenda", caminho: "/app/agenda", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "seguranca", caminho: "/app/seguranca", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "privacidade", caminho: "/privacidade", logado: false, tamanhos: ["celular360"], temas: ["light"] },
+  { nome: "ficha-animal", caminho: "/app/rebanho?animal=00000000-0000-4000-8000-000000000020", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "lancar", caminho: "/app/inicio", logado: true, tamanhos: ["celular360"], temas: ["light"], acao: async (page) => { await page.getByRole("button", { name: "Lançar" }).click(); await page.waitForTimeout(600); } },
   { nome: "vacinacao", caminho: "/app/vacinacao", logado: true, tamanhos: ["computador"], temas: ["light", "dark"] },
   { nome: "producao", caminho: "/app/producao", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "financeiro", caminho: "/app/financeiro", logado: true, tamanhos: ["computador"], temas: ["light"] },
@@ -52,42 +59,15 @@ for (const cena of CENAS) {
       if (cena.logado) {
         await context.addInitScript(({ chave, valor }) => {
           try { localStorage.setItem(chave, valor); } catch { /* sem armazenamento */ }
-        }, { chave: `sb-${REF}-auth-token`, valor: JSON.stringify(sessao) });
+        }, { chave: CHAVE_SESSAO, valor: JSON.stringify(sessao) });
       }
-      await context.route((url) => url.hostname.endsWith(".supabase.co"), async (route) => {
-        const req = route.request();
-        const url = new URL(req.url());
-        const caminho = url.pathname;
-        const headers = req.headers();
-        if (caminho.startsWith("/auth/v1/")) {
-          const fim = caminho.slice("/auth/v1/".length);
-          if (fim === "user") {
-            return cena.logado
-              ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(usuarioAuth()) })
-              : route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ code: 401, msg: "No session" }) });
-          }
-          if (fim.startsWith("token")) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(sessao) });
-          if (fim === "logout") return route.fulfill({ status: 204, body: "" });
-          if (fim === "recover") return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
-          if (fim.startsWith("factors")) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ all: [], totp: [], phone: [] }) });
-          return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
-        }
-        if (caminho.startsWith("/rest/v1/")) {
-          const r = responderRest({
-            caminho: caminho.slice("/rest/v1/".length), metodo: req.method(), params: url.searchParams,
-            cabecalhos: headers, admin: !!cena.admin,
-          });
-          return route.fulfill({ status: r.status, headers: r.headers, body: r.body });
-        }
-        // Storage, funções e tempo real: nada a mostrar nas fotos.
-        return route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ message: "não encontrado" }) });
-      });
+      await fetch(`${MOCK}/__cena`, { method: "POST", body: JSON.stringify({ admin: !!cena.admin }) });
       const page = await context.newPage();
       page.on("console", (m) => { if (m.type() === "error") info.erros.push(m.text().slice(0, 300)); });
       page.on("pageerror", (e) => info.erros.push(`pageerror: ${String(e.message).slice(0, 300)}`));
       page.on("requestfailed", (r) => {
         const u = r.url();
-        if (!u.includes("supabase.co")) info.falhas.push(`${r.failure()?.errorText ?? "falhou"} ${u.slice(0, 160)}`);
+        info.falhas.push(`${r.failure()?.errorText ?? "falhou"} ${u.slice(0, 160)}`);
       });
       try {
         await page.goto(`${BASE}${cena.caminho}`, { waitUntil: "domcontentloaded", timeout: 90_000 });

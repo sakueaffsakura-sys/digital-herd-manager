@@ -58,7 +58,7 @@ export const productionNotes: Module = {
 const NOTE_COLS =
   "id,data,animal_id,lote_id,producao,observacao,comportamento,alimentacao,informacoes_adicionais,created_at";
 
-export function NotesMural({ propertyId, globalSearch }: { propertyId: string; globalSearch: string }) {
+export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }: { propertyId: string; globalSearch: string; abrirNova?: boolean; aoAbrirNova?: () => void }) {
   const qc = useQueryClient();
   const [local, setLocal] = useState("");
   const [page, setPage] = useState(1);
@@ -67,6 +67,14 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
   const [editing, setEditing] = useState<Row | null>(null);
   const [demo, setDemo] = useState<Row | null>(null);
   const [demoIndice, setDemoIndice] = useState(0);
+  // Botão "Lançar → Anotação": abre o formulário de anotação nova assim que a aba aparece.
+  useEffect(() => {
+    if (!abrirNova) return;
+    setEditing(null);
+    setOpen(true);
+    aoAbrirNova?.();
+  }, [abrirNova]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const abrir = (e: Event) => { setEditing(null); setDemoIndice(0); setDemo((e as CustomEvent<Row>).detail); setOpen(true); };
     const fechar = () => { setDemo(null); setOpen(false); };

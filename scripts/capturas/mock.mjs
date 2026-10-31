@@ -166,6 +166,8 @@ export const TABELAS = {
     { id: uuid(), user_id: USUARIO.id, propriedade_id: P, titulo: "Bem-vinda ao novo visual", mensagem: "As telas foram reorganizadas para ficar mais fáceis de usar no celular.", lida: false, created_at: iso(hoje.getTime() - DIA) },
   ],
   suporte_mensagens: [], imagens_site: [], configuracoes_sistema: [], presenca_usuarios: [], registros_excluidos: [], importacoes: [], user_roles: [], plano_auditoria: [],
+  manutencao_config: [{ id: 1, status: "ativo", titulo: "", mensagem: "", modulos: [], duracao_bloqueio_min: 60, termina_em: null, atualizado_em: iso(hoje), atualizado_por: null }],
+  bloqueios_acesso: [], solicitacoes_exclusao: [], eventos_seguranca: [], incidentes_seguranca: [], manutencao_historico: [], rate_limits: [],
   propriedade_membros: [{ id: uuid(), propriedade_id: P, user_id: USUARIO.id, role: "proprietario", created_at: iso(hoje.getTime() - 400 * DIA) }],
 };
 
@@ -189,6 +191,29 @@ export function rpc(nome, { admin }) {
     case "diagnostico_propriedade":
       return ["animais", "lotes", "pesagens", "vacinacoes"].map((tabela) => ({ tabela, contagem: (TABELAS[tabela] ?? []).length, ultima_atualizacao: iso(hoje), tempo_ms: 1.2 }));
     case "registros_inconsistentes": return [];
+    case "central_avisos":
+      return [
+        { chave: "vacinas_atrasadas:2", nivel: "alerta", secao: "vacinacao", titulo: "2 vacinas atrasadas", texto: "A data da próxima dose já passou. Aplique e registre para sair da lista." },
+        { chave: "partos_15d:1", nivel: "aviso", secao: "agenda", titulo: "1 parto nos próximos 15 dias", texto: `O primeiro está previsto para ${dataISO(8).slice(8, 10)}/${dataISO(8).slice(5, 7)}. Prepare a maternidade.` },
+        { chave: "sem_pesagem:4", nivel: "info", secao: "bezerros", titulo: "4 animais jovens sem pesagem há mais de 60 dias", texto: "Pesar a cada 30 a 60 dias mostra se estão ganhando peso como deveriam." },
+      ];
+    case "agenda_periodo": {
+      const eventos = [
+        ...status.filter((v) => v.dias_restantes >= 0 && v.dias_restantes <= 40).map((v) => ({ data: v.proxima_aplicacao, tipo: "vacina", registro_id: v.id, animal_id: v.animal_id, titulo: v.tipos_vacinas.nome, detalhe: v.animais.nome ?? v.animais.numero_brinco, brinco: v.animais.numero_brinco, situacao: v.status_atual })),
+        ...inseminacoes.filter((i) => i.previsao_parto <= dataISO(40)).map((i) => ({ data: i.previsao_parto, tipo: "parto", registro_id: i.id, animal_id: i.animal_id, titulo: "Parto previsto", detalhe: i.animais.nome ?? i.animais.numero_brinco, brinco: i.animais.numero_brinco, situacao: i.situacao })),
+        { data: dataISO(3), tipo: "cio", registro_id: inseminacoes[3].id, animal_id: inseminacoes[3].animal_id, titulo: "Observar retorno de cio", detalhe: inseminacoes[3].animais.nome, brinco: inseminacoes[3].animais.numero_brinco, situacao: "em_andamento" },
+      ].sort((a, b) => a.data.localeCompare(b.data));
+      return {
+        eventos, truncado: false, hoje: dataISO(0),
+        atrasadas: status.filter((v) => v.dias_restantes < 0).map((v) => ({ data: v.proxima_aplicacao, registro_id: v.id, animal_id: v.animal_id, titulo: v.tipos_vacinas.nome, detalhe: v.animais.nome, brinco: v.animais.numero_brinco })),
+        sem_pesagem: animais.slice(6, 10).map((a) => ({ animal_id: a.id, nome: a.nome, brinco: a.numero_brinco, data_nascimento: a.data_nascimento, ultima_pesagem: dataISO(-75) })),
+      };
+    }
+    case "minhas_sessoes":
+      return [
+        { id: uuid(), criada_em: iso(hoje.getTime() - 3 * DIA), ultimo_uso: iso(hoje), navegador: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36", ip: "177.12.40.x", aal: "aal1", atual: true },
+        { id: uuid(), criada_em: iso(hoje.getTime() - 9 * DIA), ultimo_uso: iso(hoje.getTime() - 2 * DIA), navegador: "Mozilla/5.0 (Linux; Android 14; SM-A146M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Mobile Safari/537.36", ip: "189.40.2.x", aal: "aal1", atual: false },
+      ];
     case "admin_contas":
       return [{ user_id: USUARIO.id, email: USUARIO.email, nome: USUARIO.nome, criado_em: iso(hoje.getTime() - 400 * DIA), ultimo_acesso: iso(hoje), bloqueado: false, admin: true, propriedades: 1, registros: 412, bytes_estimados: 120_000 },
         { user_id: uuid(), email: "joao.pereira@exemplo.com.br", nome: "João Pereira", criado_em: iso(hoje.getTime() - 40 * DIA), ultimo_acesso: iso(hoje.getTime() - 2 * DIA), bloqueado: false, admin: false, propriedades: 2, registros: 1830, bytes_estimados: 380_000 }];

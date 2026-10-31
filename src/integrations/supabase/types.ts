@@ -927,6 +927,7 @@ export type Database = {
       }
       notificacoes: {
         Row: {
+          chave: string | null
           created_at: string
           id: string
           lida: boolean
@@ -936,6 +937,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chave?: string | null
           created_at?: string
           id?: string
           lida?: boolean
@@ -945,6 +947,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chave?: string | null
           created_at?: string
           id?: string
           lida?: boolean
@@ -1374,6 +1377,42 @@ export type Database = {
           propriedade_id?: string
           registro_id?: string
           tabela?: string
+        }
+        Relationships: []
+      }
+      solicitacoes_exclusao: {
+        Row: {
+          atendida_por: string | null
+          concluida_em: string | null
+          criado_em: string
+          email: string | null
+          id: string
+          motivo: string | null
+          prazo: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          atendida_por?: string | null
+          concluida_em?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          motivo?: string | null
+          prazo?: string
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          atendida_por?: string | null
+          concluida_em?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          motivo?: string | null
+          prazo?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1835,6 +1874,26 @@ export type Database = {
       }
     }
     Functions: {
+      admin_concluir_exclusao: { Args: { _id: string }; Returns: Json }
+      admin_exigir_2fa: { Args: { _ligar: boolean }; Returns: boolean }
+      agenda_periodo: {
+        Args: { _ate: string; _de: string; _propriedade_id: string }
+        Returns: Json
+      }
+      central_avisos: { Args: { _propriedade_id: string }; Returns: Json }
+      encerrar_sessao: { Args: { _id: string }; Returns: boolean }
+      minhas_sessoes: {
+        Args: never
+        Returns: {
+          aal: string
+          atual: boolean
+          criada_em: string
+          id: string
+          ip: string
+          navegador: string
+          ultimo_uso: string
+        }[]
+      }
       admin_alertas: { Args: never; Returns: Json }
       admin_conta_detalhe: { Args: { _user_id: string }; Returns: Json }
       admin_contas: {

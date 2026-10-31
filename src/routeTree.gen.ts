@@ -21,6 +21,14 @@ import { Route as ApiPublicAppResumoRouteImport } from './routes/api/public/app/
 import { Route as ApiPublicAppSincronizarRouteImport } from './routes/api/public/app/sincronizar'
 import { Route as ApiPublicAppStatusRouteImport } from './routes/api/public/app/status'
 import { Route as ApiAdminContaRouteImport } from './routes/api/admin/conta'
+import { Route as ApiPublicContaRecuperarRouteImport } from './routes/api/public/conta/recuperar'
+import { Route as ApiPublicContaCadastroRouteImport } from './routes/api/public/conta/cadastro'
+import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
+import { Route as ApiContaMeusDadosRouteImport } from './routes/api/conta/meus-dados'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as TermosRouteImport } from './routes/termos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -81,6 +89,46 @@ const ApiAdminContaRoute = ApiAdminContaRouteImport.update({
   path: '/api/admin/conta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicContaRecuperarRoute = ApiPublicContaRecuperarRouteImport.update({
+  id: '/api/public/conta/recuperar',
+  path: '/api/public/conta/recuperar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicContaCadastroRoute = ApiPublicContaCadastroRouteImport.update({
+  id: '/api/public/conta/cadastro',
+  path: '/api/public/conta/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
+  id: '/api/conta/conferir-senha',
+  path: '/api/conta/conferir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaMeusDadosRoute = ApiContaMeusDadosRouteImport.update({
+  id: '/api/conta/meus-dados',
+  path: '/api/conta/meus-dados',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,6 +142,14 @@ export interface FileRoutesByFullPath {
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
   '/api/admin/conta': typeof ApiAdminContaRoute
+  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
+  '/api/public/conta/cadastro': typeof ApiPublicContaCadastroRoute
+  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,6 +163,14 @@ export interface FileRoutesByTo {
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
   '/api/admin/conta': typeof ApiAdminContaRoute
+  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
+  '/api/public/conta/cadastro': typeof ApiPublicContaCadastroRoute
+  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +186,14 @@ export interface FileRoutesById {
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
   '/api/admin/conta': typeof ApiAdminContaRoute
+  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
+  '/api/public/conta/cadastro': typeof ApiPublicContaCadastroRoute
+  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +209,14 @@ export interface FileRouteTypes {
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
     | '/api/admin/conta'
+    | '/api/public/conta/recuperar'
+    | '/api/public/conta/cadastro'
+    | '/api/conta/conferir-senha'
+    | '/api/conta/meus-dados'
+    | '/recuperar-senha'
+    | '/redefinir-senha'
+    | '/privacidade'
+    | '/termos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -164,6 +244,22 @@ export interface FileRouteTypes {
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
     | '/api/admin/conta'
+    | '/api/public/conta/recuperar'
+    | '/api/public/conta/recuperar'
+    | '/api/public/conta/cadastro'
+    | '/api/public/conta/cadastro'
+    | '/api/conta/conferir-senha'
+    | '/api/conta/conferir-senha'
+    | '/api/conta/meus-dados'
+    | '/api/conta/meus-dados'
+    | '/recuperar-senha'
+    | '/recuperar-senha'
+    | '/redefinir-senha'
+    | '/redefinir-senha'
+    | '/privacidade'
+    | '/privacidade'
+    | '/termos'
+    | '/termos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -176,6 +272,14 @@ export interface RootRouteChildren {
   ApiPublicAppSincronizarRoute: typeof ApiPublicAppSincronizarRoute
   ApiPublicAppStatusRoute: typeof ApiPublicAppStatusRoute
   ApiAdminContaRoute: typeof ApiAdminContaRoute
+  ApiPublicContaRecuperarRoute: typeof ApiPublicContaRecuperarRoute
+  ApiPublicContaCadastroRoute: typeof ApiPublicContaCadastroRoute
+  ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
+  ApiContaMeusDadosRoute: typeof ApiContaMeusDadosRoute
+  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  TermosRoute: typeof TermosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -264,6 +368,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminContaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/conta/recuperar': {
+      id: '/api/public/conta/recuperar'
+      path: '/api/public/conta/recuperar'
+      fullPath: '/api/public/conta/recuperar'
+      preLoaderRoute: typeof ApiPublicContaRecuperarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/conta/cadastro': {
+      id: '/api/public/conta/cadastro'
+      path: '/api/public/conta/cadastro'
+      fullPath: '/api/public/conta/cadastro'
+      preLoaderRoute: typeof ApiPublicContaCadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/conferir-senha': {
+      id: '/api/conta/conferir-senha'
+      path: '/api/conta/conferir-senha'
+      fullPath: '/api/conta/conferir-senha'
+      preLoaderRoute: typeof ApiContaConferirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/meus-dados': {
+      id: '/api/conta/meus-dados'
+      path: '/api/conta/meus-dados'
+      fullPath: '/api/conta/meus-dados'
+      preLoaderRoute: typeof ApiContaMeusDadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -301,6 +461,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAppSincronizarRoute: ApiPublicAppSincronizarRoute,
   ApiPublicAppStatusRoute: ApiPublicAppStatusRoute,
   ApiAdminContaRoute: ApiAdminContaRoute,
+  ApiPublicContaRecuperarRoute: ApiPublicContaRecuperarRoute,
+  ApiPublicContaCadastroRoute: ApiPublicContaCadastroRoute,
+  ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
+  ApiContaMeusDadosRoute: ApiContaMeusDadosRoute,
+  RecuperarSenhaRoute: RecuperarSenhaRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
+  TermosRoute: TermosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

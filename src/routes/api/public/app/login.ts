@@ -5,7 +5,8 @@ import { clientIp } from "@/lib/rate-limit";
 
 const MUITAS = "Muitas tentativas. Aguarde alguns minutos.";
 
-// POST { email, senha } → sessão. POST { refresh_token } → renova a sessão.
+// POST { email, senha, codigo? } → sessão (codigo = 6 números, só para conta com duas etapas).
+// POST { refresh_token } → renova a sessão.
 export const Route = createFileRoute("/api/public/app/login")({
   server: {
     handlers: {
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/api/public/app/login")({
         const ip = clientIp(request);
         // Limite em memória (rápido) + no banco (vale entre servidores).
         if (!limitarIp(request, "login", 10)) return erro(429, MUITAS);
-        const body = await lerJson<{ email?: string; senha?: string; refresh_token?: string }>(request, 4096);
+        const body = await lerJson<{ email?: string; senha?: string; refresh_token?: string; codigo?: string }>(request, 4096);
         if (!body) return erro(400, "Pedido inválido.");
         const sb = clientePublico();
         if (typeof body.refresh_token === "string" && body.refresh_token) {
@@ -33,6 +34,22 @@ export const Route = createFileRoute("/api/public/app/login")({
         const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
         if (error || !data.session) return erro(401, "E-mail ou senha incorretos.");
         if (await contaBloqueada(clientePublico(data.session.access_token))) return erro(403, "Esta conta está bloqueada.");
+        // Conta com verificação em duas etapas: a sessão só vale depois do código do aplicativo autenticador.
+        const fator = data.user.factors?.find((f) => f.factor_type === "totp" && f.status === "verified");
+        if (fator) {
+          const codigo = typeof body.codigo === "string" ? body.codigo.replace(/\D/g, "") : "";
+          if (codigo.length !== 6) {
+            await sb.auth.signOut({ scope: "local" }).catch(() => {});
+            return json(401, { erro: "Esta conta usa verificação em duas etapas. Digite o código do aplicativo autenticador.", precisa_codigo: true });
+          }
+          const v = await sb.auth.mfa.challengeAndVerify({ factorId: fator.id, code: codigo });
+          const sessao = v.error ? null : (await sb.auth.getSession()).data.session;
+          if (!sessao) {
+            await sb.auth.signOut({ scope: "local" }).catch(() => {});
+            return json(401, { erro: "Código errado ou vencido.", precisa_codigo: true });
+          }
+          return json(200, sessaoPublica(sessao));
+        }
         return json(200, sessaoPublica(data.session));
       },
     },

@@ -1,10 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import {
-  ClipboardList,
-  MoreHorizontal,
-  PackageOpen,
-  Plus,
-  Tractor,
+  AlertTriangle, ArrowDownLeft, ArrowRightLeft, ArrowUpRight, Check, ClipboardList, Clock3, Info, Plus, Repeat2, Tag, Tractor, TrendingUp, XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/integrations/supabase/types";
@@ -16,7 +12,7 @@ export type Field = { key: string; label: string; type?: "text" | "date" | "numb
 export type FilterDef = { key: string; label: string; options: { value: string; label: string }[] };
 export type ImpliedFilter = { key: string; isNull?: boolean; value?: string };
 export type IconType = ComponentType<{ className?: string }>;
-export type Module = { title: string; singular: string; table: TableName; icon: IconType; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter };
+export type Module = { title: string; singular: string; /** Botão principal ("Novo animal"). */ novo?: string; /** Ação do estado vazio ("Cadastrar o primeiro animal"). */ primeiro?: string; table: TableName; icon: IconType; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter };
 export type FormRefs = {
   animals: { id: string; nome: string | null; numero_brinco: string; data_nascimento: string | null; sexo: string; situacao: string }[];
   lots: { id: string; nome: string }[];
@@ -51,50 +47,187 @@ export const friendlyError = (error: unknown) => {
   return message;
 };
 
-export function PageTitle({ icon: Icon, title, description, action }: { icon: IconType; title: string; description: string; action?: ReactNode }) {
-  return <div className="page-heading flex flex-col justify-between gap-5 border-b border-border/60 pb-6 sm:flex-row sm:items-end"><div className="min-w-0"><div className="mb-3 flex items-center gap-2 text-primary"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/12 ring-1 ring-inset ring-primary/25"><Icon className="size-4" /></span><span className="text-eyebrow">Pecuária Digital</span></div><h1 className="break-words text-3xl font-bold leading-tight sm:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p></div><div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div></div>;
+export function PageTitle({ title, description, action }: { icon?: IconType; title: string; description: string; action?: ReactNode }) {
+  return (
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="titulo-pagina break-words">{title}</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p>
+      </div>
+      {action && <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>}
+    </div>
+  );
 }
 
-export function Panel({ title, subtitle, children, action, className }: { title: string; subtitle: string; children: ReactNode; action?: ReactNode; className?: string }) {
-  return <section className={`data-panel min-w-0 border-t border-border py-5 ${className ?? ""}`}><div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h2 className="text-base font-semibold">{title}</h2><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{subtitle}</p></div>{action}</div>{children}</section>;
+export function Panel({ title, subtitle, children, action, className }: { title: string; subtitle?: string; children: ReactNode; action?: ReactNode; className?: string }) {
+  return (
+    <section className={`painel min-w-0 p-4 sm:p-5 ${className ?? ""}`}>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="titulo-secao text-[1.4rem] sm:text-[1.625rem]">{title}</h2>
+          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
 }
 
-export function Empty({ message }: { message: string }) {
-  return <div className="grid min-h-40 place-items-center px-4 py-8 text-center"><div className="max-w-sm"><span className="mx-auto mb-4 grid size-12 place-items-center rounded-lg bg-muted/60 text-muted-foreground"><PackageOpen className="size-6" /></span><p className="text-sm leading-relaxed text-muted-foreground">{message}</p></div></div>;
+/** Estado vazio: uma frase do que falta e, se fizer sentido, UM botão de ação. */
+export function Empty({ message, action }: { message: string; action?: { label: string; onClick: () => void } }) {
+  return (
+    <div className="grid min-h-36 place-items-center px-4 py-8 text-center">
+      <div className="max-w-sm">
+        <p className="text-muted-foreground">{message}</p>
+        {action && (
+          <Button className="mt-4 h-12 px-5" onClick={action.onClick}>
+            <Plus />
+            {action.label}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function EmptyProperty({ onCreate }: { onCreate: () => void }) {
-  return <div className="grid min-h-[70vh] place-items-center"><div className="max-w-md text-center"><Tractor className="mx-auto mb-4 size-12 text-primary" /><h1 className="text-2xl font-bold">Comece pela sua propriedade</h1><p className="mt-2 text-muted-foreground">Cadastre a fazenda para organizar animais, produção e finanças.</p><Button className="mt-6" onClick={onCreate}><Plus />Cadastrar propriedade</Button></div></div>;
+  return (
+    <div className="grid min-h-[60vh] place-items-center">
+      <div className="max-w-md">
+        <Tractor className="mb-4 size-12 text-primary" />
+        <h1 className="titulo-pagina">Comece pela sua propriedade</h1>
+        <p className="mt-2 text-muted-foreground">Cadastre a fazenda para anotar animais, leite, vacinas e dinheiro.</p>
+        <Button className="mt-6 h-12 px-5 text-base" onClick={onCreate}><Plus />Cadastrar a propriedade</Button>
+      </div>
+    </div>
+  );
 }
 
 export function EmptySection({ go }: { go: () => void }) {
-  return <div className="grid min-h-[60vh] place-items-center text-center"><div><ClipboardList className="mx-auto mb-3 size-10 text-primary" /><h1 className="text-2xl font-bold">Área não encontrada</h1><Button className="mt-5" onClick={go}>Voltar ao início</Button></div></div>;
+  return (
+    <div className="grid min-h-[50vh] place-items-center">
+      <div className="max-w-md">
+        <ClipboardList className="mb-3 size-10 text-primary" />
+        <h1 className="titulo-pagina">Esta área não existe</h1>
+        <p className="mt-2 text-muted-foreground">O endereço pode estar errado. Volte ao Início e use o menu.</p>
+        <Button className="mt-5 h-12 px-5" onClick={go}>Voltar ao início</Button>
+      </div>
+    </div>
+  );
 }
 
+type SeloInfo = { rotulo: string; cor: "alerta" | "aviso" | "pasto" | "cinza"; icone: IconType };
+const SELOS: Record<string, SeloInfo> = {
+  vencida: { rotulo: "Atrasada", cor: "alerta", icone: AlertTriangle },
+  proxima: { rotulo: "Vence logo", cor: "aviso", icone: Clock3 },
+  em_dia: { rotulo: "Em dia", cor: "pasto", icone: Check },
+  substituida: { rotulo: "Reforço aplicado", cor: "cinza", icone: Repeat2 },
+  ativo: { rotulo: "Ativo", cor: "pasto", icone: Check },
+  vendido: { rotulo: "Vendido", cor: "cinza", icone: Tag },
+  perdido: { rotulo: "Perdido", cor: "alerta", icone: XCircle },
+  falecido: { rotulo: "Morto", cor: "alerta", icone: XCircle },
+  transferido: { rotulo: "Transferido", cor: "cinza", icone: ArrowRightLeft },
+  em_andamento: { rotulo: "Em andamento", cor: "aviso", icone: Clock3 },
+  confirmada: { rotulo: "Confirmada", cor: "pasto", icone: Check },
+  falhou: { rotulo: "Falhou", cor: "alerta", icone: XCircle },
+  parto_realizado: { rotulo: "Parto realizado", cor: "pasto", icone: Check },
+  cancelada: { rotulo: "Cancelada", cor: "cinza", icone: XCircle },
+  receita: { rotulo: "Receita", cor: "pasto", icone: ArrowDownLeft },
+  despesa: { rotulo: "Despesa", cor: "alerta", icone: ArrowUpRight },
+  investimento: { rotulo: "Investimento", cor: "cinza", icone: TrendingUp },
+  aprovado: { rotulo: "Aprovado", cor: "pasto", icone: Check },
+  pendente: { rotulo: "Em análise", cor: "aviso", icone: Clock3 },
+  recusado: { rotulo: "Recusado", cor: "alerta", icone: XCircle },
+  estornado: { rotulo: "Estornado", cor: "cinza", icone: Repeat2 },
+};
+const COR_SELO: Record<SeloInfo["cor"], string> = {
+  alerta: "bg-alerta-fundo text-alerta",
+  aviso: "bg-aviso-fundo text-aviso",
+  pasto: "bg-sucesso-fundo text-primary",
+  cinza: "bg-muted text-muted-foreground",
+};
+
+/** Selo de situação: sempre ícone + texto (nunca só cor). */
 export function Status({ value }: { value: string }) {
-  const risk = value.includes("vencid") || value.includes("falh") || value.includes("perdid") || value.includes("falecid") || value === "despesa";
-  const warn = value.includes("proxim") || value.includes("andamento") || value === "investimento";
-  return <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase ${risk ? "bg-destructive/15 text-destructive" : warn ? "bg-chart-4/15 text-chart-4" : "bg-primary/15 text-primary"}`}>{pretty(value)}</span>;
+  const info = SELOS[value] ?? { rotulo: pretty(value), cor: "cinza" as const, icone: Info };
+  const Icone = info.icone;
+  return (
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-sm font-bold leading-none ${COR_SELO[info.cor]}`}>
+      <Icone className="size-3.5 shrink-0" />
+      {info.rotulo}
+    </span>
+  );
 }
 
 export type Tone = "primary" | "chart-2" | "chart-3" | "chart-4" | "chart-5" | "destructive";
-const toneCls: Record<Tone, string> = { primary: "bg-primary/12 text-primary", "chart-2": "bg-chart-2/12 text-chart-2", "chart-3": "bg-chart-3/12 text-chart-3", "chart-4": "bg-chart-4/12 text-chart-4", "chart-5": "bg-chart-5/12 text-chart-5", destructive: "bg-destructive/12 text-destructive" };
 
 /** Variação percentual entre dois valores; null quando não há base de comparação. */
 export const variacao = (atual: number, anterior: number) => (anterior ? ((atual - anterior) / Math.abs(anterior)) * 100 : null);
 
 export function Delta({ value, invert, label }: { value: number | null; invert?: boolean; label?: string }) {
-  if (value == null || !Number.isFinite(value)) return <span className="text-[11px] text-muted-foreground">{label ? `sem dados ${label}` : "—"}</span>;
+  if (value == null || !Number.isFinite(value)) return <span className="text-sm text-muted-foreground">{label ? `sem dados ${label}` : "—"}</span>;
   const bom = invert ? value <= 0 : value >= 0;
-  return <span className={`text-[11px] font-semibold ${bom ? "text-primary" : "text-destructive"}`}>{value >= 0 ? "▲" : "▼"} {Math.abs(value).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%{label && <span className="font-normal text-muted-foreground"> {label}</span>}</span>;
+  return (
+    <span className={`text-sm font-bold ${bom ? "text-primary" : "text-alerta"}`}>
+      {value >= 0 ? "▲" : "▼"} {Math.abs(value).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+      {label && <span className="font-normal text-muted-foreground"> {label}</span>}
+    </span>
+  );
 }
 
-export function Metric({ label, value, icon: Icon, tone = "primary", hint, onClick }: { label: string; value: string | number; icon?: IconType; tone?: Tone; hint?: ReactNode; onClick?: () => void }) {
-  const content = <><div className="flex items-start justify-between gap-3"><span className="min-w-0 whitespace-normal text-xs font-medium leading-relaxed text-muted-foreground">{label}</span>{Icon && <span className={`grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset ring-border/40 ${toneCls[tone]}`}><Icon className="size-4" /></span>}</div><strong className="mt-3 block break-words whitespace-normal font-display text-2xl font-bold tabular-nums leading-tight">{value}</strong>{hint && <div className="mt-2 whitespace-normal text-xs">{hint}</div>}</>;
-  const classes = "metric-tile group relative block h-auto min-w-0 overflow-hidden rounded-lg border border-border bg-card p-5 text-left";
-  return onClick ? <Button variant="outline" onClick={onClick} className={classes}>{content}</Button> : <div className={classes}>{content}</div>;
+/** Número de destaque (fora do Início, onde o destaque é o brinco). */
+export function Metric({ label, value, icon: Icon, hint, onClick }: { label: string; value: string | number; icon?: IconType; tone?: Tone; hint?: ReactNode; onClick?: () => void }) {
+  const content = (
+    <>
+      <span className="flex items-start justify-between gap-3">
+        <span className="min-w-0 text-sm text-muted-foreground">{label}</span>
+        {Icon && <Icon className="size-5 shrink-0 text-muted-foreground" />}
+      </span>
+      <strong className="mt-2 block break-words font-display text-[2.1rem] font-extrabold leading-none tabular-nums">{value}</strong>
+      {hint && <span className="mt-2 block">{hint}</span>}
+    </>
+  );
+  const classes = "painel block min-w-0 p-4 text-left";
+  return onClick ? (
+    <button type="button" onClick={onClick} className={`${classes} transition-colors hover:border-primary`}>
+      {content}
+    </button>
+  ) : (
+    <div className={classes}>{content}</div>
+  );
 }
 
 export function MiniList({ rows, empty, render }: { rows: Row[]; empty: string; render: (r: Row) => ReactNode }) {
-  return rows.length ? <div className="divide-y divide-border">{rows.map((r, i) => <div key={String(r["id"] ?? i)} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 [&_strong]:block [&_span]:text-xs [&_span]:text-muted-foreground">{render(r)}</div>)}</div> : <Empty message={empty} />;
+  return rows.length ? (
+    <div className="divide-y divide-border">
+      {rows.map((r, i) => (
+        <div key={String(r["id"] ?? i)} className="flex min-h-14 items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+          {render(r)}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <Empty message={empty} />
+  );
+}
+/** Abas simples (Aplicações / Tipos de vacina, Compras / Vendas…). */
+export function Abas<T extends string>({ valor, opcoes, aoMudar, rotulo }: { valor: T; opcoes: { valor: T; rotulo: string; tour?: string }[]; aoMudar: (v: T) => void; rotulo: string }) {
+  return (
+    <div role="tablist" aria-label={rotulo} className="mb-5 inline-flex max-w-full overflow-x-auto rounded-[10px] border border-input bg-card p-1">
+      {opcoes.map((o) => (
+        <button
+          key={o.valor}
+          type="button"
+          role="tab"
+          aria-selected={valor === o.valor}
+          data-tour={o.tour}
+          onClick={() => aoMudar(o.valor)}
+          className={`h-11 shrink-0 rounded-lg px-4 font-bold whitespace-nowrap ${valor === o.valor ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          {o.rotulo}
+        </button>
+      ))}
+    </div>
+  );
 }

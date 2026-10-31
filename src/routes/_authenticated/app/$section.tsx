@@ -1,20 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import { ApecuariaApp } from "@/components/app/ApecuariaApp";
-
-const nomes: Record<string, string> = {
-  inicio: "Início", rebanho: "Meu Rebanho", bezerros: "Evolução dos Bezerros", vacinacao: "Vacinação", inseminacao: "Inseminação", nascimentos: "Nascimentos", lotes: "Lotes", producao: "Produção de Leite", relatorios: "Relatórios", financeiro: "Lucros e Investimentos", comercial: "Compra e Venda", diagnostico: "Diagnóstico", perfil: "Perfil",
-};
+import { itemDoMenu } from "@/components/app/casca/navegacao";
 
 export const Route = createFileRoute("/_authenticated/app/$section")({
+  // ?novo=1 abre o formulário de novo registro; ?editar=<id> abre a edição; ?animal=<id> abre a ficha.
+  validateSearch: z.object({
+    novo: z.string().max(20).optional(),
+    editar: z.string().max(40).optional(),
+    animal: z.string().max(40).optional(),
+  }),
   head: ({ params }) => {
-    const nome = nomes[params.section] ?? "Gestão da Propriedade";
-    return { meta: [
-    { title: `${nome} | Pecuária Digital` },
-    { name: "description", content: `Acompanhe ${nome.toLowerCase()} da sua propriedade no Pecuária Digital.` },
-    { property: "og:title", content: `${nome} | Pecuária Digital` },
-    { property: "og:description", content: `Acompanhe ${nome.toLowerCase()} da sua propriedade no Pecuária Digital.` },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary_large_image" },
-  ] }; },
+    const item = itemDoMenu(params.section);
+    const nome = item?.rotulo ?? "Gestão da propriedade";
+    return {
+      meta: [
+        { title: `${nome} | Pecuária Digital` },
+        { name: "description", content: item?.frase ?? "Gestão da propriedade no Pecuária Digital." },
+        { name: "robots", content: "noindex" },
+      ],
+    };
+  },
   component: ApecuariaApp,
 });
