@@ -9,6 +9,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { plural } from "@/lib/texto";
 
 type Estado = { nivel: string; tenho: boolean; exigir: boolean; admins: { email: string; tem_2fa: boolean; eu: boolean }[] };
 
@@ -104,7 +105,7 @@ export function AcessoAdmin() {
             <AlertDialogTitle>Exigir o código de todos os administradores?</AlertDialogTitle>
             <AlertDialogDescription>
               {semCodigo.length
-                ? `${semCodigo.length} administrador(es) ainda entram só com senha (${semCodigo.map((a) => a.email).join(", ")}). Eles perdem o acesso ao painel até ativarem as duas etapas em Senha e segurança.`
+                ? `${plural(semCodigo.length, "administrador", "administradores")} ${semCodigo.length === 1 ? "ainda entra" : "ainda entram"} só com senha (${semCodigo.map((a) => a.email).join(", ")}). ${semCodigo.length === 1 ? "Ele perde" : "Eles perdem"} o acesso ao painel até ativar as duas etapas em Senha e segurança.`
                 : "Todos os administradores já usam o código. Quem entrar só com a senha não verá o painel."}
             </AlertDialogDescription>
           </AlertDialogHeader>

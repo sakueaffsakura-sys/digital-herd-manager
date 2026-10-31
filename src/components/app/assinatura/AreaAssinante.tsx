@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { diaBR } from "@/lib/datas";
+import { plural } from "@/lib/texto";
 import { nomeDoMetodo } from "@/lib/mercadopago";
 import { PageTitle, Status, money } from "../shared";
 import { PlanPage, RECURSOS_PREMIUM } from "../account";
@@ -119,7 +120,7 @@ export default function AreaAssinante({
       )}
       {vencendo && (
         <div role="alert" className="aviso-barra mb-6 rounded-xl bg-aviso-fundo py-3 pr-4 text-aviso">
-          <p className="font-bold text-foreground">Seu Premium da {vencendo.propriedade} vence em {vencendo.dias_restantes === 0 ? "menos de um dia" : `${vencendo.dias_restantes} dia(s)`}.</p>
+          <p className="font-bold text-foreground">Seu Premium da {vencendo.propriedade} vence em {vencendo.dias_restantes === 0 ? "menos de um dia" : plural(vencendo.dias_restantes ?? 0, "dia")}.</p>
           <p className="text-sm text-foreground/80">Renove abaixo para não perder a biblioteca e os recursos Premium.</p>
         </div>
       )}
@@ -138,7 +139,7 @@ export default function AreaAssinante({
                       <p className="font-bold">{a.propriedade}</p>
                       <p className="text-sm text-muted-foreground">
                         {a.ativa
-                          ? a.data_expiracao ? `Premium até ${diaBR(a.data_expiracao)} (${a.dias_restantes} dia(s))` : "Premium sem data de vencimento"
+                          ? a.data_expiracao ? `Premium até ${diaBR(a.data_expiracao)} (${plural(a.dias_restantes ?? 0, "dia")})` : "Premium sem data de vencimento"
                           : a.plano === "premium" ? "Premium vencido" : "Plano gratuito"}
                         {a.origem === "demonstracao" ? " · liberado pelo administrador" : ""}
                       </p>

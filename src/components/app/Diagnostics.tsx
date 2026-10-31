@@ -3,6 +3,7 @@ import { Activity, RefreshCw, ShieldAlert, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Empty, PageTitle, Panel, pretty, type Row } from "./shared";
+import { plural } from "@/lib/texto";
 
 type DiagnosticoItem = { tabela: string; contagem: number; ultima_atualizacao: string | null; tempo_ms: number };
 type Inconsistencia = { tabela: string; checagem: string; qtd: number; exemplos: Row[] };
@@ -53,7 +54,7 @@ export default function Diagnostics({ propertyId }: { propertyId: string }) {
           )}
         </Panel>
 
-        <Panel title="Revisão de consistência" subtitle={`${inconsistentCount} possível(is) irregularidade(s) — nenhum dado é apagado`} >
+        <Panel title="Revisão de consistência" subtitle={`${plural(inconsistentCount, "possível irregularidade", "possíveis irregularidades")} — nenhum dado é apagado`} >
           {diagnostic.isLoading ? <p className="text-sm text-muted-foreground">Verificando…</p> : !inconsistentCount ? (
             <Empty message="Nenhuma inconsistência detectada." />
           ) : (

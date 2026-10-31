@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { diaBR } from "@/lib/datas";
+import { plural } from "@/lib/texto";
 import { Capa } from "../biblioteca/Biblioteca";
 import { CampoArquivo } from "../shared";
 
@@ -168,7 +169,7 @@ function Lista() {
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{l.titulo}</p>
                   <p className="text-sm text-muted-foreground">{[l.autor, l.categoria, l.paginas ? `${l.paginas} páginas` : null, mb(l.tamanho_bytes)].filter(Boolean).join(" · ")}</p>
-                  <p className="text-sm text-muted-foreground">{r ? `${r.aberturas} abertura(s) por ${r.leitores} pessoa(s)${r.ultima ? `, a última em ${diaBR(r.ultima)}` : ""}` : "Sem leituras ainda"}</p>
+                  <p className="text-sm text-muted-foreground">{r ? `${plural(r.aberturas, "abertura")} por ${plural(r.leitores, "pessoa")}${r.ultima ? `, a última em ${diaBR(r.ultima)}` : ""}` : "Sem leituras ainda"}</p>
                 </div>
                 <label className="flex items-center gap-2 font-bold"><Switch checked={l.publicado} onCheckedChange={(v) => void publicar(l, v)} />{l.publicado ? "Publicado" : "Rascunho"}</label>
                 <Button variant="outline" size="icon" className="text-alerta" aria-label={`Excluir ${l.titulo}`} onClick={() => setApagar(l)}><Trash2 /></Button>

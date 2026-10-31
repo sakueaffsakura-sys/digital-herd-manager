@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { dataNoFuso, diaBR } from "@/lib/datas";
+import { plural } from "@/lib/texto";
 
 type Pedido = { id: string; user_id: string; email: string | null; motivo: string | null; status: string; criado_em: string; prazo: string; concluida_em: string | null };
 
@@ -35,7 +36,7 @@ function Confirmar({ pedido, aoFechar }: { pedido: Pedido; aoFechar: () => void 
       });
       const corpo = (await r.json().catch(() => ({}))) as { ok?: boolean; erro?: string; arquivos?: number };
       if (!r.ok || corpo.ok !== true) throw new Error(corpo.erro ?? "Não foi possível concluir a exclusão.");
-      toast.success(`Conta excluída${corpo.arquivos ? ` com ${corpo.arquivos} arquivo(s)` : ""}. O pedido foi marcado como atendido.`);
+      toast.success(`Conta excluída${corpo.arquivos ? ` com ${plural(corpo.arquivos, "arquivo")}` : ""}. O pedido foi marcado como atendido.`);
       void qc.invalidateQueries({ queryKey: ["admin-exclusoes"] });
       void qc.invalidateQueries({ queryKey: ["admin-contas"] });
       aoFechar();
@@ -104,7 +105,7 @@ export function ExclusoesAdmin() {
                     <p className="text-sm text-muted-foreground">Pedido em {diaBR(p.criado_em)}{p.motivo ? `. Motivo: ${p.motivo}` : ""}</p>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-sm font-bold ${d < 0 ? "bg-alerta-fundo text-alerta" : d <= 3 ? "bg-aviso-fundo text-aviso" : "bg-muted text-muted-foreground"}`}>
-                    {d < 0 ? `Prazo passou há ${-d} dia(s)` : d === 0 ? "Prazo termina hoje" : `Faltam ${d} dia(s)`}
+                    {d < 0 ? `Prazo passou há ${plural(-d, "dia")}` : d === 0 ? "Prazo termina hoje" : `${d === 1 ? "Falta" : "Faltam"} ${plural(d, "dia")}`}
                   </span>
                   <Button variant="outline" className="h-11 border-alerta/60 text-alerta hover:bg-alerta-fundo hover:text-alerta" onClick={() => setAlvo(p)}><UserX />Concluir exclusão</Button>
                 </li>
