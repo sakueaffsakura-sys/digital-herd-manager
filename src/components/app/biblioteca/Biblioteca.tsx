@@ -10,7 +10,7 @@ import { Leitor } from "./Leitor";
 export type Ebook = { id: string; titulo: string; autor: string | null; descricao: string | null; categoria: string | null; paginas: number | null; capa_path: string | null; publicado_em: string | null };
 
 /** Capa vinda do armazenamento privado (link curto, só para quem está logado). */
-export function Capa({ caminho, titulo, className, pequena }: { caminho: string | null; titulo: string; className?: string; pequena?: boolean }) {
+export function Capa({ caminho, titulo, className, pequena, reservarRodape }: { caminho: string | null; titulo: string; className?: string; pequena?: boolean; reservarRodape?: boolean }) {
   const url = useQuery({
     queryKey: ["capa-ebook", caminho],
     enabled: !!caminho,
@@ -23,7 +23,7 @@ export function Capa({ caminho, titulo, className, pequena }: { caminho: string 
   });
   if (!caminho || !url.data) {
     return (
-      <div className={`grid place-items-center overflow-hidden bg-capa text-center text-white ${pequena ? "p-1.5" : "p-4"} ${className ?? ""}`} aria-hidden={!!titulo}>
+      <div className={`grid place-items-center overflow-hidden bg-capa text-center text-white ${pequena ? "p-1.5" : "p-4"} ${reservarRodape ? "pb-14" : ""} ${className ?? ""}`} aria-hidden={!!titulo}>
         <span className={`font-display font-extrabold leading-[1.05] ${pequena ? "line-clamp-5 text-sm" : "text-2xl"}`}>{titulo}</span>
       </div>
     );
@@ -83,11 +83,14 @@ export default function Biblioteca({ ebookAberto, aoAbrir, aoFechar, aoIr }: { e
             <li key={l.id}>
               <button type="button" onClick={() => (pode ? aoAbrir(l.id) : aoIr("assinatura"))} className="group block w-full text-left">
                 <span className="relative block aspect-[3/4] overflow-hidden rounded-xl border border-border">
-                  <Capa caminho={l.capa_path} titulo={l.titulo} className="h-full w-full" />
+                  <Capa caminho={l.capa_path} titulo={l.titulo} reservarRodape={!pode} className="h-full w-full" />
                   {!pode && (
-                    <span className="absolute inset-x-2 bottom-2 inline-flex items-center gap-1.5 rounded-full bg-card/95 px-3 py-1.5 text-sm font-bold">
-                      <Lock className="size-4" />Para assinantes
-                    </span>
+                    <>
+                      <span aria-hidden className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
+                      <span className="absolute inset-x-2 bottom-2 inline-flex items-center justify-center gap-1.5 rounded-full bg-card/95 px-3 py-1.5 text-sm font-bold">
+                        <Lock className="size-4 shrink-0" />Para assinantes
+                      </span>
+                    </>
                   )}
                 </span>
                 <span className="mt-2 block font-bold leading-snug group-hover:underline">{l.titulo}</span>
