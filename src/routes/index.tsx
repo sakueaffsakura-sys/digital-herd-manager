@@ -157,7 +157,7 @@ function Entrar() {
           <img src={marcaBranca} alt="" width={44} height={44} className="size-11 object-contain" />
           <span className="font-display text-[1.7rem] font-extrabold leading-none">Pecuária Digital</span>
         </div>
-        <div className="mt-8 lg:mt-auto lg:pt-10">
+        <div className="mt-8 lg:my-auto lg:pb-16">
           <h1 className="font-display text-[2.6rem] font-extrabold leading-[0.95] lg:text-[clamp(3.5rem,6vw,5.5rem)]">Sua fazenda, anotada.</h1>
           <p className="mt-3 hidden max-w-md text-lg text-white/85 sm:block">Rebanho, vacinas, reprodução, leite e dinheiro num lugar só. No computador e no celular, com aplicativo que funciona sem internet.</p>
         </div>
