@@ -114,7 +114,7 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
     mutationFn: async (payload: Row) => {
       const body: Row = { ...payload, propriedade_id: propertyId };
       const response = editing
-        ? await supabase.from("anotacoes_producao").update(body).eq("id", String(editing["id"])).eq("propriedade_id", propertyId)
+        ? await supabase.from("anotacoes_producao").update(body as Database["public"]["Tables"]["anotacoes_producao"]["Update"]).eq("id", String(editing["id"])).eq("propriedade_id", propertyId)
         : await supabase.from("anotacoes_producao").insert(body as Database["public"]["Tables"]["anotacoes_producao"]["Insert"]);
       if (response.error) throw response.error;
     },

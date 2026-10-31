@@ -54,7 +54,8 @@ jobs:
         id: tipos
         continue-on-error: true
         run: |
-          norm() { grep -E "error TS[0-9]+" "$1" 2>/dev/null | sed -E 's/\([0-9]+,[0-9]+\)//' | sort; }
+          # Sem linha/coluna e sem as contagens "... 12 more ..." (mudam quando o banco ganha tabelas).
+          norm() { grep -E "error TS[0-9]+" "$1" 2>/dev/null | sed -E 's/\([0-9]+,[0-9]+\)//; s/[0-9]+ more/N more/g' | sort; }
           norm tipos.log > tipos-head.txt || true
           norm tipos-base.log > tipos-base.txt || true
           comm -13 tipos-base.txt tipos-head.txt > tipos-novos.txt
@@ -91,7 +92,7 @@ jobs:
             const cauda = (t, n, max = 12000) => (t || '(sem saída)').split('\n').slice(-n).join('\n').slice(-max);
             const s = (v) => v === 'success' ? '✅ ok' : '❌ falhou';
             // Blocos completos (com as linhas de explicação) só dos erros de tipo novos.
-            const norm = (l) => l.replace(/\(\d+,\d+\)/, '');
+            const norm = (l) => l.replace(/\(\d+,\d+\)/, '').replace(/\d+ more/g, 'N more');
             const novos = new Map();
             for (const l of ler('tipos-novos.txt').split('\n').filter(Boolean)) novos.set(l, (novos.get(l) || 0) + 1);
             const blocos = [];

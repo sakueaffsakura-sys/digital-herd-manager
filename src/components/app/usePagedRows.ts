@@ -1,9 +1,8 @@
 import { type QueryClient, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { clampPage, rangeOf } from "@/lib/pagination";
 import { escapeILikeValue, orSearch, termoDeBusca } from "@/lib/busca";
-import type { TableName } from "./shared";
 
 export { escapeILikeValue };
 
@@ -36,7 +35,7 @@ function baseScopedQuery(
   cols = "*",
   countOnly = false,
 ) {
-  let q = supabase.from(table as TableName).select(cols, countOnly ? { count: "exact", head: true } : undefined);
+  let q = supabaseDinamico.from(table).select(cols, countOnly ? { count: "exact", head: true } : undefined);
   q = q.eq("propriedade_id", propertyId);
   for (const f of filters ?? []) {
     if (!f) continue;
@@ -45,7 +44,10 @@ function baseScopedQuery(
       continue;
     }
     if (f.value === null || f.value === "") continue;
-    q = q[f.op](f.key, f.op === "ilike" ? `%${escapeILikeValue(f.value)}%` : f.value);
+    if (f.op === "ilike") q = q.ilike(f.key, `%${escapeILikeValue(f.value)}%`);
+    else if (f.op === "gte") q = q.gte(f.key, f.value);
+    else if (f.op === "lte") q = q.lte(f.key, f.value);
+    else q = q.eq(f.key, f.value);
   }
   const compiled = orSearch(searchColumns, search);
   if (compiled) q = q.or(compiled);
@@ -87,7 +89,7 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       let q = baseScopedQuery(table, propertyId, search, searchColumns, filters, cols);
       q = q.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
       const { data, error } = await q;
-      return { data: (data ?? []) as Record<string, unknown>[], error };
+      return { data: (data ?? []) as unknown as Record<string, unknown>[], error };
     },
 
     invalidate: (qc: QueryClient) => {
