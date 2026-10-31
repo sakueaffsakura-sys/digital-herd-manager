@@ -345,7 +345,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
                   className="mb-3 flex w-full items-center gap-2 border-b border-border pb-2 text-left"
                 >
                   <CalendarDays className="size-5 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1 truncate font-bold capitalize">{rotuloDoDia(dia, hoje)}</span>
+                  <span className="min-w-0 flex-1 truncate font-bold first-letter:uppercase">{rotuloDoDia(dia, hoje)}</span>
                   <span className="shrink-0 text-sm text-muted-foreground">{plural(doDia.length, "anotação", "anotações")}</span>
                   <ChevronDown className={`size-5 shrink-0 text-muted-foreground transition-transform ${fechado ? "-rotate-90" : ""}`} />
                 </button>
@@ -411,7 +411,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
                             )}
 
                             <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-2.5 text-sm text-muted-foreground">
-                              <span>{formatarDataBR(row["data"])}{hora ? ` · ${hora}` : ""}</span>
+                              <span>{hora || formatarDataBR(row["data"])}</span>
                               {producao > 0 && (
                                 <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-sucesso-fundo px-2.5 py-1 font-bold text-primary">
                                   <Milk className="size-4" />{producao.toLocaleString("pt-BR")} L
