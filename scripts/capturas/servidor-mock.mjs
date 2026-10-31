@@ -2,10 +2,10 @@
 // O site em modo de desenvolvimento aponta para cá (SUPABASE_URL e VITE_SUPABASE_URL),
 // tanto no navegador quanto no servidor. Uso: node scripts/capturas/servidor-mock.mjs
 import { createServer } from "node:http";
-import { responderRest, sessaoFalsa, usuarioAuth } from "./mock.mjs";
+import { TABELAS, pdfDeExemplo, responderRest, sessaoFalsa, usuarioAuth } from "./mock.mjs";
 
 const PORTA = Number(process.env.PORTA_MOCK ?? 54321);
-let cena = { admin: false };
+let cena = { admin: false, assinante: false };
 
 const CORS = {
   "access-control-allow-origin": "*",
@@ -45,13 +45,35 @@ createServer(async (req, res) => {
     if (fim === "logout") return enviar(res, 204, undefined);
     if (fim === "recover" || fim === "otp" || fim === "resend") return enviar(res, 200, {});
     if (fim.startsWith("factors")) return enviar(res, 200, { all: [], totp: [], phone: [] });
+    if (fim === "aal" || fim.startsWith("mfa")) return enviar(res, 200, { currentLevel: "aal1", nextLevel: "aal1", currentAuthenticationMethods: [] });
     return enviar(res, 200, {});
+  }
+  // Armazenamento: link assinado e o próprio arquivo (PDF de exemplo gerado na hora).
+  if (caminho.startsWith("/storage/v1/object/")) {
+    const resto = caminho.slice("/storage/v1/object/".length);
+    if (resto.startsWith("sign/") && req.method === "POST") {
+      await lerCorpo(req);
+      return enviar(res, 200, { signedURL: `/object/sign/${resto.slice(5)}?token=assinado-falso` });
+    }
+    if (resto.startsWith("list/") && req.method === "POST") {
+      await lerCorpo(req);
+      return enviar(res, 200, []);
+    }
+    const arquivo = resto.replace(/^sign\//, "");
+    const [balde, ...nome] = arquivo.split("/");
+    if (balde === "ebooks") {
+      const livro = (TABELAS.ebooks ?? []).find((e) => e.arquivo_path === nome.join("/"));
+      const pdf = pdfDeExemplo(livro?.titulo ?? "eBook de exemplo", 3);
+      res.writeHead(200, { "content-type": "application/pdf", "content-length": String(pdf.length), ...CORS });
+      return res.end(pdf);
+    }
+    return enviar(res, 404, { message: "arquivo não encontrado" });
   }
   if (caminho.startsWith("/rest/v1/")) {
     if (req.method !== "GET" && req.method !== "HEAD") await lerCorpo(req);
     const r = responderRest({
       caminho: caminho.slice("/rest/v1/".length), metodo: req.method, params: url.searchParams,
-      cabecalhos: req.headers, admin: !!cena.admin,
+      cabecalhos: req.headers, admin: !!cena.admin, assinante: !!cena.assinante,
     });
     res.writeHead(r.status, { ...CORS, ...r.headers });
     return res.end(r.body);

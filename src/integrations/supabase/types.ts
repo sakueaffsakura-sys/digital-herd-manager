@@ -411,6 +411,84 @@ export type Database = {
         }
         Relationships: []
       }
+      ebook_acessos: {
+        Row: {
+          criado_em: string
+          ebook_id: string
+          id: number
+          ip_mascarado: string | null
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          ebook_id: string
+          id?: number
+          ip_mascarado?: string | null
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          ebook_id?: string
+          id?: number
+          ip_mascarado?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ebooks: {
+        Row: {
+          arquivo_path: string | null
+          autor: string | null
+          capa_path: string | null
+          categoria: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          paginas: number | null
+          publicado: boolean
+          publicado_em: string | null
+          sha256: string | null
+          tamanho_bytes: number | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_path?: string | null
+          autor?: string | null
+          capa_path?: string | null
+          categoria?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          paginas?: number | null
+          publicado?: boolean
+          publicado_em?: string | null
+          sha256?: string | null
+          tamanho_bytes?: number | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_path?: string | null
+          autor?: string | null
+          capa_path?: string | null
+          categoria?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          paginas?: number | null
+          publicado?: boolean
+          publicado_em?: string | null
+          sha256?: string | null
+          tamanho_bytes?: number | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       eventos_seguranca: {
         Row: {
           caminho: string | null
@@ -966,6 +1044,66 @@ export type Database = {
           },
         ]
       }
+      pagamentos: {
+        Row: {
+          aprovado_em: string | null
+          criado_em: string
+          detalhes: Json
+          estornado_em: string | null
+          atualizado_em: string
+          id: string
+          meses: number
+          metodo: string | null
+          moeda: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          plano_id: string | null
+          plano_nome: string
+          propriedade_id: string
+          status: string
+          user_id: string
+          valor_centavos: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          criado_em?: string
+          detalhes?: Json
+          estornado_em?: string | null
+          atualizado_em?: string
+          id?: string
+          meses: number
+          metodo?: string | null
+          moeda?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          plano_id?: string | null
+          plano_nome: string
+          propriedade_id: string
+          status?: string
+          user_id: string
+          valor_centavos: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          criado_em?: string
+          detalhes?: Json
+          estornado_em?: string | null
+          atualizado_em?: string
+          id?: string
+          meses?: number
+          metodo?: string | null
+          moeda?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          plano_id?: string | null
+          plano_nome?: string
+          propriedade_id?: string
+          status?: string
+          user_id?: string
+          valor_centavos?: number
+        }
+        Relationships: []
+      }
       pesagens: {
         Row: {
           animal_id: string
@@ -1013,6 +1151,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          meses: number
+          nome: string
+          ordem: number
+          preco_centavos: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          meses: number
+          nome: string
+          ordem?: number
+          preco_centavos?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          meses?: number
+          nome?: string
+          ordem?: number
+          preco_centavos?: number
+        }
+        Relationships: []
       }
       plano_auditoria: {
         Row: {
@@ -1874,7 +2048,38 @@ export type Database = {
       }
     }
     Functions: {
+      admin_ebooks_resumo: {
+        Args: never
+        Returns: {
+          aberturas: number
+          ebook_id: string
+          leitores: number
+          ultima: string | null
+        }[]
+      }
+      admin_pagamentos: {
+        Args: { _limite?: number; _status?: string }
+        Returns: {
+          aprovado_em: string | null
+          criado_em: string
+          email: string | null
+          id: string
+          meses: number
+          metodo: string | null
+          mp_payment_id: string | null
+          plano_nome: string
+          propriedade: string | null
+          status: string
+          valor_centavos: number
+        }[]
+      }
+      minha_area_assinante: { Args: never; Returns: Json }
+      sou_assinante: { Args: never; Returns: boolean }
       admin_concluir_exclusao: { Args: { _id: string }; Returns: Json }
+      admin_2fa_resumo: {
+        Args: never
+        Returns: { email: string; eu: boolean; tem_2fa: boolean }[]
+      }
       admin_exigir_2fa: { Args: { _ligar: boolean }; Returns: boolean }
       agenda_periodo: {
         Args: { _ate: string; _de: string; _propriedade_id: string }

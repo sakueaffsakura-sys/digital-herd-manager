@@ -156,26 +156,115 @@ const porLote = lotes.map((l, i) => ({ propriedade_id: P, lote_id: l.id, nome: l
 
 const leiteHoje = producao.filter((p) => p.data === dataISO(0)).reduce((s, p) => s + p.litros, 0);
 
+// ---------- Assinatura, eBooks e pedidos (fase C) ----------
+const PLANO_MENSAL = "44444444-4444-4444-8444-000000000001";
+const PLANO_ANUAL = "44444444-4444-4444-8444-000000000002";
+const planos = [
+  { id: PLANO_MENSAL, nome: "Mensal", descricao: "Tudo liberado por 1 mês. Renova só se você pagar de novo.", meses: 1, preco_centavos: 2990, ativo: true, ordem: 1, criado_em: iso(hoje.getTime() - 30 * DIA), atualizado_em: iso(hoje) },
+  { id: PLANO_ANUAL, nome: "Anual", descricao: "12 meses pelo preço de 10.", meses: 12, preco_centavos: 29900, ativo: true, ordem: 2, criado_em: iso(hoje.getTime() - 30 * DIA), atualizado_em: iso(hoje) },
+];
+export const EBOOK_ID = "00000000-0000-4000-8000-000000000101";
+const ebooks = [
+  ["Ordenha limpa, leite de qualidade", "Rita Carvalho", "Leite", 64],
+  ["Calendário sanitário do rebanho", "Equipe Pecuária Digital", "Sanidade", 32],
+  ["Recria de bezerras do desmame ao parto", "Ana Ribeiro", "Reprodução", 88],
+  ["Quanto custa o seu litro de leite", "Carlos Menezes", "Gestão", 40],
+  ["Pastejo rotacionado em áreas pequenas", "João Batista Lima", "Pastagem", 56],
+  ["Inseminação artificial passo a passo", "Equipe Pecuária Digital", "Reprodução", 48],
+  ["Silagem de milho sem desperdício", "Paulo Andrade", "Alimentação", 36],
+].map(([titulo, autor, categoria, paginas], i) => ({
+  id: `00000000-0000-4000-8000-0000000001${String(i + 1).padStart(2, "0")}`, titulo, autor, categoria, paginas,
+  descricao: "Guia prático, com fotos e listas para usar no dia a dia da fazenda.", capa_path: null,
+  arquivo_path: `00000000-0000-4000-8000-0000000001${String(i + 1).padStart(2, "0")}.pdf`, tamanho_bytes: 2_400_000 + i * 310_000,
+  sha256: null, publicado: i < 6, publicado_em: i < 6 ? iso(hoje.getTime() - i * 9 * DIA) : null, criado_por: USUARIO.id,
+  created_at: iso(hoje.getTime() - (i * 9 + 1) * DIA), updated_at: iso(hoje.getTime() - i * 9 * DIA),
+}));
+const pagamentos = [
+  { id: uuid(), user_id: USUARIO.id, propriedade_id: P, plano_id: PLANO_ANUAL, plano_nome: "Anual", meses: 12, valor_centavos: 29900, moeda: "BRL", status: "aprovado", metodo: "pix", mp_payment_id: "1320000001", mp_preference_id: null, detalhes: {}, criado_em: iso(hoje.getTime() - 341 * DIA), aprovado_em: iso(hoje.getTime() - 341 * DIA), estornado_em: null, atualizado_em: iso(hoje.getTime() - 341 * DIA) },
+  { id: uuid(), user_id: USUARIO.id, propriedade_id: P, plano_id: PLANO_MENSAL, plano_nome: "Mensal", meses: 1, valor_centavos: 2990, moeda: "BRL", status: "recusado", metodo: "credit_card", mp_payment_id: "1320000002", mp_preference_id: null, detalhes: {}, criado_em: iso(hoje.getTime() - 342 * DIA), aprovado_em: null, estornado_em: null, atualizado_em: iso(hoje.getTime() - 342 * DIA) },
+];
+const solicitacoes = [
+  { id: uuid(), user_id: uuid(), email: "joao.pereira@exemplo.com.br", motivo: "Vendi a fazenda.", status: "pendente", criado_em: iso(hoje.getTime() - 4 * DIA), prazo: dataISO(11), concluida_em: null, atendida_por: null },
+  { id: uuid(), user_id: uuid(), email: "teste.antigo@exemplo.com.br", motivo: null, status: "concluida", criado_em: iso(hoje.getTime() - 40 * DIA), prazo: dataISO(-25), concluida_em: iso(hoje.getTime() - 33 * DIA), atendida_por: USUARIO.id },
+];
+
+/** PDF pequeno de verdade (para o leitor de eBooks nas fotos). */
+export function pdfDeExemplo(titulo = "Ordenha limpa, leite de qualidade", paginas = 3) {
+  const esc = (t) => t.replace(/[\\()]/g, (c) => `\\${c}`);
+  const linhas = [
+    "A ordenha começa antes de a vaca entrar na sala: curral limpo, animais calmos",
+    "e tetos secos. Este capítulo mostra a rotina que reduz a mastite e melhora",
+    "a contagem de células somáticas em poucas semanas.",
+    "",
+    "1. Faça o teste da caneca de fundo escuro nos três primeiros jatos.",
+    "2. Aplique o pré-dipping e espere 30 segundos.",
+    "3. Seque cada teto com papel toalha individual.",
+    "4. Coloque as teteiras sem deixar entrar ar.",
+    "5. Depois da ordenha, use o pós-dipping e mantenha a vaca em pé.",
+  ];
+  const objetos = [null];
+  const n = paginas;
+  objetos[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+  objetos[2] = `<< /Type /Pages /Kids [${Array.from({ length: n }, (_, i) => `${4 + 2 * i} 0 R`).join(" ")}] /Count ${n} >>`;
+  objetos[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+  for (let i = 0; i < n; i++) {
+    const corpo = [`BT /F1 26 Tf 56 760 Td (${esc(titulo)}) Tj ET`, `BT /F1 14 Tf 56 730 Td (Capítulo ${i + 1} de ${n}) Tj ET`]
+      .concat(linhas.map((l, k) => `BT /F1 12 Tf 56 ${690 - k * 20} Td (${esc(l)}) Tj ET`)).join("\n");
+    objetos[4 + 2 * i] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${5 + 2 * i} 0 R >>`;
+    objetos[5 + 2 * i] = `<< /Length ${Buffer.byteLength(corpo, "latin1")} >>\nstream\n${corpo}\nendstream`;
+  }
+  let texto = "%PDF-1.4\n";
+  const pos = [];
+  for (let k = 1; k < objetos.length; k++) {
+    pos[k] = Buffer.byteLength(texto, "latin1");
+    texto += `${k} 0 obj\n${objetos[k]}\nendobj\n`;
+  }
+  const xref = Buffer.byteLength(texto, "latin1");
+  texto += `xref\n0 ${objetos.length}\n0000000000 65535 f \n${pos.slice(1).map((o) => `${String(o).padStart(10, "0")} 00000 n \n`).join("")}`;
+  texto += `trailer\n<< /Size ${objetos.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(texto, "latin1");
+}
+
 export const TABELAS = {
   propriedades: [{ id: P, nome: "Fazenda Boa Vista", cidade: "Patos de Minas", estado: "MG", proprietario_id: USUARIO.id, ativo: true, periodo_gestacao_dias: 283, created_at: iso(hoje.getTime() - 400 * DIA), updated_at: iso(hoje.getTime() - 5 * DIA) }],
   profiles: [{ id: USUARIO.id, nome_completo: USUARIO.nome, nome_exibicao: "Maria", telefone: "(34) 99999-0000", cargo: "Proprietária", biografia: null, avatar_url: null, bloqueado: false, preferencias: {}, created_at: iso(hoje.getTime() - 400 * DIA), updated_at: iso(hoje.getTime() - 5 * DIA) }],
   animais, lotes, tipos_vacinas: tiposVacinas, vacinacoes, v_vacinacoes_status: status, inseminacoes, nascimentos, pesagens,
   producao_leite: producao, anotacoes_producao: anotacoes, movimentacoes_financeiras: movimentacoes, compras, vendas, investimentos: [],
   v_producao_mensal: vProducaoMensal, v_financeiro_mensal: vFinanceiroMensal, v_animais_por_lote: porLote, v_producao_por_lote: [], v_financeiro_por_categoria: [],
+  planos, ebooks, ebook_acessos: [], pagamentos,
   assinaturas: [], propriedade_perfil: [], configuracoes: [], notificacoes: [
     { id: uuid(), user_id: USUARIO.id, propriedade_id: P, titulo: "Bem-vinda ao novo visual", mensagem: "As telas foram reorganizadas para ficar mais fáceis de usar no celular.", lida: false, created_at: iso(hoje.getTime() - DIA) },
   ],
-  suporte_mensagens: [], imagens_site: [], configuracoes_sistema: [], presenca_usuarios: [], registros_excluidos: [], importacoes: [], user_roles: [], plano_auditoria: [],
+  suporte_mensagens: [], imagens_site: [], configuracoes_sistema: [{ chave: "exigir_2fa_admin", valor: "nao", atualizado_em: iso(hoje), atualizado_por: null }], presenca_usuarios: [], registros_excluidos: [], importacoes: [], user_roles: [], plano_auditoria: [],
   manutencao_config: [{ id: 1, status: "ativo", titulo: "", mensagem: "", modulos: [], duracao_bloqueio_min: 60, termina_em: null, atualizado_em: iso(hoje), atualizado_por: null }],
-  bloqueios_acesso: [], solicitacoes_exclusao: [], eventos_seguranca: [], incidentes_seguranca: [], manutencao_historico: [], rate_limits: [],
+  bloqueios_acesso: [], solicitacoes_exclusao: solicitacoes, eventos_seguranca: [], incidentes_seguranca: [], manutencao_historico: [], rate_limits: [],
   propriedade_membros: [{ id: uuid(), propriedade_id: P, user_id: USUARIO.id, role: "proprietario", created_at: iso(hoje.getTime() - 400 * DIA) }],
 };
 
-export function rpc(nome, { admin }) {
+export function rpc(nome, { admin, assinante = false }) {
   const ativos = animais.filter((a) => a.situacao === "ativo").length;
   switch (nome) {
     case "sou_admin": case "pode_gerenciar_planos": return admin;
-    case "sou_assinante": return false;
+    case "sou_assinante": return assinante;
+    case "minha_area_assinante":
+      return {
+        assinante,
+        assinaturas: [assinante
+          ? { propriedade_id: P, propriedade: "Fazenda Boa Vista", plano: "premium", status: "ativo", origem: "mercadopago", data_expiracao: iso(hoje.getTime() + 24 * DIA), ativa: true, dias_restantes: 24 }
+          : { propriedade_id: P, propriedade: "Fazenda Boa Vista", plano: "gratuito", status: null, origem: null, data_expiracao: null, ativa: false, dias_restantes: null }],
+      };
+    case "ebook_registrar_acesso": return { permitido: true };
+    case "admin_pagamentos":
+      return [
+        { id: uuid(), criado_em: iso(hoje.getTime() - 2 * 3600e3), email: "joao.pereira@exemplo.com.br", propriedade: "Sítio Três Irmãos", plano_nome: "Mensal", meses: 1, valor_centavos: 2990, metodo: "pix", status: "pendente", mp_payment_id: null, aprovado_em: null },
+        { id: uuid(), criado_em: iso(hoje.getTime() - DIA), email: USUARIO.email, propriedade: "Fazenda Boa Vista", plano_nome: "Anual", meses: 12, valor_centavos: 29900, metodo: "pix", status: "aprovado", mp_payment_id: "1320000003", aprovado_em: iso(hoje.getTime() - DIA) },
+        { id: uuid(), criado_em: iso(hoje.getTime() - 3 * DIA), email: "ana.lima@exemplo.com.br", propriedade: "Fazenda Santa Luzia", plano_nome: "Mensal", meses: 1, valor_centavos: 2990, metodo: "credit_card", status: "recusado", mp_payment_id: "1320000004", aprovado_em: null },
+        { id: uuid(), criado_em: iso(hoje.getTime() - 8 * DIA), email: "carlos.m@exemplo.com.br", propriedade: "Chácara Recanto", plano_nome: "Mensal", meses: 1, valor_centavos: 2990, metodo: "bolbradesco", status: "aprovado", mp_payment_id: "1320000005", aprovado_em: iso(hoje.getTime() - 7 * DIA) },
+      ];
+    case "admin_ebooks_resumo":
+      return ebooks.filter((e) => e.publicado).slice(0, 4).map((e, i) => ({ ebook_id: e.id, aberturas: [42, 17, 9, 3][i], leitores: [11, 6, 4, 2][i], ultima: iso(hoje.getTime() - i * DIA) }));
+    case "admin_2fa_resumo":
+      return [{ email: USUARIO.email, tem_2fa: false, eu: true }, { email: "suporte@exemplo.com.br", tem_2fa: true, eu: false }];
     case "estado_manutencao":
       return { status: "ativo", titulo: "", mensagem: "", modulos: [], atualizado_em: iso(hoje), termina_em: null, sou_admin: admin, conta_bloqueada: false };
     case "dashboard_resumo":
@@ -219,11 +308,11 @@ export function rpc(nome, { admin }) {
         { user_id: uuid(), email: "joao.pereira@exemplo.com.br", nome: "João Pereira", criado_em: iso(hoje.getTime() - 40 * DIA), ultimo_acesso: iso(hoje.getTime() - 2 * DIA), bloqueado: false, admin: false, propriedades: 2, registros: 1830, bytes_estimados: 380_000 }];
     case "admin_sistema":
       return { banco_bytes: 82_000_000, armazenamento_bytes: 12_400_000, arquivos: 31, usuarios: 2, propriedades: 3, conexoes_ativas: 3, conexoes_total: 18, cache_hit: 99.6, ping_ms: 0.8, novos_7d: 1, ativos_7d: 2, tabelas: [] };
-    case "admin_alertas": return [];
+    case "admin_alertas": return { alertas: [], bloqueios_10min: 0, bloqueios_60min: 0, ips_60min: 0, conexoes: 3, conexoes_max: 60, cache: 99, eventos: [], por_hora: [], top_ips: [] };
     case "admin_metricas": return { cadastros_90d: [], acessos_30d: [], registros_dia: [] };
     case "admin_saude": return { consultas_lentas: [], rate_limits: [], rate_limit_total: 0, seq_scans: [], manutencao: [] };
     case "admin_tempo_real":
-      return { ts: Date.now() / 1000, commits: 1000, rollbacks: 0, lidas: 1, inseridas: 1, atualizadas: 1, removidas: 0, blks_hit: 100, blks_read: 1, deadlocks: 0, conexoes_ativas: 2, conexoes_ociosas: 10, conexoes_total: 12, conexoes_max: 60, bloqueios: 0, consulta_mais_longa_s: 0, banco_bytes: 82_000_000, usuarios_online: 1, usuarios_hora: 2, sessoes_abertas: 2 };
+      return { ts: Date.now() / 1000, commits: 1000, rollbacks: 0, lidas: 1, inseridas: 1, atualizadas: 1, removidas: 0, blks_hit: 100, blks_read: 1, deadlocks: 0, conexoes_ativas: 2, conexoes_ociosas: 10, conexoes_total: 12, conexoes_max: 60, bloqueios: 0, consulta_mais_longa_s: 0, banco_bytes: 82_000_000, usuarios_online: 1, usuarios_hora: 2, sessoes_abertas: 2, online_lista: [{ email: USUARIO.email, pagina: "/app/inicio", visto_em: iso(hoje) }], ping_ms: 1 };
     case "admin_seguranca_painel":
       return { config: { id: 1, status: "ativo", titulo: "", mensagem: "", modulos: [], duracao_bloqueio_min: 60, termina_em: null }, totais: { suspeitas: 0, negados: 0, ips: 0, dispositivos: 0, contas: 0 }, tipos: [], incidentes: [], bloqueios: [], historico: [] };
     default: return null;
@@ -261,11 +350,11 @@ function aplicarFiltros(linhas, params) {
   return out;
 }
 
-export function responderRest({ caminho, metodo, params, cabecalhos, admin }) {
+export function responderRest({ caminho, metodo, params, cabecalhos, admin, assinante = false }) {
   const json = (status, corpo, extra = {}) => ({ status, headers: { "content-type": "application/json; charset=utf-8", ...extra }, body: corpo === undefined ? "" : JSON.stringify(corpo) });
   if (caminho.startsWith("rpc/")) {
     const nome = caminho.slice(4);
-    const r = rpc(nome, { admin });
+    const r = rpc(nome, { admin, assinante });
     return json(200, r);
   }
   const tabela = caminho.split("/")[0];
@@ -273,7 +362,8 @@ export function responderRest({ caminho, metodo, params, cabecalhos, admin }) {
     // Escritas: devolvem o próprio registro, sem gravar nada.
     return json(201, [{ id: uuid() }]);
   }
-  const todas = TABELAS[tabela] ?? [];
+  // Quem não assina não tem pagamentos; e só o administrador vê planos desligados e eBooks em rascunho.
+  const todas = tabela === "pagamentos" && !assinante ? [] : (TABELAS[tabela] ?? []).filter((l) => admin || !(tabela === "ebooks" && !l.publicado));
   const filtradas = aplicarFiltros(todas, params);
   const offset = Number(params.get("offset") ?? 0);
   const limit = params.has("limit") ? Number(params.get("limit")) : filtradas.length;

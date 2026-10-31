@@ -180,6 +180,6 @@ input:focus-visible, textarea:focus-visible, [role="combobox"]:focus-visible {
 
 /* Impressão: só o conteúdo. */
 @media print {
-  .menu-curral, .barra-topo, .barra-inferior, [data-sonner-toaster] { display: none !important; }
+  .menu-curral, .barra-topo, .barra-inferior, [data-sonner-toaster], .leitor-ebook { display: none !important; }
   body { background: #fff; color: #000; }
 }

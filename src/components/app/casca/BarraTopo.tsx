@@ -31,7 +31,7 @@ export function BarraTopo({
       <DropdownMenu>
         <DropdownMenuTrigger
           data-tour="propriedade"
-          className="flex h-12 min-w-0 max-w-[60vw] items-center gap-2 rounded-[10px] px-2.5 text-left hover:bg-accent sm:max-w-xs"
+          className="flex h-12 min-w-0 max-w-[62vw] items-center gap-1.5 rounded-[10px] px-2 text-left hover:bg-accent sm:max-w-xs sm:gap-2 sm:px-2.5"
           aria-label={atual ? `Propriedade: ${atual.nome}. Trocar de propriedade` : "Escolher propriedade"}
         >
           <span className="min-w-0">
@@ -64,7 +64,7 @@ export function BarraTopo({
         type="button"
         data-tour="busca"
         onClick={aoBuscar}
-        className="ml-auto flex h-12 items-center gap-2 rounded-[10px] border border-input bg-card px-3 text-muted-foreground hover:border-primary hover:text-foreground lg:ml-6 lg:w-full lg:max-w-md"
+        className="ml-auto hidden h-12 items-center gap-2 rounded-[10px] border border-input bg-card px-3 text-muted-foreground hover:border-primary hover:text-foreground sm:flex lg:ml-6 lg:w-full lg:max-w-md"
         aria-label="Buscar animal, lote ou página (Ctrl+K)"
       >
         <Search className="size-5 shrink-0" />
@@ -72,7 +72,7 @@ export function BarraTopo({
         <kbd className="ml-auto hidden rounded-md border border-border bg-muted px-1.5 py-0.5 text-xs font-bold lg:inline">Ctrl K</kbd>
       </button>
 
-      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1 lg:ml-auto">
+      <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:ml-0 sm:gap-1 lg:ml-auto">
         <BotaoYui ehAdmin={ehAdmin} />
         <Avisos propriedadeId={propriedadeId} aoIr={aoIr} />
         <ContaMenu userId={userId} email={email} aoIr={aoIr} aoSair={aoSair} aoSobre={aoSobre} />

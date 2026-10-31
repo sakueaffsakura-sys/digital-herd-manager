@@ -6,9 +6,11 @@ import { itemDoMenu } from "@/components/app/casca/navegacao";
 export const Route = createFileRoute("/_authenticated/app/$section")({
   // ?novo=1 abre o formulário de novo registro; ?editar=<id> abre a edição; ?animal=<id> abre a ficha.
   validateSearch: z.object({
-    novo: z.string().max(20).optional(),
-    editar: z.string().max(40).optional(),
-    animal: z.string().max(40).optional(),
+    novo: z.string().max(20).optional().catch(undefined),
+    editar: z.string().max(40).optional().catch(undefined),
+    animal: z.string().max(40).optional().catch(undefined),
+    ebook: z.string().max(40).optional().catch(undefined),
+    retorno: z.enum(["sucesso", "pendente", "falha"]).optional().catch(undefined),
   }),
   head: ({ params }) => {
     const item = itemDoMenu(params.section);

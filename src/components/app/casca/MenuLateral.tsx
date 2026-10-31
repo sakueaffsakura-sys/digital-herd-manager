@@ -1,4 +1,4 @@
-import { ShieldCheck, X } from "lucide-react";
+import { Search, ShieldCheck, X } from "lucide-react";
 import marcaBranca from "@/assets/marca/marca-branca.webp";
 import type { GrupoMenu } from "./navegacao";
 
@@ -10,6 +10,8 @@ type Props = {
   aoIr: (chave: string) => void;
   aoFechar: () => void;
   aoAdmin: () => void;
+  /** No celular a busca fica dentro do menu (a barra do topo é estreita). */
+  aoBuscar?: () => void;
 };
 
 /**
@@ -17,13 +19,13 @@ type Props = {
  * pelo botão "Mais" da barra de baixo. É o mesmo elemento nos dois casos (o passeio da Yui
  * aponta para os itens pelo atributo data-tour).
  */
-export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, aoAdmin }: Props) {
+export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, aoAdmin, aoBuscar }: Props) {
   return (
     <>
       <aside
         id="menu-principal"
         aria-label="Menu principal"
-        className={`menu-curral fixed inset-y-0 left-0 z-50 flex w-[min(320px,86vw)] flex-col bg-sidebar text-sidebar-foreground transition-transform duration-200 ease-out lg:z-30 lg:w-[248px] lg:translate-x-0 ${aberto ? "translate-x-0" : "-translate-x-full"}`}
+        className={`menu-curral fixed inset-y-0 left-0 z-50 flex w-[min(320px,86vw)] flex-col bg-sidebar text-sidebar-foreground transition-[transform,visibility] duration-200 ease-out lg:visible lg:z-30 lg:w-[248px] lg:translate-x-0 ${aberto ? "visible translate-x-0" : "invisible -translate-x-full"}`}
       >
         <div className="flex h-16 shrink-0 items-center gap-2.5 px-4 lg:h-[72px] lg:px-5">
           <img src={marcaBranca} alt="" width={40} height={40} className="size-10 shrink-0 object-contain" />
@@ -37,6 +39,14 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
             <X className="size-6" />
           </button>
         </div>
+        {aoBuscar && (
+          <div className="px-3 pb-2 lg:hidden">
+            <button type="button" onClick={aoBuscar} className="flex min-h-12 w-full items-center gap-3 rounded-[10px] bg-white/[0.08] px-3 text-left text-[15px] text-sidebar-foreground hover:bg-white/[0.12]">
+              <Search className="size-5 shrink-0" />
+              Buscar animal ou página
+            </button>
+          </div>
+        )}
         <nav aria-label="Áreas da fazenda" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
           {grupos.map((g, i) => (
             <div key={g.rotulo ?? `g${i}`} className={i === 0 ? "mt-1" : "mt-4"}>

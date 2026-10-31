@@ -4,6 +4,7 @@ import {
   formatarDataBR,
   dataNoFuso,
   dataValida,
+  diaBR,
   diasNoMes,
   isoValido,
   mesLocalISO,
@@ -71,5 +72,18 @@ describe("formatarDataBR", () => {
     expect(formatarDataBR("2026-03-15T23:59:59-03:00")).toBe("15/03/2026");
     expect(formatarDataBR(null)).toBe("—");
     expect(formatarDataBR("lixo")).toBe("—");
+  });
+});
+
+describe("diaBR", () => {
+  it("mostra o dia de Brasília para um momento gravado em UTC", () => {
+    // 01/11 às 01:30 em UTC ainda é 31/10 em Brasília (22:30).
+    expect(diaBR("2026-11-01T01:30:00+00:00")).toBe("31/10/2026");
+    expect(diaBR("2026-11-01T12:00:00Z")).toBe("01/11/2026");
+  });
+  it("não quebra com valor vazio ou inválido", () => {
+    expect(diaBR(null)).toBe("—");
+    expect(diaBR("")).toBe("—");
+    expect(diaBR("lixo")).toBe("—");
   });
 });

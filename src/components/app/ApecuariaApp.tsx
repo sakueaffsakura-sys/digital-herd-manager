@@ -45,6 +45,8 @@ const Dashboard = lazy(() => import("./Dashboard"));
 const Reports = lazy(() => import("./Reports"));
 const Diagnostics = lazy(() => import("./Diagnostics"));
 const Agenda = lazy(() => import("./Agenda"));
+const AreaAssinante = lazy(() => import("./assinatura/AreaAssinante"));
+const Biblioteca = lazy(() => import("./biblioteca/Biblioteca"));
 
 const modules: Record<string, Module> = {
   rebanho: { title: "Meu rebanho", singular: "animal", novo: "Novo animal", primeiro: "Cadastrar o primeiro animal", table: "animais", icon: HerdIcon, description: "Todos os animais, com brinco, lote e situação. Toque num animal para ver a ficha.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
@@ -61,7 +63,7 @@ const modules: Record<string, Module> = {
 
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", novo:"Novo tipo de vacina", primeiro:"Cadastrar a primeira vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"As vacinas que você usa e de quantos em quantos dias repetir.", searchColumns:["nome"], columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
 
-const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "assinatura", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
+const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "biblioteca", "assinatura", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
 const GRUPOS = filtrarMenu((chave) => IMPLEMENTADAS.has(chave));
 const GRUPOS_LATERAL = filtrarMenu((chave) => IMPLEMENTADAS.has(chave), { lateral: true });
 const CHAVE_PROPRIEDADE = "pd-propriedade";
@@ -69,7 +71,7 @@ const lerPropriedadeSalva = () => { try { return localStorage.getItem(CHAVE_PROP
 
 export function ApecuariaApp() {
   const { section = "inicio" } = useParams({ strict: false }) as { section?: string };
-  const busca = useSearch({ strict: false }) as { novo?: string; editar?: string; animal?: string };
+  const busca = useSearch({ strict: false }) as { novo?: string; editar?: string; animal?: string; ebook?: string; retorno?: "sucesso" | "pendente" | "falha" };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -112,7 +114,8 @@ export function ApecuariaApp() {
   else if (section === "vacinacao") conteudo = <VaccinationArea key={propertyId} propertyId={propertyId} pedido={pedido} />;
   else if (section === "producao") conteudo = <ProductionArea key={propertyId} propertyId={propertyId} pedido={pedido} />;
   else if (section === "perfil-propriedade" || section === "configuracoes") conteudo = <div className="space-y-8"><SettingsPage property={currentProperty} onUpdated={() => queryClient.invalidateQueries({ queryKey: ["properties"] })} /><PropertyProfilePage propertyId={propertyId} /></div>;
-  else if (section === "assinatura") conteudo = <PlanPage propertyId={propertyId} />;
+  else if (section === "assinatura") conteudo = <Suspense fallback={<SectionLoading />}><AreaAssinante propriedades={propertiesQuery.data ?? []} propriedadeId={propertyId} ehAdmin={isAdminQuery.data === true} retorno={busca.retorno} aoIr={(c) => void go(c)} /></Suspense>;
+  else if (section === "biblioteca") conteudo = <Suspense fallback={<SectionLoading />}><Biblioteca ebookAberto={busca.ebook} aoAbrir={(id) => void navigate({ to: "/app/$section", params: { section: "biblioteca" }, search: { ebook: id } })} aoFechar={() => void navigate({ to: "/app/$section", params: { section: "biblioteca" }, search: {}, replace: true })} aoIr={(c) => void go(c)} /></Suspense>;
   else if (modules[section]) conteudo = <CrudModule key={`${propertyId}:${section}`} config={modules[section]} propertyId={propertyId} globalSearch="" pedido={pedido} />;
   else conteudo = <EmptySection go={() => go("inicio")} />;
   void secaoPropriedade;
@@ -128,6 +131,7 @@ export function ApecuariaApp() {
         aoIr={(c) => void go(c)}
         aoFechar={() => setMenuAberto(false)}
         aoAdmin={() => navigate({ to: "/admin" })}
+        aoBuscar={() => { setMenuAberto(false); setBuscaAberta(true); }}
       />
       <div className="lg:pl-[248px]">
         <BarraTopo

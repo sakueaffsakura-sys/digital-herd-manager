@@ -29,6 +29,11 @@ import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as TermosRouteImport } from './routes/termos'
+import { Route as ApiAssinaturaCheckoutRouteImport } from './routes/api/assinatura/checkout'
+import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago/webhook'
+import { Route as ApiAdminPagamentosEstadoRouteImport } from './routes/api/admin/pagamentos-estado'
+import { Route as ApiEbooksIdArquivoRouteImport } from './routes/api/ebooks/$id/arquivo'
+import { Route as ApiAdminExclusaoRouteImport } from './routes/api/admin/exclusao'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -129,6 +134,31 @@ const TermosRoute = TermosRouteImport.update({
   path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAssinaturaCheckoutRoute = ApiAssinaturaCheckoutRouteImport.update({
+  id: '/api/assinatura/checkout',
+  path: '/api/assinatura/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMercadopagoWebhookRoute = ApiPublicMercadopagoWebhookRouteImport.update({
+  id: '/api/public/mercadopago/webhook',
+  path: '/api/public/mercadopago/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminPagamentosEstadoRoute = ApiAdminPagamentosEstadoRouteImport.update({
+  id: '/api/admin/pagamentos-estado',
+  path: '/api/admin/pagamentos-estado',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEbooksIdArquivoRoute = ApiEbooksIdArquivoRouteImport.update({
+  id: '/api/ebooks/$id/arquivo',
+  path: '/api/ebooks/$id/arquivo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminExclusaoRoute = ApiAdminExclusaoRouteImport.update({
+  id: '/api/admin/exclusao',
+  path: '/api/admin/exclusao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,6 +180,11 @@ export interface FileRoutesByFullPath {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/privacidade': typeof PrivacidadeRoute
   '/termos': typeof TermosRoute
+  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
+  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
+  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
+  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,6 +206,11 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/privacidade': typeof PrivacidadeRoute
   '/termos': typeof TermosRoute
+  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
+  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
+  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
+  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,6 +234,11 @@ export interface FileRoutesById {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/privacidade': typeof PrivacidadeRoute
   '/termos': typeof TermosRoute
+  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
+  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
+  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
+  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -217,6 +262,11 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/privacidade'
     | '/termos'
+    | '/api/assinatura/checkout'
+    | '/api/public/mercadopago/webhook'
+    | '/api/admin/pagamentos-estado'
+    | '/api/ebooks/$id/arquivo'
+    | '/api/admin/exclusao'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -260,6 +310,16 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/termos'
     | '/termos'
+    | '/api/assinatura/checkout'
+    | '/api/assinatura/checkout'
+    | '/api/public/mercadopago/webhook'
+    | '/api/public/mercadopago/webhook'
+    | '/api/admin/pagamentos-estado'
+    | '/api/admin/pagamentos-estado'
+    | '/api/ebooks/$id/arquivo'
+    | '/api/ebooks/$id/arquivo'
+    | '/api/admin/exclusao'
+    | '/api/admin/exclusao'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -280,6 +340,11 @@ export interface RootRouteChildren {
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   TermosRoute: typeof TermosRoute
+  ApiAssinaturaCheckoutRoute: typeof ApiAssinaturaCheckoutRoute
+  ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
+  ApiAdminPagamentosEstadoRoute: typeof ApiAdminPagamentosEstadoRoute
+  ApiEbooksIdArquivoRoute: typeof ApiEbooksIdArquivoRoute
+  ApiAdminExclusaoRoute: typeof ApiAdminExclusaoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -424,6 +489,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/assinatura/checkout': {
+      id: '/api/assinatura/checkout'
+      path: '/api/assinatura/checkout'
+      fullPath: '/api/assinatura/checkout'
+      preLoaderRoute: typeof ApiAssinaturaCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/mercadopago/webhook': {
+      id: '/api/public/mercadopago/webhook'
+      path: '/api/public/mercadopago/webhook'
+      fullPath: '/api/public/mercadopago/webhook'
+      preLoaderRoute: typeof ApiPublicMercadopagoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/pagamentos-estado': {
+      id: '/api/admin/pagamentos-estado'
+      path: '/api/admin/pagamentos-estado'
+      fullPath: '/api/admin/pagamentos-estado'
+      preLoaderRoute: typeof ApiAdminPagamentosEstadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ebooks/$id/arquivo': {
+      id: '/api/ebooks/$id/arquivo'
+      path: '/api/ebooks/$id/arquivo'
+      fullPath: '/api/ebooks/$id/arquivo'
+      preLoaderRoute: typeof ApiEbooksIdArquivoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/exclusao': {
+      id: '/api/admin/exclusao'
+      path: '/api/admin/exclusao'
+      fullPath: '/api/admin/exclusao'
+      preLoaderRoute: typeof ApiAdminExclusaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -469,6 +569,11 @@ const rootRouteChildren: RootRouteChildren = {
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   TermosRoute: TermosRoute,
+  ApiAssinaturaCheckoutRoute: ApiAssinaturaCheckoutRoute,
+  ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
+  ApiAdminPagamentosEstadoRoute: ApiAdminPagamentosEstadoRoute,
+  ApiEbooksIdArquivoRoute: ApiEbooksIdArquivoRoute,
+  ApiAdminExclusaoRoute: ApiAdminExclusaoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

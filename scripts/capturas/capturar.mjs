@@ -22,7 +22,13 @@ const TAMANHOS = {
   celular360: { viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
 };
 
-/** Cada cena: caminho, se está logado, se é admin, tamanhos, temas e uma ação opcional antes da foto. */
+/** Abre uma aba do painel do administrador pelo menu lateral. */
+const abaAdmin = (nome) => async (page) => {
+  await page.getByRole("button", { name: nome, exact: true }).click();
+  await page.waitForTimeout(1500);
+};
+
+/** Cada cena: caminho, se está logado, se é admin/assinante, tamanhos, temas e uma ação opcional antes da foto. */
 const CENAS = [
   { nome: "entrar", caminho: "/", logado: false, tamanhos: ["computador", "celular"], temas: ["light", "dark"] },
   { nome: "recuperar-senha", caminho: "/recuperar-senha", logado: false, tamanhos: ["computador", "celular360"], temas: ["light"] },
@@ -39,7 +45,17 @@ const CENAS = [
   { nome: "financeiro", caminho: "/app/financeiro", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "relatorios", caminho: "/app/relatorios", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "perfil", caminho: "/app/perfil", logado: true, tamanhos: ["computador"], temas: ["light"] },
-  { nome: "admin", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "assinatura", caminho: "/app/assinatura", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "assinatura-ativa", caminho: "/app/assinatura", logado: true, assinante: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "biblioteca-bloqueada", caminho: "/app/biblioteca", logado: true, tamanhos: ["celular360"], temas: ["light"] },
+  { nome: "biblioteca", caminho: "/app/biblioteca", logado: true, assinante: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
+  { nome: "leitor-ebook", caminho: "/app/biblioteca?ebook=00000000-0000-4000-8000-000000000101", logado: true, assinante: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "admin", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "admin-assinaturas", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Assinaturas") },
+  { nome: "admin-ebooks", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("eBooks") },
+  { nome: "admin-exclusoes", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Pedidos de exclusão") },
+  { nome: "admin-acesso", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Duas etapas") },
+  { nome: "admin-contas", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["dark"], acao: abaAdmin("Contas") },
 ];
 
 const filtro = process.env.CENAS ? new Set(process.env.CENAS.split(",")) : null;
@@ -61,7 +77,7 @@ for (const cena of CENAS) {
           try { localStorage.setItem(chave, valor); } catch { /* sem armazenamento */ }
         }, { chave: CHAVE_SESSAO, valor: JSON.stringify(sessao) });
       }
-      await fetch(`${MOCK}/__cena`, { method: "POST", body: JSON.stringify({ admin: !!cena.admin }) });
+      await fetch(`${MOCK}/__cena`, { method: "POST", body: JSON.stringify({ admin: !!cena.admin, assinante: !!cena.assinante }) });
       const page = await context.newPage();
       page.on("console", (m) => { if (m.type() === "error") info.erros.push(m.text().slice(0, 300)); });
       page.on("pageerror", (e) => info.erros.push(`pageerror: ${String(e.message).slice(0, 300)}`));
