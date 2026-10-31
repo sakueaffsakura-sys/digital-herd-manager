@@ -1334,16 +1334,19 @@ export type Database = {
           chave: string
           contador: number
           janela: string
+          termina_em: string | null
         }
         Insert: {
           chave: string
           contador?: number
           janela: string
+          termina_em?: string | null
         }
         Update: {
           chave?: string
           contador?: number
           janela?: string
+          termina_em?: string | null
         }
         Relationships: []
       }

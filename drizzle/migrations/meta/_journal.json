@@ -36,6 +36,13 @@
       "when": 1793319199788,
       "tag": "0004_bloqueios_expirados_renovam",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793417016902,
+      "tag": "0005_fase_a_bloqueio_conta_transferencia_limites",
+      "breakpoints": true
     }
   ]
 }
