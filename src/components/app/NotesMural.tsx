@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { loadFormRefs } from "./formRefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,8 +114,8 @@ export function NotesMural({ propertyId, globalSearch }: { propertyId: string; g
     mutationFn: async (payload: Row) => {
       const body: Row = { ...payload, propriedade_id: propertyId };
       const response = editing
-        ? await supabase.from("anotacoes_producao").update(body as any).eq("id", String(editing["id"]))
-        : await supabase.from("anotacoes_producao").insert(body as any);
+        ? await supabase.from("anotacoes_producao").update(body).eq("id", String(editing["id"])).eq("propriedade_id", propertyId)
+        : await supabase.from("anotacoes_producao").insert(body as Database["public"]["Tables"]["anotacoes_producao"]["Insert"]);
       if (response.error) throw response.error;
     },
     onSuccess: () => {

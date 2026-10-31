@@ -24,11 +24,13 @@ async function carregar(): Promise<Cache> {
   const sb = await admin();
   const [cfg, bl] = await Promise.all([
     sb.from("manutencao_config").select("status,titulo,mensagem,modulos").eq("id", 1).maybeSingle(),
-    sb.from("bloqueios_acesso").select("tipo,valor,expira_em").eq("ativo", true).in("tipo", ["ip", "dispositivo"]).limit(5000),
+    carregarBloqueios(sb),
   ]);
+  if (cfg.error) throw cfg.error;
+  if (!cfg.data) throw new Error("Configuração de manutenção indisponível.");
   const agora = Date.now();
   const ips = new Set<string>(); const disps = new Set<string>();
-  for (const b of bl.data ?? []) {
+  for (const b of bl) {
     if (b.expira_em && new Date(b.expira_em).getTime() <= agora) continue;
     (b.tipo === "ip" ? ips : disps).add(b.valor);
   }
@@ -36,11 +38,22 @@ async function carregar(): Promise<Cache> {
   return { estado, ips, disps, ate: agora + TTL };
 }
 
+async function carregarBloqueios(sb: Awaited<ReturnType<typeof admin>>) {
+  const rows: { tipo: string; valor: string; expira_em: string | null }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const r = await sb.from("bloqueios_acesso").select("tipo,valor,expira_em")
+      .eq("ativo", true).in("tipo", ["ip", "dispositivo"]).order("id").range(from, from + 999);
+    if (r.error) throw r.error;
+    rows.push(...(r.data ?? []));
+    if ((r.data?.length ?? 0) < 1000) return rows;
+  }
+}
+
 async function obter(): Promise<Cache | null> {
   if (cache && cache.ate > Date.now()) return cache;
   carregando ??= carregar().finally(() => { carregando = null; });
   try { cache = await carregando; } catch (e) { console.error("manutencao: falha ao ler estado", e); }
-  return cache; // em falha de leitura mantém o último estado conhecido (não bloqueia ninguém por erro de conexão)
+  return cache; // em falha mantém o último estado; sem estado inicial responde indisponível
 }
 
 export function invalidarCacheManutencao() { cache = null; }
@@ -53,8 +66,14 @@ async function verificarAdmin(token: string | null) {
   let r = { admin: false, userId: null as string | null };
   const { data } = await sb.auth.getUser(token);
   if (data.user) {
-    const { data: role } = await sb.from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "administrador").maybeSingle();
-    r = { admin: !!role, userId: data.user.id };
+    const { createClient } = await import("@supabase/supabase-js");
+    const { data: role, error } = await createClient(
+      process.env["SUPABASE_URL"] ?? "",
+      process.env["SUPABASE_PUBLISHABLE_KEY"] ?? "",
+      { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } },
+    ).rpc("sou_admin");
+    if (error) throw error;
+    r = { admin: role === true, userId: data.user.id };
   }
   if (adminTokens.size > 5000) adminTokens.clear();
   adminTokens.set(token, { ...r, ate: Date.now() + 60_000 });
@@ -95,10 +114,11 @@ export function dispositivoDe(req: Request): string | null {
 async function incidente(a: { tipo: string; severidade: string; ip: string; disp: string | null; user: string | null; req: Request; caminho: string; motivo: string; detalhes?: Record<string, unknown>; bloquear: boolean }) {
   try {
     const sb = await admin();
-    await sb.rpc("seg_registrar_incidente", {
+    const r = await sb.rpc("seg_registrar_incidente", {
       _tipo: a.tipo, _severidade: a.severidade, _ip: a.ip, _disp: a.disp ?? "", _user: a.user as string, _caminho: a.caminho,
       _metodo: a.req.method, _agente: a.req.headers.get("user-agent") ?? "", _motivo: a.motivo, _detalhes: (a.detalhes ?? {}) as never, _bloquear: a.bloquear,
     });
+    if (r.error) throw r.error;
     if (a.bloquear) invalidarCacheManutencao();
   } catch (e) { console.error("manutencao: falha ao registrar incidente", e); }
 }
@@ -112,8 +132,10 @@ export async function guardaManutencao(req: Request, ip: string): Promise<Respon
   const url = new URL(req.url);
   const p = url.pathname;
   if (p.startsWith("/assets/") || p.startsWith("/@") || p.startsWith("/node_modules/") || p.startsWith("/src/") || /\.(png|jpe?g|webp|svg|ico|css|js|woff2?|webmanifest|txt)$/.test(p)) return null;
+  // O login continua alcançável; autenticar não concede acesso aos módulos bloqueados.
+  if (p === "/" || p === "/admin" || p === "/api/public/app/login" || p === "/api/public/app/status") return null;
   const c = await obter();
-  if (!c) return null;
+  if (!c) return json(503, { erro: "Não foi possível verificar a disponibilidade do sistema. Tente novamente em instantes.", codigo: "estado_indisponivel" });
   const disp = dispositivoDe(req);
   const ehApi = p.startsWith("/api/") || p.startsWith("/_serverFn");
   const ehPaginaApp = p === "/app" || p.startsWith("/app/");
@@ -125,6 +147,7 @@ export async function guardaManutencao(req: Request, ip: string): Promise<Respon
     if (!adm.admin) {
       const chave = `${ip}|${disp}`;
       if ((tentativaLog.get(chave) ?? 0) < Date.now()) {
+        if (tentativaLog.size >= 20_000) tentativaLog.clear();
         tentativaLog.set(chave, Date.now() + 60_000);
         const sb = await admin();
         if (ipBloq) void sb.rpc("seg_tentativa_bloqueado", { _tipo: "ip", _valor: ip });

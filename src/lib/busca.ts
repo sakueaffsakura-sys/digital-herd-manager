@@ -9,7 +9,7 @@ export const BUSCA_MAX = 100;
 
 /** Normaliza o que a pessoa digitou: tira espaços das pontas/duplicados e limita o tamanho. */
 export const termoDeBusca = (raw: string): string =>
-  raw.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, BUSCA_MAX);
+  Array.from(raw, (c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127 ? " " : c).join("").replace(/\s+/g, " ").trim().slice(0, BUSCA_MAX);
 
 /** Escapa os curingas do ILIKE (`\`, `%`, `_`) para o termo valer literalmente. */
 export const escapeILikeValue = (value: string) => value.replace(/[\\%_]/g, (m) => `\\${m}`);

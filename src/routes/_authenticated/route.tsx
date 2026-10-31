@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated")({
       await supabase.auth.signOut();
       throw redirect({ to: "/", search: { motivo: "conta-bloqueada" } });
     }
-    const manutencao = await lerEstadoManutencao();
+    const manutencao = location.pathname === "/admin" ? null : await lerEstadoManutencao();
     return { user, manutencao };
   },
   component: AreaLogada,
@@ -49,7 +49,9 @@ function AreaLogada() {
   useEffect(() => {
     const ping = () => {
       if (document.visibilityState !== "visible") return;
-      void supabase.from("presenca_usuarios" as never).upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current } as never).then(() => undefined);
+      void supabase.from("presenca_usuarios").upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current }).then(({ error }) => {
+        if (error) console.warn("Não foi possível atualizar a presença do usuário.");
+      });
     };
     ping();
     const id = setInterval(ping, 60000);
@@ -58,6 +60,7 @@ function AreaLogada() {
   }, [user.id]);
   const secao = pagina.startsWith("/app/") ? pagina.split("/")[2] ?? null : null;
   const ehAdmin = pagina === "/admin" || pagina.startsWith("/admin/");
+  if (!ehAdmin && estado.isError && !estado.data) throw estado.error;
   if (!ehAdmin && estado.data && secaoBloqueada(estado.data, secao)) {
     return <TelaManutencao estado={estado.data} onTentar={() => void estado.refetch()} />;
   }

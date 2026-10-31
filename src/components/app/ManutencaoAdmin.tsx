@@ -20,7 +20,7 @@ type Historico = { id: string; criado_em: string; email: string | null; status_a
 type Painel = { config: Config; totais: { suspeitas: number; negados: number; ips: number; dispositivos: number; contas: number }; tipos: string[]; incidentes: Incidente[]; bloqueios: Bloqueio[]; historico: Historico[] };
 type Filtros = { desde: string; ate: string; ip: string; dispositivo: string; tipo: string; status: string };
 
-const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+const rpc = supabase.rpc.bind(supabase);
 const dt = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR") : "—");
 const STATUS: Record<Status, { label: string; cls: string }> = {
   ativo: { label: "Ativo", cls: "bg-primary/15 text-primary border-primary/30" },
@@ -39,9 +39,9 @@ function usePainel(f: Filtros) {
     queryKey: ["admin-seguranca-painel", f], refetchInterval: 10_000,
     queryFn: async () => {
       const r = await rpc("admin_seguranca_painel", {
-        _desde: f.desde ? new Date(f.desde + "T00:00:00").toISOString() : null,
-        _ate: f.ate ? new Date(f.ate + "T23:59:59").toISOString() : null,
-        _ip: f.ip.trim() || null, _dispositivo: f.dispositivo.trim() || null, _tipo: f.tipo || null, _status: f.status || null,
+        _desde: f.desde ? new Date(f.desde + "T00:00:00").toISOString() : undefined,
+        _ate: f.ate ? new Date(f.ate + "T23:59:59").toISOString() : undefined,
+        _ip: f.ip.trim() || undefined, _dispositivo: f.dispositivo.trim() || undefined, _tipo: f.tipo || undefined, _status: f.status || undefined,
       });
       if (r.error) throw new Error("Não foi possível carregar os dados de segurança.");
       return r.data as Painel;
@@ -67,12 +67,14 @@ export function ManutencaoAdmin() {
       const d = r.data as { ok: boolean; erro?: string };
       if (!d.ok) throw new Error(d.erro ?? "Não foi possível salvar.");
     },
-    onSuccess: () => { toast.success("Configuração aplicada imediatamente."); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); qc.invalidateQueries({ queryKey: ["estado-manutencao"] }); },
+    onSuccess: () => { toast.success("Configuração salva. As telas atualizam em até 15 segundos."); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); qc.invalidateQueries({ queryKey: ["estado-manutencao"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (q.isLoading || !form || !cfg) return <p className="text-sm text-muted-foreground">Carregando configuração…</p>;
   if (q.error) return <p className="text-sm text-destructive">{(q.error as Error).message}</p>;
+  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando configuração…</p>;
+  if (!cfg) return <p className="text-sm text-destructive">Configuração de manutenção não encontrada.</p>;
+  if (!form) return <p className="text-sm text-muted-foreground">Carregando configuração…</p>;
   const st = STATUS[cfg.status];
   const toggleMod = (k: string, on: boolean) => {
     let m = on ? [...form.modulos, k] : form.modulos.filter((x) => x !== k);
@@ -157,7 +159,7 @@ export function MonitoramentoSeguranca() {
   const d = q.data;
 
   const desbloquear = useMutation({
-    mutationFn: async (id: string) => { const r = await rpc("admin_desbloquear", { _id: id }); if (r.error) throw new Error("Não foi possível desbloquear."); },
+    mutationFn: async (id: string) => { const r = await rpc("admin_desbloquear", { _id: id }); if (r.error || !(r.data as { ok?: boolean } | null)?.ok) throw new Error("Não foi possível desbloquear. O bloqueio pode já ter sido removido."); },
     onSuccess: () => { toast.success("Bloqueio removido. Pode levar alguns segundos para valer em todos os servidores."); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); },
     onError: (e: Error) => toast.error(e.message),
   });

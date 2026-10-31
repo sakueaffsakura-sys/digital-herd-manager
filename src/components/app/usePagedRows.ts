@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { clampPage, rangeOf } from "@/lib/pagination";
 import { escapeILikeValue, orSearch, termoDeBusca } from "@/lib/busca";
+import type { TableName } from "./shared";
 
 export { escapeILikeValue };
 
@@ -35,7 +36,7 @@ function baseScopedQuery(
   cols = "*",
   countOnly = false,
 ) {
-  let q = (supabase.from(table as any) as any).select(cols, countOnly ? { count: "exact", head: true } : undefined);
+  let q = supabase.from(table as TableName).select(cols, countOnly ? { count: "exact", head: true } : undefined);
   q = q.eq("propriedade_id", propertyId);
   for (const f of filters ?? []) {
     if (!f) continue;

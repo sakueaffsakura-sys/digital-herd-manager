@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Auditoria: corrigir erros confirmados, concluir manutenção existente e validar testes/telas sem redesenho; teste administrativo aguarda sessão autorizada.
 - [x] Refinar CSS compartilhado e login com animações leves — cadastro, mostrar senha, ausência de transbordamento no celular e redução de movimento verificados; build OK.
 - [ ] Conferir ajustes visuais em anotações com login — sessão própria não disponível: nenhuma conta corresponde ao e-mail do solicitante.
 - [x] Restabelecer carregamento e salvamento de anotações — banco reativado e CRUD verificado com login.

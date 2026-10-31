@@ -20,8 +20,8 @@ export const MODULOS_MANUTENCAO: { k: string; label: string }[] = [
 ];
 
 export async function lerEstadoManutencao(): Promise<EstadoManutencao | null> {
-  const r = await (supabase.rpc as unknown as (f: string) => Promise<{ data: unknown; error: unknown }>)("estado_manutencao");
-  if (r.error) return null;
+  const r = await supabase.rpc("estado_manutencao");
+  if (r.error || !r.data) throw new Error("Não foi possível verificar a disponibilidade do sistema. Tente novamente.");
   return r.data as EstadoManutencao;
 }
 
