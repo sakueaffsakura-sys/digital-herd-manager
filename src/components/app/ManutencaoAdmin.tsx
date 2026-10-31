@@ -30,7 +30,7 @@ const dt = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR") : "—
 const STATUS: Record<Status, { label: string; cls: string }> = {
   ativo: { label: "Ativo", cls: "bg-primary/15 text-primary border-primary/30" },
   manutencao: { label: "Em manutenção", cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-  bloqueado: { label: "Bloqueado", cls: "bg-destructive/15 text-destructive border-destructive/30" },
+  bloqueado: { label: "Bloqueado", cls: "bg-alerta-fundo text-alerta border-destructive/30" },
 };
 const TIPOS_LABEL: Record<string, string> = {
   alterar_manutencao: "Alterar manutenção sem permissão", acesso_negado_manutencao: "Acesso negado na manutenção",
@@ -80,9 +80,9 @@ export function ManutencaoAdmin() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (q.error) return <p className="text-sm text-destructive">{(q.error as Error).message}</p>;
+  if (q.error) return <p className="text-sm text-alerta">{(q.error as Error).message}</p>;
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando configuração…</p>;
-  if (!cfg) return <p className="text-sm text-destructive">Configuração de manutenção não encontrada.</p>;
+  if (!cfg) return <p className="text-sm text-alerta">Configuração de manutenção não encontrada.</p>;
   if (!form) return <p className="text-sm text-muted-foreground">Carregando configuração…</p>;
   const st = STATUS[cfg.status];
   const toggleMod = (k: string, on: boolean) => {
@@ -99,7 +99,7 @@ export function ManutencaoAdmin() {
           <div className="flex items-center gap-3">
             <span className="grid size-12 place-items-center rounded-xl bg-primary/10 text-primary"><Power className="size-6" /></span>
             <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Status atual do sistema</p>
+              <p className="text-xs text-muted-foreground">Status atual do sistema</p>
               <span className={`mt-1 inline-flex rounded-full border px-3 py-0.5 text-sm font-semibold ${st.cls}`}>{st.label}</span>
               <p className="mt-1 text-xs text-muted-foreground">Atualizado em {dt(cfg.atualizado_em)}</p>
               {cfg.status !== "ativo" && cfg.termina_em && <p className="mt-1 text-xs font-medium text-foreground">Volta ao normal sozinho em {dt(cfg.termina_em)}</p>}
@@ -131,7 +131,7 @@ export function ManutencaoAdmin() {
             <p className="text-xs text-muted-foreground">Bloqueia só o aparelho e a conta, nunca o IP: na internet de celular muita gente usa o mesmo IP.</p>
           </div>
           <div className="rounded-xl border border-dashed border-border p-4 text-center">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Prévia</p>
+            <p className="text-xs text-muted-foreground">Prévia</p>
             <p className="mt-2 font-bold">{form.titulo || "—"}</p>
             <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{form.mensagem || "—"}</p>
           </div>
@@ -208,7 +208,7 @@ export function MonitoramentoSeguranca() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {cards.map(({ icon: I, label, v }) => (
           <div key={label} className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground">{label}<I className="size-4 text-primary" /></div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">{label}<I className="size-4 text-primary" /></div>
             <p className="mt-2 font-display text-2xl font-bold">{v ?? "…"}</p>
           </div>
         ))}
@@ -238,7 +238,7 @@ export function MonitoramentoSeguranca() {
       </div>
 
       {q.isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
-      {q.error && <p className="text-sm text-destructive">{(q.error as Error).message}</p>}
+      {q.error && <p className="text-sm text-alerta">{(q.error as Error).message}</p>}
 
       {d && aba === "incidentes" && (
         <Tabela vazio="Nenhuma ocorrência no período." cab={["Data e hora", "Tipo", "Motivo", "IP", "Dispositivo", "Status", ""]}
@@ -297,7 +297,7 @@ export function MonitoramentoSeguranca() {
 }
 
 function Pill({ children, c }: { children: React.ReactNode; c?: "destructive" }) {
-  return <span className={`inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-xs ${c ? "border-destructive/30 bg-destructive/15 text-destructive" : "border-border bg-muted text-muted-foreground"}`}>{children}</span>;
+  return <span className={`inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-xs ${c ? "border-destructive/30 bg-alerta-fundo text-alerta" : "border-border bg-muted text-muted-foreground"}`}>{children}</span>;
 }
 
 function Tabela({ cab, linhas, vazio }: { cab: string[]; linhas: React.ReactNode[][]; vazio: string }) {
@@ -305,7 +305,7 @@ function Tabela({ cab, linhas, vazio }: { cab: string[]; linhas: React.ReactNode
   return (
     <div className="overflow-x-auto rounded-2xl border border-border bg-card">
       <table className="w-full text-sm">
-        <thead className="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground"><tr>{cab.map((c, i) => <th key={i} className="whitespace-nowrap px-3 py-2.5">{c}</th>)}</tr></thead>
+        <thead className="bg-muted/40 text-left text-xs text-muted-foreground"><tr>{cab.map((c, i) => <th key={i} className="whitespace-nowrap px-3 py-2.5">{c}</th>)}</tr></thead>
         <tbody>{linhas.map((l, i) => <tr key={i} className="border-t border-border hover:bg-muted/20">{l.map((c, j) => <td key={j} className="px-3 py-2 align-top">{c}</td>)}</tr>)}</tbody>
       </table>
     </div>
@@ -336,7 +336,7 @@ export function FaixaManutencaoAdmin() {
   if (!e || e.status === "ativo") return null;
   const fim = e.termina_em ? new Date(e.termina_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
   return (
-    <div role="alert" className="sticky top-0 z-30 flex flex-col gap-2 border-b border-destructive/40 bg-destructive px-4 py-3 text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
+    <div role="alert" className="sticky top-0 z-30 flex flex-col gap-2 border-b border-destructive/40 bg-destructive px-4 py-3 text-alerta-foreground sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm font-medium">
         {e.status === "bloqueado" ? "O site está BLOQUEADO para os clientes." : "O site está em manutenção para os clientes."}
         {fim ? ` Volta sozinho em ${fim}.` : ""}

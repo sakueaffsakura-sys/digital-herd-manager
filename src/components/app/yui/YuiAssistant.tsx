@@ -80,6 +80,12 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
     return () => clearTimeout(t);
   }, []);
   const fecharConvite = () => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); };
+  // O botão da Yui fica na barra do topo (casca/BarraTopo): ele avisa por evento.
+  useEffect(() => {
+    const alternar = () => { setAberto((a) => !a); setConvite(false); };
+    window.addEventListener("yui:abrir", alternar);
+    return () => window.removeEventListener("yui:abrir", alternar);
+  }, []);
 
   const topico = TOPICOS_TOUR.find((t) => t.id === topicoId) ?? TOPICOS_TOUR[0];
   const passosTour = modo === "funcao" ? topico.passos : TOUR;
@@ -118,24 +124,15 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
     {tour && <YuiTour passos={passosTour} go={go} abrirMenu={abrirMenu} isAdmin={isAdmin} onSair={() => { setTour(false); setAberto(true); }} />}
 
     {convite && !aberto && !tour && (
-      <div className="fixed bottom-24 right-4 z-40 w-[min(320px,calc(100vw-32px))] animate-in fade-in slide-in-from-bottom-4 rounded-2xl border border-primary/40 bg-popover p-4 shadow-2xl sm:right-6">
+      <div role="dialog" aria-label="Convite da Yui" className="fixed right-3 top-[72px] z-40 w-[min(340px,calc(100vw-24px))] animate-in fade-in slide-in-from-top-2 rounded-2xl border border-border bg-popover p-4 lg:top-[80px] lg:right-5">
         <Button type="button" size="icon-sm" variant="ghost" onClick={fecharConvite} className="absolute right-2 top-2" aria-label="Fechar"><X className="size-4" /></Button>
-        <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="text-sm font-semibold">Oi! 👋</p><p className="mt-1 text-sm text-muted-foreground">Sou a assistente virtual do Pecuária Digital, criada para dar suporte quando você tiver dificuldade ou dúvidas. Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
+        <div className="flex gap-3"><img src={yuiAvatar} alt="" width={40} height={40} className="size-10 rounded-full bg-primary/10 object-cover" /><div><p className="font-bold">Oi!</p><p className="mt-1 text-sm text-muted-foreground">Sou a assistente virtual do Pecuária Digital, criada para dar suporte quando você tiver dificuldade ou dúvidas. Quer que eu entre no modo automático e te mostre o site funcionando, passo a passo e com voz?</p></div></div>
         <div className="mt-3 flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={fecharConvite}>Agora não</Button><Button size="sm" onClick={() => { setConvite(false); localStorage.setItem(BOAS_VINDAS, "1"); setEtapa("pergunta2"); setAberto(true); }}>Quero sim</Button></div>
       </div>
     )}
 
-    {!tour && (
-      <Button type="button" data-tour="yui" onClick={() => { setAberto((a) => !a); setConvite(false); }} aria-label={aberto ? "Fechar suporte da Yui" : "Abrir suporte da Yui"}
-        className="group fixed bottom-4 right-4 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card shadow-[0_8px_30px_-6px_color-mix(in_oklab,var(--primary)_55%,transparent)] transition-transform hover:scale-105 sm:bottom-6 sm:right-6">
-        <img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" />
-        <span className="absolute -top-1 right-0 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">Ajuda</span>
-      </Button>
-    )}
-    {tour && <span data-tour="yui" className="fixed bottom-6 right-6 z-40 grid size-16 place-items-center rounded-full border-2 border-primary bg-card"><img src={yuiAvatar} alt="" width={64} height={64} className="size-full rounded-full object-cover" /></span>}
-
     {aberto && !tour && (
-      <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(680px,calc(100vh-120px))] sm:w-[430px] sm:rounded-lg sm:border">
+      <section aria-label="Suporte da Yui" className="fixed inset-0 z-50 flex flex-col overflow-hidden border-border bg-background shadow-2xl animate-in fade-in slide-in-from-bottom-6 sm:inset-auto sm:right-4 sm:top-[80px] sm:h-[min(680px,calc(100vh-96px))] sm:w-[430px] sm:rounded-2xl sm:border">
         {wallpaper && <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           {wallpaper.video ? <video src={wallpaper.url} autoPlay muted loop playsInline className="size-full object-cover" /> : <img src={wallpaper.url} alt="" className="size-full object-cover" />}
           <div className="absolute inset-0 bg-background/55" />
@@ -151,24 +148,24 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
             <button type="button" onClick={() => { setModo("funcao"); setEtapa("chat"); setEscolhendoFuncao((v) => !v); }} aria-expanded={escolhendoFuncao}
               className={`flex items-center gap-2 rounded-xl border p-2 text-left transition ${escolhendoFuncao ? "border-primary bg-primary/15" : "border-border bg-background/60 hover:border-primary/60"}`}>
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary"><BookOpen className="size-4" /></span>
-              <span className="min-w-0"><span className="block text-xs font-semibold">Uma função</span><span className="block truncate text-[11px] text-muted-foreground">Aprender só uma área</span></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold">Uma função</span><span className="block truncate text-xs text-muted-foreground">Aprender só uma área</span></span>
             </button>
             <button type="button" onClick={() => { setModo("completo"); setEscolhendoFuncao(false); setEtapa("pergunta1"); }}
               className="flex items-center gap-2 rounded-xl border border-border bg-background/60 p-2 text-left transition hover:border-primary/60">
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary"><Compass className="size-4" /></span>
-              <span className="min-w-0"><span className="block text-xs font-semibold">Tour completo</span><span className="block truncate text-[11px] text-muted-foreground">Ver o sistema todo</span></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold">Tour completo</span><span className="block truncate text-xs text-muted-foreground">Ver o sistema todo</span></span>
             </button>
           </div>
-          {!escolhendoFuncao && <Button type="button" size="sm" variant="ghost" className="mt-2 h-8 w-full justify-start gap-2 border border-border bg-background/40 px-3 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground" onClick={demonstrarAnotacao}><NotebookPen className="size-4 text-primary" />Simular uma anotação<span className="ml-auto text-[10px]">Sem salvar dados</span></Button>}
+          {!escolhendoFuncao && <Button type="button" size="sm" variant="ghost" className="mt-2 h-8 w-full justify-start gap-2 border border-border bg-background/40 px-3 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground" onClick={demonstrarAnotacao}><NotebookPen className="size-4 text-primary" />Simular uma anotação<span className="ml-auto text-xs">Sem salvar dados</span></Button>}
           {escolhendoFuncao && <div className="mt-2.5 animate-in fade-in slide-in-from-top-1">
-            <p className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">O que você quer aprender?</p>
+            <p className="mb-1.5 px-1 text-xs font-medium text-muted-foreground">O que você quer aprender?</p>
             <div className="grid max-h-48 grid-cols-3 gap-1.5 overflow-y-auto pr-0.5">
               {TOPICOS_TOUR.map((t) => {
                 const ativo = t.id === topicoId;
                 return <button key={t.id} type="button" onClick={() => setTopicoId(t.id)} aria-pressed={ativo}
-                  className={`flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center text-[11px] leading-tight transition ${ativo ? "border-primary bg-primary/15 text-foreground" : "border-border bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>
+                  className={`flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-center text-xs leading-tight transition ${ativo ? "border-primary bg-primary/15 text-foreground" : "border-border bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"}`}>
                   <span className="font-medium">{t.nome}</span>
-                  <span className="text-[10px] opacity-70">{t.passos.length} passo{t.passos.length === 1 ? "" : "s"}</span>
+                  <span className="text-xs opacity-70">{t.passos.length} passo{t.passos.length === 1 ? "" : "s"}</span>
                 </button>;
               })}
             </div>
@@ -210,7 +207,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
                     ? <img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 shrink-0 rounded-full border border-primary/40 object-cover" />
                     : <span className="size-7 shrink-0" />)}
                   <div className="group min-w-0 max-w-[85%]">
-                    {novoGrupo && <p className={`mb-1 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
+                    {novoGrupo && <p className={`mb-1 px-1 text-xs font-medium text-muted-foreground ${m.role === "user" ? "text-right" : ""}`}>{m.role === "user" ? "Você" : "Yui"}</p>}
                     <Message from={m.role} className="max-w-full">
                       <MessageContent className={m.role === "user" ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground shadow-md" : "px-1 py-1 text-foreground"}>
                         {m.parts.map((p, i) => p.type === "text" ? (m.role === "assistant" ? <MessageResponse key={i}>{p.text}</MessageResponse> : <span key={i} className="whitespace-pre-wrap">{p.text}</span>) : null)}
@@ -228,7 +225,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
               );
             })}
             {status === "submitted" && <div className="flex gap-2"><img src={yuiAvatar} alt="" width={28} height={28} className="mt-1 size-7 rounded-full border border-primary/40 object-cover" /><div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-border bg-card/85 px-4 py-3"><span className="size-1.5 animate-bounce rounded-full bg-primary" /><span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" /><span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" /><Shimmer className="ml-2 text-xs">Yui está digitando…</Shimmer></div></div>}
-            {error && status !== "streaming" && <div className="flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">Não consegui responder.<Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => void regenerate()}><RefreshCw className="size-3.5" />Tentar de novo</Button></div>}
+            {error && status !== "streaming" && <div className="flex items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-alerta-fundo p-2 text-xs text-alerta">Não consegui responder.<Button size="sm" variant="ghost" className="h-7 text-alerta" onClick={() => void regenerate()}><RefreshCw className="size-3.5" />Tentar de novo</Button></div>}
 
             {etapa !== "chat" && (
               <div className="rounded-2xl border border-primary/40 bg-card p-4">
@@ -253,7 +250,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
           <PromptInput onSubmit={(msg) => enviar(msg.text ?? "")} className="rounded-lg border-border bg-card shadow-lg focus-within:border-primary/60 focus-within:shadow-[0_0_20px_-8px_var(--primary)]">
               <PromptInputTextarea placeholder="Pergunte à Yui…" autoFocus maxLength={4000} />
             <PromptInputFooter className="justify-between">
-              <span className="px-2 text-[11px] text-muted-foreground">Respostas geradas por IA</span>
+              <span className="px-2 text-xs text-muted-foreground">Respostas geradas por IA</span>
               <PromptInputSubmit status={status} onStop={stop} className="size-8 shrink-0 rounded-md" />
             </PromptInputFooter>
           </PromptInput>

@@ -411,6 +411,84 @@ export type Database = {
         }
         Relationships: []
       }
+      ebook_acessos: {
+        Row: {
+          criado_em: string
+          ebook_id: string
+          id: number
+          ip_mascarado: string | null
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          ebook_id: string
+          id?: number
+          ip_mascarado?: string | null
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          ebook_id?: string
+          id?: number
+          ip_mascarado?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ebooks: {
+        Row: {
+          arquivo_path: string | null
+          autor: string | null
+          capa_path: string | null
+          categoria: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          paginas: number | null
+          publicado: boolean
+          publicado_em: string | null
+          sha256: string | null
+          tamanho_bytes: number | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_path?: string | null
+          autor?: string | null
+          capa_path?: string | null
+          categoria?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          paginas?: number | null
+          publicado?: boolean
+          publicado_em?: string | null
+          sha256?: string | null
+          tamanho_bytes?: number | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_path?: string | null
+          autor?: string | null
+          capa_path?: string | null
+          categoria?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          paginas?: number | null
+          publicado?: boolean
+          publicado_em?: string | null
+          sha256?: string | null
+          tamanho_bytes?: number | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       eventos_seguranca: {
         Row: {
           caminho: string | null
@@ -927,6 +1005,7 @@ export type Database = {
       }
       notificacoes: {
         Row: {
+          chave: string | null
           created_at: string
           id: string
           lida: boolean
@@ -936,6 +1015,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chave?: string | null
           created_at?: string
           id?: string
           lida?: boolean
@@ -945,6 +1025,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chave?: string | null
           created_at?: string
           id?: string
           lida?: boolean
@@ -962,6 +1043,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pagamentos: {
+        Row: {
+          aprovado_em: string | null
+          criado_em: string
+          detalhes: Json
+          estornado_em: string | null
+          atualizado_em: string
+          id: string
+          meses: number
+          metodo: string | null
+          moeda: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          plano_id: string | null
+          plano_nome: string
+          propriedade_id: string
+          status: string
+          user_id: string
+          valor_centavos: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          criado_em?: string
+          detalhes?: Json
+          estornado_em?: string | null
+          atualizado_em?: string
+          id?: string
+          meses: number
+          metodo?: string | null
+          moeda?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          plano_id?: string | null
+          plano_nome: string
+          propriedade_id: string
+          status?: string
+          user_id: string
+          valor_centavos: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          criado_em?: string
+          detalhes?: Json
+          estornado_em?: string | null
+          atualizado_em?: string
+          id?: string
+          meses?: number
+          metodo?: string | null
+          moeda?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          plano_id?: string | null
+          plano_nome?: string
+          propriedade_id?: string
+          status?: string
+          user_id?: string
+          valor_centavos?: number
+        }
+        Relationships: []
       }
       pesagens: {
         Row: {
@@ -1010,6 +1151,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          meses: number
+          nome: string
+          ordem: number
+          preco_centavos: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          meses: number
+          nome: string
+          ordem?: number
+          preco_centavos?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          meses?: number
+          nome?: string
+          ordem?: number
+          preco_centavos?: number
+        }
+        Relationships: []
       }
       plano_auditoria: {
         Row: {
@@ -1374,6 +1551,84 @@ export type Database = {
           propriedade_id?: string
           registro_id?: string
           tabela?: string
+        }
+        Relationships: []
+      }
+      suporte_contatos: {
+        Row: {
+          assunto: string
+          criado_em: string
+          email: string | null
+          id: string
+          mensagem: string
+          propriedade_id: string | null
+          respondido_em: string | null
+          respondido_por: string | null
+          resposta: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          assunto: string
+          criado_em?: string
+          email?: string | null
+          id?: string
+          mensagem: string
+          propriedade_id?: string | null
+          respondido_em?: string | null
+          respondido_por?: string | null
+          resposta?: string | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          assunto?: string
+          criado_em?: string
+          email?: string | null
+          id?: string
+          mensagem?: string
+          propriedade_id?: string | null
+          respondido_em?: string | null
+          respondido_por?: string | null
+          resposta?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      solicitacoes_exclusao: {
+        Row: {
+          atendida_por: string | null
+          concluida_em: string | null
+          criado_em: string
+          email: string | null
+          id: string
+          motivo: string | null
+          prazo: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          atendida_por?: string | null
+          concluida_em?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          motivo?: string | null
+          prazo?: string
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          atendida_por?: string | null
+          concluida_em?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          motivo?: string | null
+          prazo?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1835,6 +2090,76 @@ export type Database = {
       }
     }
     Functions: {
+      admin_ebooks_resumo: {
+        Args: never
+        Returns: {
+          aberturas: number
+          ebook_id: string
+          leitores: number
+          ultima: string | null
+        }[]
+      }
+      admin_pagamentos: {
+        Args: { _limite?: number; _status?: string }
+        Returns: {
+          aprovado_em: string | null
+          criado_em: string
+          email: string | null
+          id: string
+          meses: number
+          metodo: string | null
+          mp_payment_id: string | null
+          plano_nome: string
+          propriedade: string | null
+          status: string
+          valor_centavos: number
+        }[]
+      }
+      minha_area_assinante: { Args: never; Returns: Json }
+      sou_assinante: { Args: never; Returns: boolean }
+      admin_concluir_exclusao: { Args: { _id: string }; Returns: Json }
+      admin_2fa_resumo: {
+        Args: never
+        Returns: { email: string; eu: boolean; tem_2fa: boolean }[]
+      }
+      indicadores_propriedade: { Args: { _propriedade_id: string }; Returns: Json }
+      admin_suporte: {
+        Args: { _limite?: number; _status?: string }
+        Returns: {
+          assunto: string
+          criado_em: string
+          email: string | null
+          id: string
+          mensagem: string
+          propriedade: string | null
+          respondido_em: string | null
+          resposta: string | null
+          status: string
+        }[]
+      }
+      admin_responder_suporte: {
+        Args: { _fechar?: boolean; _id: string; _resposta: string }
+        Returns: boolean
+      }
+      admin_exigir_2fa: { Args: { _ligar: boolean }; Returns: boolean }
+      agenda_periodo: {
+        Args: { _ate: string; _de: string; _propriedade_id: string }
+        Returns: Json
+      }
+      central_avisos: { Args: { _propriedade_id: string }; Returns: Json }
+      encerrar_sessao: { Args: { _id: string }; Returns: boolean }
+      minhas_sessoes: {
+        Args: never
+        Returns: {
+          aal: string
+          atual: boolean
+          criada_em: string
+          id: string
+          ip: string
+          navegador: string
+          ultimo_uso: string
+        }[]
+      }
       admin_alertas: { Args: never; Returns: Json }
       admin_conta_detalhe: { Args: { _user_id: string }; Returns: Json }
       admin_contas: {

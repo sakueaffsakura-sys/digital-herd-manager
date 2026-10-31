@@ -3,6 +3,7 @@ import { Activity, RefreshCw, ShieldAlert, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Empty, PageTitle, Panel, pretty, type Row } from "./shared";
+import { plural } from "@/lib/texto";
 
 type DiagnosticoItem = { tabela: string; contagem: number; ultima_atualizacao: string | null; tempo_ms: number };
 type Inconsistencia = { tabela: string; checagem: string; qtd: number; exemplos: Row[] };
@@ -53,14 +54,14 @@ export default function Diagnostics({ propertyId }: { propertyId: string }) {
           )}
         </Panel>
 
-        <Panel title="Revisão de consistência" subtitle={`${inconsistentCount} possível(is) irregularidade(s) — nenhum dado é apagado`} >
+        <Panel title="Revisão de consistência" subtitle={`${plural(inconsistentCount, "possível irregularidade", "possíveis irregularidades")} — nenhum dado é apagado`} >
           {diagnostic.isLoading ? <p className="text-sm text-muted-foreground">Verificando…</p> : !inconsistentCount ? (
             <Empty message="Nenhuma inconsistência detectada." />
           ) : (
             <div className="space-y-5">
               {diagnostic.data?.checagens.map((c) => (
                 <div key={c.checagem} className="rounded-lg border border-border bg-muted/20 p-4">
-                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldAlert className="size-4 text-amber-500" />{c.checagem} <span className="ml-auto rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">{Number(c.qtd ?? 0).toLocaleString("pt-BR")}</span></p>
+                  <p className="flex items-center gap-2 text-sm font-semibold"><ShieldAlert className="size-4 text-amber-500" />{c.checagem} <span className="ml-auto rounded-full bg-alerta-fundo px-2 py-0.5 text-xs text-alerta">{Number(c.qtd ?? 0).toLocaleString("pt-BR")}</span></p>
                   {c.exemplos?.length ? (
                     <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
                       {c.exemplos.slice(0, 5).map((r, i) => (

@@ -45,6 +45,12 @@ const protectionMiddleware = createMiddleware().server(async ({ next, request })
       res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
       res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
       res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+      // Só o próprio site e o editor do Lovable podem exibir estas páginas dentro de um quadro.
+      // Isso evita o golpe de sobrepor uma página falsa por cima da nossa (clickjacking).
+      res.headers.set(
+        "Content-Security-Policy",
+        "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com",
+      );
     } catch {
       /* cabeçalhos imutáveis */
     }

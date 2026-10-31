@@ -71,7 +71,7 @@ export function YuiFotoAdmin() {
       <div className="grid gap-6 md:grid-cols-[160px_1fr]">
         <div className="flex flex-col items-center gap-2">
           <img src={mostrada} alt="Foto da Yui" width={128} height={128} className="size-32 rounded-full border-2 border-primary bg-primary/10 object-cover" />
-          <span className="text-[11px] text-muted-foreground">{previa ? "Prévia — ainda não salva" : atual === YUI_FOTO_PADRAO ? "Foto padrão" : "Foto atual"}</span>
+          <span className="text-xs text-muted-foreground">{previa ? "Prévia — ainda não salva" : atual === YUI_FOTO_PADRAO ? "Foto padrão" : "Foto atual"}</span>
         </div>
         <div className="space-y-5">
           <div className="space-y-2">
@@ -85,7 +85,7 @@ export function YuiFotoAdmin() {
             <Label>Ou enviar do computador/celular</Label>
             <input ref={arquivo} type="file" accept={ACEITA_IMAGEM_OU_PDF} className="hidden" onChange={(e) => { escolherArquivo(e.target.files?.[0]); e.target.value = ""; }} />
             <Button variant="outline" onClick={() => arquivo.current?.click()}><ImageUp />Escolher imagem</Button>
-            <p className="text-[11px] text-muted-foreground">A imagem é recortada em quadrado e reduzida automaticamente.</p>
+            <p className="text-xs text-muted-foreground">A imagem é recortada em quadrado e reduzida automaticamente.</p>
           </div>
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             <Button disabled={!previa || salvar.isPending} onClick={() => previa && salvar.mutate(previa)}>{salvar.isPending ? "Salvando…" : "Salvar foto"}</Button>

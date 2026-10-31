@@ -67,7 +67,7 @@ function Item({ info }: { info: (typeof IMAGENS_INFO)[number] }) {
       <div className={vertical ? "grid gap-5 sm:grid-cols-[120px_1fr]" : "space-y-4"}>
         <div>
           <img src={previa ?? atual} alt={info.titulo} className={`w-full rounded-lg border border-border object-cover ${vertical ? "aspect-[3/10]" : "aspect-[16/6]"}`} />
-          <p className="mt-1 text-[11px] text-muted-foreground">{previa ? "Prévia — ainda não salva" : padrao ? "Imagem original" : "Imagem atual"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{previa ? "Prévia — ainda não salva" : padrao ? "Imagem original" : "Imagem atual"}</p>
         </div>
         <div className="space-y-3">
           <div className="flex gap-2">

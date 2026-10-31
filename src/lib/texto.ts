@@ -80,3 +80,14 @@ export function urlValida(v: string): boolean {
     return false;
   }
 }
+/** "1 vaca" / "3 vacas" — escreve o número junto com a palavra no singular ou no plural. */
+export function plural(quantidade: number | null | undefined, singular: string, pluralForma?: string): string {
+  const n = Number(quantidade ?? 0);
+  const palavra = Math.abs(n) === 1 ? singular : (pluralForma ?? `${singular}s`);
+  return `${n.toLocaleString("pt-BR")} ${palavra}`;
+}
+
+/** Só a palavra, sem o número ("vaca" ou "vacas"). */
+export function palavraPlural(quantidade: number | null | undefined, singular: string, pluralForma?: string): string {
+  return Math.abs(Number(quantidade ?? 0)) === 1 ? singular : (pluralForma ?? `${singular}s`);
+}

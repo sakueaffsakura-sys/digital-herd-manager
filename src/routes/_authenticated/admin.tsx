@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImageIcon, Bot, AlertTriangle, BellRing, ShieldAlert, Activity, ArrowLeft, BarChart3, Database, Eye, Gauge, HardDrive, Lock, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, Users, Zap } from "lucide-react";
+import { ImageIcon, Bot, AlertTriangle, BellRing, BookOpenText, ShieldAlert, Activity, ArrowLeft, BarChart3, Contact, CreditCard, Database, Eye, Gauge, HardDrive, KeyRound, LifeBuoy, Lock, Menu, MoreHorizontal, Pause, Play, Radio, Search, ShieldCheck, ShieldX, Trash2, Unlock, UserX, Users, X, Zap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -16,6 +16,12 @@ import { CriadoresAdmin } from "@/components/app/CriadoresAdmin";
 import { ImagensSiteAdmin } from "@/components/app/ImagensSiteAdmin";
 import { FaixaManutencaoAdmin, ManutencaoAdmin, MonitoramentoSeguranca } from "@/components/app/ManutencaoAdmin";
 import { Hammer, Siren } from "lucide-react";
+import marcaBranca from "@/assets/marca/marca-branca.webp";
+import { AssinaturasAdmin } from "@/components/app/admin/AssinaturasAdmin";
+import { EbooksAdmin } from "@/components/app/admin/EbooksAdmin";
+import { ExclusoesAdmin } from "@/components/app/admin/ExclusoesAdmin";
+import { AcessoAdmin } from "@/components/app/admin/AcessoAdmin";
+import { SuporteAdmin } from "@/components/app/admin/SuporteAdmin";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -122,6 +128,14 @@ function AdminPage() {
     });
   }, [alertas.data]);
   const contas = useQuery({ queryKey: ["admin-contas"], enabled: isAdmin.data === true, queryFn: async () => { const r = await rpc("admin_contas"); if (r.error) throw r.error; return (r.data ?? []) as Conta[]; } });
+  const suporteAberto = useQuery({
+    queryKey: ["admin-suporte", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
+    queryFn: async () => { const { count, error } = await supabase.from("suporte_contatos").select("id", { count: "exact", head: true }).eq("status", "aberto"); if (error) throw error; return count ?? 0; },
+  });
+  const pedidosAbertos = useQuery({
+    queryKey: ["admin-exclusoes", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
+    queryFn: async () => { const { count, error } = await supabase.from("solicitacoes_exclusao").select("id", { count: "exact", head: true }).eq("status", "pendente"); if (error) throw error; return count ?? 0; },
+  });
 
   const acao = useMutation({
     mutationFn: async (a: { user_id: string; bloqueado?: boolean; admin?: boolean }) => definirConta(a.user_id, { bloqueado: a.bloqueado, admin: a.admin }),
@@ -135,15 +149,28 @@ function AdminPage() {
   }, [contas.data, busca]);
 
   if (isAdmin.isPending) return <Shell><p className="text-muted-foreground">Verificando acesso…</p></Shell>;
-  if (!isAdmin.data) return <Shell><div className="rounded-xl border border-border bg-card p-8 text-center"><ShieldCheck className="mx-auto size-10 text-destructive" /><h2 className="mt-3 text-lg font-semibold">Acesso restrito</h2><p className="mt-1 text-sm text-muted-foreground">Somente administradores do sistema podem ver esta área.</p></div></Shell>;
+  if (!isAdmin.data) return (
+    <Shell>
+      <div className="painel p-8 text-center">
+        <ShieldX className="mx-auto size-10 text-alerta" />
+        <h1 className="titulo-secao mt-3">Acesso restrito</h1>
+        <p className="mt-2 text-muted-foreground">Somente administradores do sistema podem ver esta área.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Se você administra o sistema e a regra de duas etapas está ligada, ative o código em Senha e segurança e entre de novo.</p>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <Button asChild variant="outline" className="h-12"><Link to="/app/$section" params={{ section: "seguranca" }}>Senha e segurança</Link></Button>
+          <Button asChild className="h-12"><Link to="/app/$section" params={{ section: "inicio" }}>Voltar ao sistema</Link></Button>
+        </div>
+      </div>
+    </Shell>
+  );
 
   const s = sistema.data;
-   const titulos = { tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] } as const;
+  const titulos: Record<Aba, readonly [string, string]> = { exclusoes: ["Pedidos de exclusão", "Contas que pediram para ser apagadas (LGPD). Atenda em até 15 dias."], acesso: ["Duas etapas", "Exija o código do celular de quem administra o sistema."], suporte: ["Suporte e aplicativo", "Responda as mensagens de quem usa e publique a versão do aplicativo Android."], assinaturas: ["Assinaturas", "Mercado Pago, planos, preços e pagamentos recebidos."], ebooks: ["eBooks", "Envie, publique e acompanhe a leitura dos eBooks dos assinantes."], tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] };
   return (
-    <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length}>
+    <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length} pedidosCount={pedidosAbertos.data ?? 0} suporteCount={suporteAberto.data ?? 0}>
       <div>
-        <h2 className="text-xl font-bold tracking-tight">{titulos[tab][0]}</h2>
-        <p className="text-sm text-muted-foreground">{titulos[tab][1]}</p>
+        <h1 className="titulo-pagina">{titulos[tab][0]}</h1>
+        <p className="mt-1 max-w-prose text-muted-foreground">{titulos[tab][1]}</p>
       </div>
       <AlertasFaixa dados={alertas.data} erro={!!alertas.error} onVer={() => setTab("seguranca")} esconderVer={tab === "seguranca"} />
       {(tab === "contas" || tab === "desempenho") && (
@@ -162,9 +189,14 @@ function AdminPage() {
       {tab === "contas" && <ContasTab filtradas={filtradas} contas={contas} busca={busca} setBusca={setBusca} acao={acao} onDetalhe={setDetalheId} />}
       {tab === "metricas" && <MetricasTab />}
       {tab === "desempenho" && <DesempenhoTab sistema={s} latencia={latencia} />}
-       {tab === "yui" && <div className="space-y-4"><YuiFotoAdmin /><YuiWallpaperAdmin /></div>}
-       {tab === "criadores" && <CriadoresAdmin />}
-       {tab === "imagens" && <ImagensSiteAdmin />}
+      {tab === "yui" && <div className="space-y-4"><YuiFotoAdmin /><YuiWallpaperAdmin /></div>}
+      {tab === "criadores" && <CriadoresAdmin />}
+      {tab === "imagens" && <ImagensSiteAdmin />}
+      {tab === "assinaturas" && <AssinaturasAdmin />}
+      {tab === "ebooks" && <EbooksAdmin />}
+      {tab === "exclusoes" && <ExclusoesAdmin />}
+      {tab === "acesso" && <AcessoAdmin />}
+      {tab === "suporte" && <SuporteAdmin />}
 
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
@@ -235,9 +267,9 @@ function TempoRealTab() {
   const media = serie.length ? Math.round(serie.reduce((s, p) => s + p.latencia, 0) / serie.length) : null;
   const pico = serie.length ? Math.max(...serie.map((p) => p.latencia)) : null;
   const saude = !atual ? "…" : atual.latencia < 400 && (ultima?.bloqueios ?? 0) === 0 ? "Ótimo" : atual.latencia < 1200 ? "Atenção" : "Lento";
-  const corSaude = saude === "Ótimo" ? "text-primary" : saude === "Atenção" ? "text-warning" : "text-destructive";
+  const corSaude = saude === "…" ? "text-muted-foreground" : saude === "Ótimo" ? "text-primary" : saude === "Atenção" ? "text-aviso" : "text-alerta";
   const uso = ultima ? Math.round((100 * ultima.conexoes_total) / ultima.conexoes_max) : 0;
-  const eixo = { tick: { fontSize: 10, fill: "var(--muted-foreground)" }, axisLine: false, tickLine: false };
+  const eixo = { tick: { fontSize: 13, fill: "var(--muted-foreground)" }, axisLine: false, tickLine: false };
 
   return (
     <div className="space-y-4">
@@ -245,7 +277,7 @@ function TempoRealTab() {
         <span className="relative flex size-2.5">{!pausado && <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />}<span className={`relative inline-flex size-2.5 rounded-full ${pausado ? "bg-muted-foreground" : "bg-primary"}`} /></span>
         <span className="text-sm font-medium">{pausado ? "Pausado" : "Ao vivo"}</span>
         <span className="text-xs text-muted-foreground">{atual ? `Última leitura ${atual.hora}` : "Coletando…"} · {serie.length} leituras{erros ? ` · ${erros} falhas` : ""}</span>
-        <span className={`ml-auto text-sm font-semibold ${corSaude}`}>Situação: {saude}</span>
+        <span className={`ml-auto text-sm font-bold ${corSaude}`}>{saude === "…" ? "Coletando a situação…" : `Situação: ${saude}`}</span>
         <Button size="sm" variant="outline" onClick={() => setPausado((p) => !p)}>{pausado ? <><Play />Retomar</> : <><Pause />Pausar</>}</Button>
       </div>
 
@@ -258,10 +290,10 @@ function TempoRealTab() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Tempo de resposta (ms)">
-          <div className="h-56"><ResponsiveContainer><AreaChart data={serie}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis {...eixo} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 11 }} /><Area isAnimationActive={false} type="monotone" dataKey="latencia" name="Site → servidor" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.18} /><Area isAnimationActive={false} type="monotone" dataKey="banco" name="Dentro do banco" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.12} /></AreaChart></ResponsiveContainer></div>
+          <div className="h-56"><ResponsiveContainer><AreaChart data={serie}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis {...eixo} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 14 }} /><Area isAnimationActive={false} type="monotone" dataKey="latencia" name="Site → servidor" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.18} /><Area isAnimationActive={false} type="monotone" dataKey="banco" name="Dentro do banco" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.12} /></AreaChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Leituras e gravações por segundo">
-          <div className="h-56"><ResponsiveContainer><LineChart data={serie}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis {...eixo} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 11 }} /><Line isAnimationActive={false} type="monotone" dataKey="leituras" name="Leituras" stroke="var(--primary)" strokeWidth={2} dot={false} /><Line isAnimationActive={false} type="monotone" dataKey="escritas" name="Gravações" stroke="var(--chart-4)" strokeWidth={2} dot={false} /><Line isAnimationActive={false} type="monotone" dataKey="tps" name="Transações" stroke="var(--chart-2)" strokeWidth={1.5} dot={false} /></LineChart></ResponsiveContainer></div>
+          <div className="h-56"><ResponsiveContainer><LineChart data={serie}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis {...eixo} /><Tooltip contentStyle={tip} /><Legend wrapperStyle={{ fontSize: 14 }} /><Line isAnimationActive={false} type="monotone" dataKey="leituras" name="Leituras" stroke="var(--primary)" strokeWidth={2} dot={false} /><Line isAnimationActive={false} type="monotone" dataKey="escritas" name="Gravações" stroke="var(--chart-4)" strokeWidth={2} dot={false} /><Line isAnimationActive={false} type="monotone" dataKey="tps" name="Transações" stroke="var(--chart-2)" strokeWidth={1.5} dot={false} /></LineChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Conexões ativas">
           <div className="h-48"><ResponsiveContainer><BarChart data={serie}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="hora" {...eixo} interval="preserveStartEnd" /><YAxis allowDecimals={false} {...eixo} /><Tooltip contentStyle={tip} /><Bar isAnimationActive={false} dataKey="conexoes" name="Conexões" fill="var(--primary)" radius={3} /></BarChart></ResponsiveContainer></div>
@@ -289,7 +321,7 @@ function TempoRealTab() {
   );
 }
 
-const tip = { background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 };
+const tip = { background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--foreground)" };
 
 function Info({ label, value, ok }: { label: string; value: React.ReactNode; ok: boolean }) {
   return <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"><span className="text-xs text-muted-foreground">{label}</span><span className={`font-semibold ${ok ? "text-foreground" : "text-destructive"}`}>{value}</span></div>;
@@ -327,7 +359,7 @@ function ContasTab({ filtradas, contas, busca, setBusca, acao, onDetalhe }: {
       {contas.isPending ? <div className="space-y-2 p-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-muted/40" />)}</div> :
         lista.length === 0 ? <div className="p-10 text-center"><Users className="mx-auto size-8 text-muted-foreground" /><p className="mt-2 text-sm text-muted-foreground">Nenhuma conta encontrada.</p></div> :
         <div className="overflow-x-auto"><table className="w-full min-w-[860px] text-sm">
-          <thead className="bg-muted/30 text-left text-[11px] uppercase tracking-wide text-muted-foreground"><tr><th className="px-4 py-2.5 font-medium">Conta</th><th className="font-medium">Situação</th><th className="font-medium">Último acesso</th><th className="text-right font-medium">Propr.</th><th className="text-right font-medium">Registros</th><th className="w-40 pl-6 font-medium">Espaço</th><th /></tr></thead>
+          <thead className="bg-muted/30 text-left text-sm text-muted-foreground"><tr><th className="px-4 py-2.5 font-medium">Conta</th><th className="font-medium">Situação</th><th className="font-medium">Último acesso</th><th className="text-right font-medium">Propr.</th><th className="text-right font-medium">Registros</th><th className="w-40 pl-6 font-medium">Espaço</th><th /></tr></thead>
           <tbody>{lista.map((c) => {
             const nome = c.nome || c.email.split("@")[0];
             const pct = Math.round((100 * Number(c.bytes_estimados)) / maxEspaco);
@@ -336,7 +368,7 @@ function ContasTab({ filtradas, contas, busca, setBusca, acao, onDetalhe }: {
                 <span className={`relative grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold uppercase ${c.admin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>{nome.slice(0, 2)}{recente(c.ultimo_acesso) && <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-card bg-primary" />}</span>
                 <div className="min-w-0"><div className="truncate font-medium">{nome}</div><div className="truncate text-xs text-muted-foreground">{c.email} · desde {new Date(c.criado_em).toLocaleDateString("pt-BR")}</div></div>
               </div></td>
-              <td><div className="flex gap-1">{c.bloqueado ? <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-medium text-destructive">Bloqueada</span> : <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">Ativa</span>}{c.admin && <span className="rounded-full border border-primary/40 px-2 py-0.5 text-[11px] font-medium text-primary">Admin</span>}</div></td>
+              <td><div className="flex gap-1">{c.bloqueado ? <span className="rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">Bloqueada</span> : <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">Ativa</span>}{c.admin && <span className="rounded-full border border-primary/40 px-2 py-0.5 text-xs font-medium text-primary">Admin</span>}</div></td>
               <td className="text-xs text-muted-foreground">{data(c.ultimo_acesso)}</td>
               <td className="text-right tabular-nums">{c.propriedades}</td>
               <td className="text-right tabular-nums">{Number(c.registros).toLocaleString("pt-BR")}</td>
@@ -344,7 +376,7 @@ function ContasTab({ filtradas, contas, busca, setBusca, acao, onDetalhe }: {
               <td className="px-4 text-right" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Ações"><MoreHorizontal /></Button></DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="dark">
+                  <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onDetalhe(c.user_id)}><Eye />Ver detalhes</DropdownMenuItem>
                     <DropdownMenuItem disabled={acao.isPending} onClick={() => acao.mutate({ user_id: c.user_id, bloqueado: !c.bloqueado })}>{c.bloqueado ? <><Unlock />Desbloquear</> : <><Lock />Bloquear</>}</DropdownMenuItem>
                     <DropdownMenuItem disabled={acao.isPending} onClick={() => acao.mutate({ user_id: c.user_id, admin: !c.admin })}><ShieldCheck />{c.admin ? "Remover admin" : "Tornar admin"}</DropdownMenuItem>
@@ -385,19 +417,19 @@ function MetricasTab() {
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Novos cadastros (90 dias)">
-          <div className="h-56"><ResponsiveContainer><LineChart data={cadastros}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} cursor={{ fill: "var(--muted)", opacity: 0.3 }} /><Line type="monotone" dataKey="qtd" name="Cadastros" stroke="var(--primary)" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
+          <div className="h-56"><ResponsiveContainer><LineChart data={cadastros}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis allowDecimals={false} tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} cursor={{ fill: "var(--muted)", opacity: 0.3 }} /><Line type="monotone" dataKey="qtd" name="Cadastros" stroke="var(--primary)" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Usuários ativos por dia (30 dias)">
-          <div className="h-56"><ResponsiveContainer><BarChart data={acessos}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} cursor={{ fill: "var(--muted)", opacity: 0.3 }} /><Bar dataKey="qtd" name="Acessos" fill="var(--primary)" radius={4} /></BarChart></ResponsiveContainer></div>
+          <div className="h-56"><ResponsiveContainer><BarChart data={acessos}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis allowDecimals={false} tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} cursor={{ fill: "var(--muted)", opacity: 0.3 }} /><Bar dataKey="qtd" name="Acessos" fill="var(--primary)" radius={4} /></BarChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Registros criados por tipo (90 dias)">
-          <div className="h-64"><ResponsiveContainer><BarChart data={registros}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} cursor={{ fill: "var(--muted)", opacity: 0.3 }} /><Legend wrapperStyle={{ fontSize: 11 }} /><Bar dataKey="animais" stackId="a" name="Animais" fill="var(--primary)" /><Bar dataKey="producao_leite" stackId="a" name="Leite" fill="var(--chart-2)" /><Bar dataKey="movimentacoes" stackId="a" name="Financeiro" fill="var(--chart-3)" /><Bar dataKey="vacinacoes" stackId="a" name="Vacinas" fill="var(--chart-4)" /><Bar dataKey="nascimentos" stackId="a" name="Nascimentos" fill="var(--chart-5)" /><Bar dataKey="pesagens" stackId="a" name="Pesagens" fill="var(--muted-foreground)" /></BarChart></ResponsiveContainer></div>
+          <div className="h-64"><ResponsiveContainer><BarChart data={registros}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis allowDecimals={false} tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} cursor={{ fill: "var(--muted)", opacity: 0.3 }} /><Legend wrapperStyle={{ fontSize: 14 }} /><Bar dataKey="animais" stackId="a" name="Animais" fill="var(--primary)" /><Bar dataKey="producao_leite" stackId="a" name="Leite" fill="var(--chart-2)" /><Bar dataKey="movimentacoes" stackId="a" name="Financeiro" fill="var(--chart-3)" /><Bar dataKey="vacinacoes" stackId="a" name="Vacinas" fill="var(--chart-4)" /><Bar dataKey="nascimentos" stackId="a" name="Nascimentos" fill="var(--chart-5)" /><Bar dataKey="pesagens" stackId="a" name="Pesagens" fill="var(--muted-foreground)" /></BarChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Leite produzido por mês (12 meses)">
-          <div className="h-64"><ResponsiveContainer><AreaChart data={litros}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} formatter={(v: number) => `${Number(v).toLocaleString("pt-BR")} L`} /><Area type="monotone" dataKey="litros" name="Litros" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.2} /></AreaChart></ResponsiveContainer></div>
+          <div className="h-64"><ResponsiveContainer><AreaChart data={litros}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} formatter={(v: number) => `${Number(v).toLocaleString("pt-BR")} L`} /><Area type="monotone" dataKey="litros" name="Litros" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.2} /></AreaChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Financeiro por mês (12 meses)" className="lg:col-span-2">
-          <div className="h-64"><ResponsiveContainer><BarChart data={financeiro}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} formatter={(v: number) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} /><Legend wrapperStyle={{ fontSize: 11 }} /><Bar dataKey="receita" name="Receitas" fill="var(--primary)" radius={3} /><Bar dataKey="despesa" name="Despesas" fill="var(--destructive)" radius={3} /><Bar dataKey="investimento" name="Investimentos" fill="var(--chart-4)" radius={3} /></BarChart></ResponsiveContainer></div>
+          <div className="h-64"><ResponsiveContainer><BarChart data={financeiro}><CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} /><XAxis dataKey="label" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" /><YAxis tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={tip} formatter={(v: number) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} /><Legend wrapperStyle={{ fontSize: 14 }} /><Bar dataKey="receita" name="Receitas" fill="var(--grafico-positivo)" radius={3} /><Bar dataKey="despesa" name="Despesas" fill="var(--grafico-negativo)" radius={3} /><Bar dataKey="investimento" name="Investimentos" fill="var(--chart-4)" radius={3} /></BarChart></ResponsiveContainer></div>
         </Panel>
       </div>
     </div>
@@ -473,22 +505,27 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
     onSuccess: () => { toast.success("Plano atualizado."); qc.invalidateQueries({ queryKey: ["admin-conta", id] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+  // Pelo servidor: além do banco, apaga as fotos da pessoa e das propriedades dela.
   const excluir = useMutation({
-    mutationFn: async () => { const r = await rpc("admin_excluir_conta", { _user_id: id }); if (r.error) throw r.error; return r.data as { propriedades_excluidas: number }; },
-    onSuccess: (res) => { toast.success(`Conta excluída (${res.propriedades_excluidas} propriedade(s) removida(s)).`); onClose(); },
+    mutationFn: async () => {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
+      const resp = await fetch("/api/admin/exclusao", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify({ user_id: id }) });
+      const corpo = (await resp.json().catch(() => ({}))) as { ok?: boolean; erro?: string; arquivos?: number; resultado?: { propriedades_excluidas?: number } };
+      if (!resp.ok || corpo.ok !== true) throw new Error(corpo.erro ?? "Não foi possível excluir a conta.");
+      return corpo;
+    },
+    onSuccess: (res) => { toast.success(`Conta excluída: ${res.resultado?.propriedades_excluidas ?? 0} propriedade(s) e ${res.arquivos ?? 0} arquivo(s).`); onClose(); },
     onError: (e: Error) => toast.error(e.message),
   });
-  const pedirExclusao = () => {
-    if (!confirm("Excluir esta conta e TODOS os dados dela? Esta ação é permanente.")) return;
-    if (!confirm("Confirma de novo? Todos os animais, relatórios e arquivos da conta serão apagados.")) return;
-    excluir.mutate();
-  };
+  const [confirmando, setConfirmando] = useState(false);
+  const [textoConfirma, setTextoConfirma] = useState("");
 
   const d = q.data;
   const setF = (k: keyof PerfilForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((p) => (p ? { ...p, [k]: e.target.value } : p));
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="dark max-h-[85vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Detalhes da conta</DialogTitle>
           <DialogDescription>{d?.email ?? q.error?.message ?? "Carregando…"}</DialogDescription>
@@ -544,7 +581,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
                     <div className="flex flex-wrap items-center gap-1">
                       {p.plano ? <span className={`rounded px-2 py-0.5 text-xs ${p.plano.plano === "premium" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{p.plano.plano === "premium" ? "Premium" : "Gratuito"}{p.plano.origem === "demonstracao" ? " (demonstração)" : ""}</span> : <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">Sem plano</span>}
                       <Button size="sm" variant="outline" disabled={plano.isPending || p.plano?.plano === "premium"} onClick={() => plano.mutate({ pid: p.id, modo: "premium" })}>Premium</Button>
-                      <Button size="sm" variant="ghost" disabled={plano.isPending || (p.plano?.plano !== "premium")}>Gratuito</Button>
+                      <Button size="sm" variant="ghost" disabled={plano.isPending || (p.plano?.plano !== "premium")} onClick={() => plano.mutate({ pid: p.id, modo: "gratuito" })}>Gratuito</Button>
                       <Button size="sm" variant="ghost" disabled={plano.isPending || !p.plano} onClick={() => plano.mutate({ pid: p.id, modo: "cancelar" })}>Cancelar plano</Button>
                     </div>
                   </div>
@@ -555,7 +592,17 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
             <section className="flex flex-wrap gap-2 border-t border-border pt-4">
               <Button variant="outline" size="sm" disabled={acao.isPending} onClick={() => acao.mutate({ bloqueado: !d.perfil?.["bloqueado"] })}>{d.perfil?.["bloqueado"] ? "Desbloquear conta" : "Bloquear conta"}</Button>
               <Button variant="ghost" size="sm" disabled={acao.isPending} onClick={() => acao.mutate({ admin: !d.admin })}>{d.admin ? "Remover admin" : "Tornar admin"}</Button>
-              <Button variant="destructive" size="sm" className="ml-auto" disabled={excluir.isPending || d.admin} title={d.admin ? "Remova o papel de admin antes de excluir" : undefined} onClick={pedirExclusao}><Trash2 />Excluir conta</Button>
+              {!confirmando && <Button variant="destructive" size="sm" className="ml-auto" disabled={excluir.isPending || d.admin} title={d.admin ? "Remova o papel de admin antes de excluir" : undefined} onClick={() => setConfirmando(true)}><Trash2 />Excluir conta</Button>}
+              {confirmando && (
+                <div className="w-full rounded-xl border border-alerta/40 bg-alerta-fundo p-3">
+                  <Label htmlFor="apagar-email">Para excluir a conta e tudo dela, digite o e-mail {d.email}</Label>
+                  <Input id="apagar-email" autoComplete="off" spellCheck={false} value={textoConfirma} onChange={(e) => setTextoConfirma(e.target.value)} />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => { setConfirmando(false); setTextoConfirma(""); }}>Cancelar</Button>
+                    <Button className="bg-alerta text-white hover:bg-alerta/90 dark:text-[#0e1712]" disabled={excluir.isPending || textoConfirma.trim().toLowerCase() !== d.email.toLowerCase()} onClick={() => excluir.mutate()}><Trash2 />{excluir.isPending ? "Excluindo…" : "Excluir para sempre"}</Button>
+                  </div>
+                </div>
+              )}
             </section>
           </div>
         )}
@@ -564,64 +611,114 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "metricas" | "desempenho" | "yui" | "criadores" | "imagens";
-const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
-  { k: "tempo", label: "Tempo real", icon: Radio },
-  { k: "manutencao", label: "Manutenção", icon: Hammer },
-  { k: "protecao", label: "Proteção e bloqueios", icon: Siren },
-  { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
-  { k: "contas", label: "Contas", icon: Users },
-  { k: "metricas", label: "Métricas", icon: BarChart3 },
-  { k: "desempenho", label: "Desempenho", icon: Gauge },
-  { k: "yui", label: "Yui (assistente)", icon: Bot },
-  { k: "criadores", label: "Criadores", icon: Users },
-  { k: "imagens", label: "Imagens do site", icon: ImageIcon },
+type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "suporte" | "yui" | "criadores" | "imagens";
+type ItemAba = { k: Aba; label: string; icon: typeof Users };
+const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
+  { rotulo: "Agora", abas: [
+    { k: "tempo", label: "Tempo real", icon: Radio },
+    { k: "seguranca", label: "Segurança e alertas", icon: ShieldAlert },
+    { k: "protecao", label: "Proteção e bloqueios", icon: Siren },
+    { k: "manutencao", label: "Manutenção", icon: Hammer },
+  ] },
+  { rotulo: "Pessoas", abas: [
+    { k: "contas", label: "Contas", icon: Users },
+    { k: "exclusoes", label: "Pedidos de exclusão", icon: UserX },
+    { k: "acesso", label: "Duas etapas", icon: KeyRound },
+  ] },
+  { rotulo: "Vendas e conteúdo", abas: [
+    { k: "assinaturas", label: "Assinaturas", icon: CreditCard },
+    { k: "ebooks", label: "eBooks", icon: BookOpenText },
+    { k: "metricas", label: "Métricas", icon: BarChart3 },
+  ] },
+  { rotulo: "Site", abas: [
+    { k: "suporte", label: "Suporte e aplicativo", icon: LifeBuoy },
+    { k: "desempenho", label: "Desempenho", icon: Gauge },
+    { k: "yui", label: "Yui (assistente)", icon: Bot },
+    { k: "criadores", label: "Criadores", icon: Contact },
+    { k: "imagens", label: "Imagens do site", icon: ImageIcon },
+  ] },
 ];
 
-function Shell({ children, tab, setTab, alertaCount }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number }) {
+/** Casca do painel: menu verde-curral (fixo no computador, gaveta no celular), igual ao do sistema. */
+function Shell({ children, tab, setTab, alertaCount = 0, pedidosCount = 0, suporteCount = 0 }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number; pedidosCount?: number; suporteCount?: number }) {
+  const [aberto, setAberto] = useState(false);
+  useEffect(() => {
+    if (!aberto) return;
+    const fechar = (e: KeyboardEvent) => { if (e.key === "Escape") setAberto(false); };
+    window.addEventListener("keydown", fechar);
+    return () => window.removeEventListener("keydown", fechar);
+  }, [aberto]);
+  if (!setTab) {
+    return <main className="mx-auto min-h-screen max-w-xl px-4 py-16">{children}</main>;
+  }
+  const ir = (k: Aba) => { setTab(k); setAberto(false); window.scrollTo({ top: 0 }); };
+  const selo = (n: number, perigo: boolean) => (n > 0 ? <span className={`ml-auto min-w-7 rounded-full px-2 text-center text-sm font-bold ${perigo ? "bg-alerta text-white dark:text-[#0e1712]" : "bg-white text-curral"}`}>{n}</span> : null);
   return (
-    <main className="dark min-h-screen bg-background text-foreground">
-      {setTab && <FaixaManutencaoAdmin />}
-      <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
-        <aside className="border-b border-border bg-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r">
-          <div className="flex items-center gap-2 p-4">
-            <Button asChild variant="ghost" size="icon"><Link to="/app/$section" params={{ section: "inicio" }} aria-label="Voltar ao sistema"><ArrowLeft /></Link></Button>
-            <div className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary"><ShieldCheck className="size-4" /></span>
-              <div><p className="text-sm font-bold leading-tight">Área Admin</p><p className="text-[11px] text-muted-foreground">Pecuária Digital</p></div>
-            </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <aside
+        id="menu-admin"
+        aria-label="Seções do painel"
+        className={`menu-curral fixed inset-y-0 left-0 z-50 flex w-[min(320px,86vw)] flex-col bg-sidebar text-sidebar-foreground transition-[transform,visibility] duration-200 ease-out lg:visible lg:z-30 lg:w-[248px] lg:translate-x-0 ${aberto ? "visible translate-x-0" : "invisible -translate-x-full"}`}
+      >
+        <div className="flex h-16 shrink-0 items-center gap-2.5 px-4 lg:h-[72px] lg:px-5">
+          <img src={marcaBranca} alt="" width={40} height={40} className="size-10 shrink-0 object-contain" />
+          <div className="min-w-0">
+            <p className="font-display text-[1.45rem] font-extrabold leading-none text-white">Administração</p>
+            <p className="text-sm text-sidebar-foreground/70">Pecuária Digital</p>
           </div>
-          {setTab && (
-            <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible">
-              {ABAS.map(({ k, label, icon: Icon }) => (
-                <button key={k} type="button" onClick={() => setTab(k)}
-                  className={`flex h-10 shrink-0 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-colors ${tab === k ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"}`}>
-                  <Icon className="size-4" />{label}
-                  {k === "tempo" && <span className="ml-auto size-1.5 rounded-full bg-primary" />}
-                  {k === "seguranca" && (alertaCount ?? 0) > 0 && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">{alertaCount}</span>}
-                </button>
-              ))}
-            </nav>
-          )}
-          <p className="hidden px-6 pt-4 text-[11px] text-muted-foreground lg:block">Visível apenas para administradores do sistema.</p>
-        </aside>
-        <div className="min-w-0 flex-1 space-y-5 p-4 sm:p-8">{children}</div>
+          <button type="button" onClick={() => setAberto(false)} className="ml-auto grid size-12 place-items-center rounded-[10px] hover:bg-sidebar-accent lg:hidden" aria-label="Fechar menu"><X className="size-6" /></button>
+        </div>
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
+          {GRUPOS_ADMIN.map((g, i) => (
+            <div key={g.rotulo} className={i === 0 ? "mt-1" : "mt-4"}>
+              <p className="px-3 pb-0.5 text-sm font-bold text-sidebar-foreground/65">{g.rotulo}</p>
+              <ul className="space-y-0.5">
+                {g.abas.map(({ k, label, icon: Icon }) => {
+                  const ativo = tab === k;
+                  return (
+                    <li key={k}>
+                      <button type="button" aria-current={ativo ? "page" : undefined} onClick={() => ir(k)}
+                        className={`relative flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left text-[15px] leading-tight transition-colors lg:min-h-11 ${ativo ? "marca-ativa bg-sidebar-accent font-bold text-white" : "text-sidebar-foreground/90 hover:bg-white/[0.07] hover:text-white"}`}>
+                        <Icon className="size-5 shrink-0" />
+                        <span className="min-w-0 flex-1">{label}</span>
+                        {k === "seguranca" && selo(alertaCount, true)}
+                        {k === "exclusoes" && selo(pedidosCount, false)}
+                        {k === "suporte" && selo(suporteCount, false)}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+        <div className="shrink-0 border-t border-sidebar-border px-3 py-2.5">
+          <Link to="/app/$section" params={{ section: "inicio" }} className="flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-[15px] font-bold text-white hover:bg-white/[0.07]"><ArrowLeft className="size-5" />Voltar ao sistema</Link>
+        </div>
+      </aside>
+      {aberto && <div aria-hidden className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setAberto(false)} />}
+      <div className="lg:pl-[248px]">
+        <header className="barra-topo sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-card px-3 lg:hidden">
+          <Button variant="outline" className="h-11" onClick={() => setAberto(true)} aria-expanded={aberto} aria-controls="menu-admin"><Menu />Seções</Button>
+          <p className="min-w-0 flex-1 truncate text-right font-display text-[1.3rem] font-extrabold">Administração</p>
+        </header>
+        <FaixaManutencaoAdmin />
+        <main className="mx-auto min-w-0 max-w-[1400px] space-y-5 px-4 py-5 sm:px-8 sm:py-8">{children}</main>
       </div>
-    </main>
+    </div>
   );
 }
 function Card({ icon: Icon, label, value, sub }: { icon: typeof Users; label: string; value: React.ReactNode; sub: string }) {
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
-      <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 transition-colors group-hover:bg-primary/10" />
-      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><span className="grid size-7 place-items-center rounded-md bg-primary/12 text-primary"><Icon className="size-3.5" /></span>{label}</div>
-      <div className="mt-3 text-2xl font-bold tabular-nums tracking-tight">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{sub}</div>
+    <div className="painel p-4">
+      <div className="flex items-start gap-2 text-sm font-bold leading-tight text-muted-foreground"><Icon className="mt-0.5 size-5 shrink-0 text-primary" /><span className="min-w-0">{label}</span></div>
+      <div className="mt-2 font-display text-[2rem] font-extrabold leading-none tabular-nums">{value}</div>
+      <div className="mt-1.5 text-sm text-muted-foreground">{sub}</div>
     </div>
   );
 }
 function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
-  return <section className={`rounded-xl border border-border bg-card p-5 ${className ?? ""}`}><h3 className="mb-4 text-sm font-semibold">{title}</h3>{children}</section>;
+  return <section className={`painel p-4 sm:p-5 ${className ?? ""}`}><h3 className="mb-4 text-[1.35rem] leading-tight">{title}</h3>{children}</section>;
 }
 
 type Alerta = { categoria: "seguranca" | "desempenho"; severidade: "info" | "aviso" | "critico"; titulo: string; detalhe: string };
@@ -630,7 +727,7 @@ type Alertas = {
   eventos: { criado_em: string; tipo: string; severidade: string; ip: string | null; caminho: string | null; quantidade: number; detalhe: string | null }[];
   por_hora: { hora: string; total: number }[]; top_ips: { ip: string | null; total: number; ultimo: string }[];
 };
-const sevCls = { critico: "border-destructive/50 bg-destructive/10 text-destructive", aviso: "border-chart-4/50 bg-chart-4/10 text-chart-4", info: "border-border bg-muted/30 text-muted-foreground" } as const;
+const sevCls = { critico: "border-alerta/40 bg-alerta-fundo text-alerta", aviso: "border-aviso/40 bg-aviso-fundo text-aviso", info: "border-border bg-muted/40 text-muted-foreground" } as const;
 const TIPOS: Record<string, string> = { rajada: "Rajada de acessos", limite_minuto: "Limite por minuto", pico_global: "Pico geral (DDoS)", envio_grande: "Envio grande demais" };
 
 function AlertasFaixa({ dados, erro, onVer, esconderVer }: { dados?: Alertas; erro: boolean; onVer: () => void; esconderVer: boolean }) {
@@ -662,14 +759,14 @@ function SegurancaTab({ dados, carregando }: { dados?: Alertas; carregando: bool
       <Card icon={Gauge} label="Cache do banco" value={`${dados.cache}%`} sub={dados.cache >= 95 ? "ótimo" : dados.cache >= 90 ? "bom" : "baixo"} />
     </div>
     <Panel title="Alertas ativos">{dados.alertas.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum alerta de segurança ou desempenho no momento.</p> :
-      <div className="space-y-2">{dados.alertas.map((a) => <div key={a.titulo} className={`rounded-lg border p-3 ${sevCls[a.severidade]}`}><div className="flex items-center gap-2 text-sm font-semibold">{a.categoria === "seguranca" ? <ShieldAlert className="size-4" /> : <Gauge className="size-4" />}{a.titulo}<span className="ml-auto text-[10px] uppercase">{a.categoria === "seguranca" ? "Segurança" : "Desempenho"}</span></div><p className="mt-1 text-xs text-foreground/80">{a.detalhe}</p></div>)}</div>}
+      <div className="space-y-2">{dados.alertas.map((a) => <div key={a.titulo} className={`rounded-lg border p-3 ${sevCls[a.severidade]}`}><div className="flex items-center gap-2 text-sm font-semibold">{a.categoria === "seguranca" ? <ShieldAlert className="size-4" /> : <Gauge className="size-4" />}{a.titulo}<span className="ml-auto text-xs">{a.categoria === "seguranca" ? "Segurança" : "Desempenho"}</span></div><p className="mt-1 text-xs text-foreground/80">{a.detalhe}</p></div>)}</div>}
     </Panel>
     <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-      <Panel title="Acessos bloqueados nas últimas 24 horas"><div className="h-60"><ResponsiveContainer width="100%" height="100%"><BarChart data={horas}><CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="hora" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval={2} /><YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} allowDecimals={false} /><Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v) => [v, "Bloqueios"]} /><Bar dataKey="total" fill="var(--destructive)" radius={[3, 3, 0, 0]} /></BarChart></ResponsiveContainer></div></Panel>
+      <Panel title="Acessos bloqueados nas últimas 24 horas"><div className="h-60"><ResponsiveContainer width="100%" height="100%"><BarChart data={horas}><CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="hora" tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval={2} /><YAxis tick={{ fontSize: 13, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} allowDecimals={false} /><Tooltip contentStyle={tip} formatter={(v) => [v, "Bloqueios"]} /><Bar dataKey="total" fill="var(--destructive)" radius={[3, 3, 0, 0]} /></BarChart></ResponsiveContainer></div></Panel>
       <Panel title="Endereços mais bloqueados (24h)">{dados.top_ips.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum endereço bloqueado.</p> : <div className="space-y-2 text-sm">{dados.top_ips.map((i) => <div key={String(i.ip)} className="flex items-center justify-between border-b border-border/50 pb-1.5"><span className="font-mono text-xs">{i.ip ?? "desconhecido"}</span><span className="text-xs text-muted-foreground">{i.total} · {new Date(i.ultimo).toLocaleTimeString("pt-BR")}</span></div>)}</div>}</Panel>
     </div>
     <Panel title="Últimos eventos de segurança">{dados.eventos.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum evento registrado. Quando alguém exceder os limites, aparecerá aqui.</p> :
-      <div className="max-h-96 overflow-auto"><table className="w-full min-w-[640px] text-sm"><thead className="sticky top-0 bg-card text-left text-xs uppercase text-muted-foreground"><tr><th className="py-2">Quando</th><th>Tipo</th><th>Endereço</th><th>Página</th><th className="text-right">Qtd.</th></tr></thead><tbody>{dados.eventos.map((e, i) => <tr key={i} className="border-t border-border/50"><td className="py-1.5 text-xs">{new Date(e.criado_em).toLocaleString("pt-BR")}</td><td><span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${sevCls[(e.severidade as keyof typeof sevCls) ?? "info"] ?? sevCls.info}`}>{TIPOS[e.tipo] ?? e.tipo}</span></td><td className="font-mono text-xs">{e.ip ?? "—"}</td><td className="max-w-[200px] truncate text-xs text-muted-foreground">{e.caminho ?? "—"}</td><td className="text-right tabular-nums">{e.quantidade}</td></tr>)}</tbody></table></div>}
+      <div className="max-h-96 overflow-auto"><table className="w-full min-w-[640px] text-sm"><thead className="sticky top-0 bg-card text-left text-sm text-muted-foreground"><tr><th className="py-2">Quando</th><th>Tipo</th><th>Endereço</th><th>Página</th><th className="text-right">Qtd.</th></tr></thead><tbody>{dados.eventos.map((e, i) => <tr key={i} className="border-t border-border/50"><td className="py-1.5 text-xs">{new Date(e.criado_em).toLocaleString("pt-BR")}</td><td><span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${sevCls[(e.severidade as keyof typeof sevCls) ?? "info"] ?? sevCls.info}`}>{TIPOS[e.tipo] ?? e.tipo}</span></td><td className="font-mono text-xs">{e.ip ?? "—"}</td><td className="max-w-[200px] truncate text-xs text-muted-foreground">{e.caminho ?? "—"}</td><td className="text-right tabular-nums">{e.quantidade}</td></tr>)}</tbody></table></div>}
     </Panel>
   </div>;
 }

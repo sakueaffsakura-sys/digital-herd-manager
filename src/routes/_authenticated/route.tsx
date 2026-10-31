@@ -29,6 +29,11 @@ export const Route = createFileRoute("/_authenticated")({
       }
       user = data.user;
     }
+    // Conta com verificação em duas etapas: sem o código, volta para a tela de entrar pedir o código.
+    const nivel = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (nivel.data && nivel.data.nextLevel === "aal2" && nivel.data.currentLevel !== "aal2") {
+      throw redirect({ to: "/", search: { motivo: "duas-etapas" } });
+    }
     const { data: perfil } = await supabase.from("profiles").select("bloqueado").eq("id", user.id).maybeSingle();
     if ((perfil as { bloqueado?: boolean } | null)?.bloqueado) {
       await supabase.auth.signOut();

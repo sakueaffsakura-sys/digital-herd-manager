@@ -278,7 +278,7 @@ export default function ImportDialog({
   const s = state;
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="dark max-h-[92vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto border-border bg-card sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Importar {config.singular}s</DialogTitle>
           <DialogDescription>
@@ -306,7 +306,7 @@ export default function ImportDialog({
             <div className="grid grid-cols-3 gap-3">
               <PreviewStat label="Total de linhas" value={s.data.rows.length} tone="" />
               <PreviewStat label="Válidas" value={s.valid.length} tone="text-chart-3" />
-              <PreviewStat label="Com problema" value={s.reasons.length} tone="text-destructive" />
+              <PreviewStat label="Com problema" value={s.reasons.length} tone="text-alerta" />
             </div>
             {resume.current && (
               <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-500">
@@ -317,7 +317,7 @@ export default function ImportDialog({
               <div className="max-h-44 overflow-y-auto rounded-lg border border-border bg-muted/20 p-3">
                 <p className="mb-2 text-xs font-semibold text-muted-foreground">Problemas encontrados (amostra):</p>
                 {s.reasons.slice(0, 10).map((r, i) => (
-                  <p key={i} className="text-xs text-destructive"><XCircle className="mr-1 inline size-3" />Linha {r.linha}: {r.motivo}</p>
+                  <p key={i} className="text-xs text-alerta"><XCircle className="mr-1 inline size-3" />Linha {r.linha}: {r.motivo}</p>
                 ))}
               </div>
             )}
@@ -342,12 +342,12 @@ export default function ImportDialog({
             <div className="grid grid-cols-3 gap-3">
               <PreviewStat label="Adicionados" value={s.aceitas} tone="text-chart-3" />
               <PreviewStat label="Duplicados ignorados" value={s.duplicated} tone="text-amber-500" />
-              <PreviewStat label="Rejeitados" value={s.rejeitadas - s.duplicated} tone="text-destructive" />
+              <PreviewStat label="Rejeitados" value={s.rejeitadas - s.duplicated} tone="text-alerta" />
             </div>
             {s.reasons.length > 0 && (
               <div className="max-h-56 overflow-y-auto rounded-lg border border-border bg-muted/20 p-3">
                 {s.reasons.map((r, i) => (
-                  <p key={i} className="py-0.5 text-xs text-muted-foreground"><XCircle className="mr-1 inline size-3 text-destructive" />Linha {r.linha}: {r.motivo}</p>
+                  <p key={i} className="py-0.5 text-xs text-muted-foreground"><XCircle className="mr-1 inline size-3 text-alerta" />Linha {r.linha}: {r.motivo}</p>
                 ))}
                 {s.reasons.length === MAX_DETAIL && <p className="text-xs text-muted-foreground">…demais itens suprimidos para manter o registro compacto.</p>}
               </div>

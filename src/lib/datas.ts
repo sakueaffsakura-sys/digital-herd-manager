@@ -74,3 +74,10 @@ export function formatarDataBR(valor: unknown): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(valor ?? ""));
   return m ? `${m[3]}/${m[2]}/${m[1]}` : "—";
 }
+
+/** Momento com hora (timestamptz) -> "31/10/2026" no horário de Brasília (não vira o dia às 21h). */
+export function diaBR(valor: unknown): string {
+  if (valor == null || valor === "") return "—";
+  const d = new Date(String(valor));
+  return Number.isNaN(d.getTime()) ? "—" : formatarDataBR(dataNoFuso(d));
+}

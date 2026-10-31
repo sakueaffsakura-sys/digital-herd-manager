@@ -1,38 +1,247 @@
-import logoWide from "@/assets/logo-pecuaria-wide.jpeg.asset.json";
-import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useImagensSite } from "@/components/app/imagensSite";
+import { lovable } from "@/integrations/lovable";
+import { avaliarSenha, motivoSenhaFraca } from "@/lib/senha";
+import { CampoSenha, RegrasSenha } from "@/components/app/conta/CampoSenha";
+import { BrincoIlustrado } from "@/components/app/conta/BrincoIlustrado";
+import marcaBranca from "@/assets/marca/marca-branca.webp";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
     motivo: z.string().optional(),
     redirect: z.string().optional(),
   }),
-  head: () => ({ meta: [
-    { title: "Pecuária Digital | Gestão Pecuária" },
-    { name: "description", content: "Controle seu rebanho, produção, vacinação e finanças em uma plataforma segura." },
-    { property: "og:title", content: "Pecuária Digital" },
-    { property: "og:description", content: "Gestão pecuária completa, moderna e segura." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary_large_image" },
-  ]}),
-  component: AuthPage,
+  head: () => ({
+    meta: [
+      { title: "Pecuária Digital | Sua fazenda, anotada" },
+      { name: "description", content: "Rebanho, vacinas, reprodução, leite e dinheiro da fazenda num lugar só. No computador e no celular, com aplicativo que funciona sem internet." },
+      { property: "og:title", content: "Pecuária Digital" },
+      { property: "og:description", content: "Sua fazenda, anotada: rebanho, vacinas, leite e dinheiro num lugar só." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Entrar,
 });
 
-function AuthPage(){
- const navigate=useNavigate();const {motivo,redirect:redirectVolta}=Route.useSearch();const [mode,setMode]=useState<"login"|"signup">("login");const [name,setName]=useState("");const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [show,setShow]=useState(false);const [loading,setLoading]=useState(false);
- useEffect(()=>{if(motivo==="sessao-expirada")toast.info("Sua sessão expirou. Faça login novamente.");if(motivo==="conta-bloqueada")toast.error("Esta conta foi bloqueada pelo administrador.")},[motivo]);
- useEffect(()=>{if(motivo==="conta-bloqueada")return;supabase.auth.getUser().then(({data})=>{if(data.user){if(redirectVolta)window.location.assign(decodeURIComponent(redirectVolta));else navigate({to:"/app/$section",params:{section:"inicio"}})}})},[navigate,redirectVolta,motivo]);
- const traduzir=(m:string)=>/invalid login/i.test(m)?"E-mail ou senha incorretos.":/already registered/i.test(m)?"Este e-mail já possui conta. Faça login.":/rate limit|too many/i.test(m)?"Muitas tentativas. Aguarde alguns minutos.":/pwned|weak|breach/i.test(m)?"Senha fraca ou vazada. Escolha outra.":m;
- const irParaApp=()=>{if(redirectVolta)window.location.assign(decodeURIComponent(redirectVolta));else navigate({to:"/app/$section",params:{section:"inicio"}})};
- const submit=async(e:FormEvent)=>{e.preventDefault();setLoading(true);try{if(mode==="signup"){const {data,error}=await supabase.auth.signUp({email,password,options:{data:{nome_completo:name}}});if(error)throw error;if(data.session){toast.success("Conta criada! Bem-vindo.");irParaApp()}else{const r=await supabase.auth.signInWithPassword({email,password});if(r.error)throw r.error;toast.success("Conta criada! Bem-vindo.");irParaApp()}}else{const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;irParaApp()}}catch(e){toast.error(traduzir(e instanceof Error?e.message:"Não foi possível entrar")) }finally{setLoading(false)}};
- const imagemSite = useImagensSite();
- return <main className="auth-page dark relative min-h-screen overflow-hidden bg-background text-foreground"><img src={imagemSite("fundo_login")} alt="Pecuária Digital — tecnologia no campo" className="absolute inset-0 h-full w-full object-cover opacity-45"/><div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40"/><div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-5 py-8 lg:gap-14 lg:py-10 lg:grid-cols-[1.2fr_.8fr] lg:px-10"><section className="max-w-2xl"><span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-primary backdrop-blur">Gestão pecuária premium</span><div className="mb-10 flex items-center gap-3"><img src={logoWide.url} alt="Pecuária Digital" className="mix-blend-lighten h-16 w-auto object-contain sm:h-20" /></div><h1 className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">Sua propriedade,<br/><span className="text-gradient-primary">sob controle.</span></h1><p className="mt-5 max-w-lg text-base text-foreground/70">Rebanho, sanidade, produção e resultados financeiros reunidos em uma gestão segura.</p><ul className="mt-8 grid gap-3 text-sm text-foreground/80 sm:grid-cols-2">{["Dados reais e protegidos","Indicadores sempre atualizados","Controle em qualquer dispositivo","Histórico completo do rebanho"].map(x=><li key={x} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded-full bg-primary/15 text-primary"><Check className="size-3"/></span>{x}</li>)}</ul><div className="mt-10 flex flex-wrap gap-x-10 gap-y-4 border-t border-border/60 pt-6">{[["11","módulos de gestão"],["100%","dados em tempo real"],["24/7","assistente virtual Yui"]].map(([v,l])=><div key={l}><strong className="font-display text-2xl font-bold text-primary">{v}</strong><p className="mt-0.5 text-xs text-foreground/60">{l}</p></div>)}</div></section><section className="auth-panel premium-panel w-full max-w-md justify-self-end rounded-2xl p-6 backdrop-blur-xl sm:p-9"><div className="mb-6"><p className="text-xs font-bold uppercase text-primary">Bem-vindo</p><h2 className="mt-1 text-2xl font-bold">{mode==="login"?"Acesse sua conta":"Crie sua conta"}</h2><p className="mt-1 text-sm text-muted-foreground">{mode==="login"?"Entre para gerenciar sua propriedade.":"Comece a organizar sua operação."}</p></div><form onSubmit={submit} className="space-y-5">{mode==="signup"&&<div><Label>Nome completo</Label><Input required value={name} onChange={e=>setName(e.target.value)} placeholder="Seu nome"/></div>}<div><Label>E-mail</Label><Input required type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="voce@exemplo.com"/></div><div><Label>Senha</Label><div className="relative"><Input required minLength={8} type={show?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} className="pr-10"/><Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0" onClick={()=>setShow(!show)} aria-label={show?"Ocultar senha":"Mostrar senha"}>{show?<EyeOff/>:<Eye/>}</Button></div></div><Button className="btn-premium h-12 w-full rounded-xl text-base font-semibold" disabled={loading}>{loading?<LoaderCircle className="animate-spin"/>:mode==="login"?"Entrar":"Criar conta"}</Button></form><p className="mt-6 text-center text-sm text-muted-foreground">{mode==="login"?"Ainda não possui conta?":"Já possui uma conta?"} <Button type="button" variant="link" className="h-auto px-1 py-0 font-semibold text-primary" onClick={()=>setMode(mode==="login"?"signup":"login")}>{mode==="login"?"Cadastre-se":"Entrar"}</Button></p></section></div></main>
+const MENSAGENS: Record<string, { tipo: "info" | "erro" | "ok"; texto: string }> = {
+  "sessao-expirada": { tipo: "info", texto: "Sua sessão terminou. Entre de novo." },
+  "conta-bloqueada": { tipo: "erro", texto: "Esta conta foi bloqueada pelo administrador." },
+  "senha-alterada": { tipo: "ok", texto: "Senha alterada. Entre com a senha nova." },
+  "saiu-de-todos": { tipo: "ok", texto: "Você saiu de todos os aparelhos." },
+  "duas-etapas": { tipo: "info", texto: "Falta o código do aplicativo autenticador para entrar." },
+};
+
+/** Só aceita voltar para páginas deste site (nada de redirecionar para fora). */
+function destinoSeguro(redirect?: string) {
+  if (!redirect) return null;
+  try {
+    const u = new URL(decodeURIComponent(redirect), window.location.origin);
+    if (u.origin !== window.location.origin || !u.pathname.startsWith("/")) return null;
+    return u.pathname + u.search + u.hash;
+  } catch {
+    return null;
+  }
+}
+
+function traduzir(m: string) {
+  if (/invalid login|invalid credentials/i.test(m)) return "E-mail ou senha errados.";
+  if (/email not confirmed/i.test(m)) return "Confirme o seu e-mail antes de entrar. Procure a mensagem na caixa de entrada e no spam.";
+  if (/rate limit|too many/i.test(m)) return "Muitas tentativas. Aguarde alguns minutos.";
+  if (/banned|bloquead/i.test(m)) return "Esta conta está bloqueada.";
+  return "Não foi possível entrar agora. Tente de novo.";
+}
+
+function Entrar() {
+  const navigate = useNavigate();
+  const { motivo, redirect } = Route.useSearch();
+  const [aba, setAba] = useState<"entrar" | "criar">("entrar");
+  const [etapa, setEtapa] = useState<"senha" | "codigo">("senha");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [site, setSite] = useState(""); // campo anti-robô (fica escondido)
+  const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [confirmarEmail, setConfirmarEmail] = useState(false);
+  const inicio = useRef(Date.now());
+
+  const irParaApp = () => {
+    const destino = destinoSeguro(redirect);
+    if (destino) window.location.assign(destino);
+    else navigate({ to: "/app/$section", params: { section: "inicio" } });
+  };
+  /** Depois da senha: se a conta usa duas etapas, pede o código; senão, entra. */
+  const continuar = async () => {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (data && data.nextLevel === "aal2" && data.currentLevel !== "aal2") { setEtapa("codigo"); setErro(null); return; }
+    irParaApp();
+  };
+
+  useEffect(() => {
+    const m = motivo ? MENSAGENS[motivo] : undefined;
+    if (m) (m.tipo === "erro" ? toast.error : m.tipo === "ok" ? toast.success : toast.info)(m.texto);
+  }, [motivo]);
+  useEffect(() => {
+    if (motivo === "conta-bloqueada") return;
+    void supabase.auth.getSession().then(({ data }) => { if (data.session) void continuar(); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const enviarSenha = async (e: FormEvent) => {
+    e.preventDefault();
+    setErro(null);
+    setCarregando(true);
+    try {
+      if (aba === "criar") {
+        const fraca = motivoSenhaFraca(senha, email);
+        if (fraca) { setErro(fraca); return; }
+        const r = await fetch("/api/public/conta/cadastro", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ nome, email, senha, site, inicio: inicio.current }),
+        });
+        const corpo = (await r.json().catch(() => ({}))) as { erro?: string; confirmar?: boolean; sessao?: { access_token: string; refresh_token: string } };
+        if (!r.ok) { setErro(corpo.erro ?? "Não foi possível criar a conta agora."); return; }
+        if (corpo.confirmar) { setConfirmarEmail(true); return; }
+        if (corpo.sessao) {
+          const { error } = await supabase.auth.setSession(corpo.sessao);
+          if (error) { setErro("Conta criada. Entre com o e-mail e a senha."); setAba("entrar"); return; }
+          toast.success("Conta criada. Bem-vindo(a)!");
+          irParaApp();
+        }
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
+      if (error) { setErro(traduzir(error.message)); return; }
+      await continuar();
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const enviarCodigo = async (e: FormEvent) => {
+    e.preventDefault();
+    setErro(null);
+    setCarregando(true);
+    try {
+      const { data } = await supabase.auth.mfa.listFactors();
+      const fator = data?.totp?.find((f) => f.status === "verified");
+      if (!fator) { irParaApp(); return; }
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: fator.id, code: codigo.replace(/\D/g, "") });
+      if (error) { setErro("Código errado ou vencido. Digite o código que aparece agora no aplicativo."); return; }
+      irParaApp();
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const google = async () => {
+    setErro(null);
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    if (r && "error" in r && r.error) setErro("Entrar com Google não está disponível agora. Use o e-mail e a senha.");
+  };
+  const sairDaConta = async () => { await supabase.auth.signOut(); setEtapa("senha"); setCodigo(""); };
+
+  return (
+    <main className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="relative overflow-hidden bg-curral px-6 pb-8 pt-6 text-white lg:flex lg:min-h-screen lg:flex-col lg:px-14 lg:py-12">
+        <div className="flex items-center gap-2.5">
+          <img src={marcaBranca} alt="" width={44} height={44} className="size-11 object-contain" />
+          <span className="font-display text-[1.7rem] font-extrabold leading-none">Pecuária Digital</span>
+        </div>
+        <div className="mt-8 flex items-end gap-5 lg:mt-auto lg:block lg:pt-10">
+          <BrincoIlustrado className="h-28 w-auto shrink-0 -rotate-6 lg:h-[min(44vh,380px)] lg:-rotate-3" />
+          <div className="lg:mt-10">
+            <h1 className="font-display text-[2.6rem] font-extrabold leading-[0.95] lg:text-[clamp(3.5rem,6vw,5.5rem)]">Sua fazenda, anotada.</h1>
+            <p className="mt-3 hidden max-w-md text-lg text-white/85 sm:block">Rebanho, vacinas, reprodução, leite e dinheiro num lugar só. No computador e no celular, com aplicativo que funciona sem internet.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex items-center justify-center px-5 py-8 sm:px-8 lg:min-h-screen lg:py-12">
+        <div className="w-full max-w-md">
+          {confirmarEmail ? (
+            <div>
+              <h2 className="titulo-pagina">Confirme o seu e-mail</h2>
+              <p className="mt-3 text-muted-foreground">Enviamos um link para <strong className="text-foreground">{email}</strong>. Abra o e-mail e toque no link para ativar a conta. Confira também o spam.</p>
+              <Button variant="outline" className="mt-6 h-12" onClick={() => { setConfirmarEmail(false); setAba("entrar"); }}>Voltar para entrar</Button>
+            </div>
+          ) : etapa === "codigo" ? (
+            <form onSubmit={enviarCodigo} noValidate>
+              <h2 className="titulo-pagina">Código de verificação</h2>
+              <p className="mt-2 text-muted-foreground">Abra o aplicativo autenticador no celular e digite o código de 6 números.</p>
+              <div className="mt-6">
+                <Label htmlFor="codigo">Código</Label>
+                <Input id="codigo" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={7} value={codigo} onChange={(e) => setCodigo(e.target.value)} className="text-center font-display text-3xl tracking-[0.35em]" aria-invalid={erro ? true : undefined} aria-describedby={erro ? "erro-login" : undefined} />
+              </div>
+              {erro && <p id="erro-login" role="alert" className="mt-3 font-bold text-alerta">{erro}</p>}
+              <Button type="submit" className="mt-6 h-12 w-full text-base" disabled={carregando || codigo.replace(/\D/g, "").length !== 6}>{carregando ? <LoaderCircle className="animate-spin" /> : "Confirmar e entrar"}</Button>
+              <Button type="button" variant="ghost" className="mt-2 h-12 w-full" onClick={() => void sairDaConta()}>Entrar com outra conta</Button>
+            </form>
+          ) : (
+            <>
+              <div role="tablist" aria-label="Entrar ou criar conta" className="grid grid-cols-2 rounded-[10px] border border-input bg-card p-1">
+                {(["entrar", "criar"] as const).map((a) => (
+                  <button key={a} type="button" role="tab" aria-selected={aba === a} onClick={() => { setAba(a); setErro(null); }}
+                    className={`h-11 rounded-lg font-bold ${aba === a ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                    {a === "entrar" ? "Entrar" : "Criar conta"}
+                  </button>
+                ))}
+              </div>
+              <h2 className="titulo-pagina mt-8">{aba === "entrar" ? "Entre na sua conta" : "Crie sua conta grátis"}</h2>
+              <p className="mt-2 text-muted-foreground">{aba === "entrar" ? "Use o e-mail e a senha do cadastro." : "Leva um minuto. Depois é só cadastrar a fazenda."}</p>
+              <form onSubmit={enviarSenha} className="mt-6 space-y-4" noValidate>
+                {aba === "criar" && (
+                  <div>
+                    <Label htmlFor="nome">Seu nome</Label>
+                    <Input id="nome" autoComplete="name" required maxLength={120} value={nome} onChange={(e) => setNome(e.target.value)} />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input id="email" type="email" inputMode="email" autoComplete="email" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" />
+                </div>
+                <div>
+                  <CampoSenha rotulo="Senha" valor={senha} aoMudar={setSenha} autoComplete={aba === "entrar" ? "current-password" : "new-password"} />
+                  {aba === "criar" && <RegrasSenha senha={senha} email={email} />}
+                </div>
+                {/* Campo para robôs: pessoas não veem nem alcançam pelo teclado. */}
+                <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+                  <label htmlFor="site">Seu site</label>
+                  <input id="site" name="site" tabIndex={-1} autoComplete="off" value={site} onChange={(e) => setSite(e.target.value)} />
+                </div>
+                {erro && <p role="alert" className="font-bold text-alerta">{erro}</p>}
+                <Button type="submit" className="h-12 w-full text-base" disabled={carregando || !email || !senha || (aba === "criar" && (!nome.trim() || !avaliarSenha(senha, email).ok))}>
+                  {carregando ? <LoaderCircle className="animate-spin" /> : aba === "entrar" ? "Entrar" : "Criar conta"}
+                </Button>
+              </form>
+              {aba === "entrar" && (
+                <p className="mt-4 text-center">
+                  <Link to="/recuperar-senha" className="font-bold text-primary underline underline-offset-4">Esqueci minha senha</Link>
+                </p>
+              )}
+              <div className="my-6 flex items-center gap-3 text-sm text-muted-foreground"><span className="h-px flex-1 bg-border" />ou<span className="h-px flex-1 bg-border" /></div>
+              <Button type="button" variant="outline" className="h-12 w-full text-base" onClick={() => void google()}>
+                <svg aria-hidden viewBox="0 0 24 24" className="size-5"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7Z" /><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z" /><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1Z" /><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z" /></svg>
+                Entrar com Google
+              </Button>
+            </>
+          )}
+          <nav aria-label="Informações" className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+            <Link to="/privacidade" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">Privacidade</Link>
+            <Link to="/termos" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">Termos de uso</Link>
+          </nav>
+        </div>
+      </section>
+    </main>
+  );
 }
