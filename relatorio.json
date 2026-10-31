@@ -1,0 +1,920 @@
+[
+  {
+    "arquivo": "entrar--computador--claro.png",
+    "caminho": "/",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "entrar--computador--escuro.png",
+    "caminho": "/",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "entrar--celular--claro.png",
+    "caminho": "/",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/",
+    "larguraPagina": 390
+  },
+  {
+    "arquivo": "entrar--celular--escuro.png",
+    "caminho": "/",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/",
+    "larguraPagina": 390
+  },
+  {
+    "arquivo": "recuperar-senha--computador--claro.png",
+    "caminho": "/recuperar-senha",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/recuperar-senha",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "recuperar-senha--celular360--claro.png",
+    "caminho": "/recuperar-senha",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/recuperar-senha",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "redefinir-senha--celular360--claro.png",
+    "caminho": "/redefinir-senha",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/redefinir-senha",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "inicio--computador--claro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "inicio--computador--escuro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "inicio--celular--claro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 390
+  },
+  {
+    "arquivo": "inicio--celular--escuro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 390
+  },
+  {
+    "arquivo": "inicio--celular360--claro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "inicio--celular360--escuro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "rebanho--computador--claro.png",
+    "caminho": "/app/rebanho",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/animais?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/rebanho",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "rebanho--celular360--claro.png",
+    "caminho": "/app/rebanho",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/animais?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/rebanho",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "agenda--computador--claro.png",
+    "caminho": "/app/agenda",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/agenda",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "agenda--celular360--claro.png",
+    "caminho": "/app/agenda",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/agenda",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "seguranca--computador--claro.png",
+    "caminho": "/app/seguranca",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/seguranca",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "privacidade--celular360--claro.png",
+    "caminho": "/privacidade",
+    "erros": [],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/privacidade",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "ficha-animal--computador--claro.png",
+    "caminho": "/app/rebanho?animal=00000000-0000-4000-8000-000000000020",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/animais?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/rebanho",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "lancar--celular360--claro.png",
+    "caminho": "/app/inicio",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/inicio",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "vacinacao--computador--claro.png",
+    "caminho": "/app/vacinacao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/vacinacoes?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/vacinacao",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "vacinacao--computador--escuro.png",
+    "caminho": "/app/vacinacao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/vacinacoes?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/vacinacao",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "producao--computador--claro.png",
+    "caminho": "/app/producao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/producao_leite?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/producao",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "anotacoes--computador--claro.png",
+    "caminho": "/app/producao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/producao_leite?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/anotacoes_producao?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/producao",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "anotacoes--computador--escuro.png",
+    "caminho": "/app/producao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/producao_leite?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/anotacoes_producao?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/producao",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "anotacoes--celular360--claro.png",
+    "caminho": "/app/producao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/producao_leite?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/anotacoes_producao?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": true,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/producao",
+    "larguraPagina": 366
+  },
+  {
+    "arquivo": "anotacoes--celular360--escuro.png",
+    "caminho": "/app/producao",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/producao_leite?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/anotacoes_producao?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222"
+    ],
+    "estouroHorizontal": true,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/producao",
+    "larguraPagina": 366
+  },
+  {
+    "arquivo": "financeiro--computador--claro.png",
+    "caminho": "/app/financeiro",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/movimentacoes_financeiras?select=id&propriedade_id=eq.22222222-2222-4222-8222-222222222222&origem_tipo=is.null"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/financeiro",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "relatorios--computador--claro.png",
+    "caminho": "/app/relatorios",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/relatorios",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "perfil--computador--claro.png",
+    "caminho": "/app/perfil",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/perfil",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "assinatura--computador--claro.png",
+    "caminho": "/app/assinatura",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/assinatura",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "assinatura--celular360--claro.png",
+    "caminho": "/app/assinatura",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/assinatura",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "assinatura-ativa--computador--claro.png",
+    "caminho": "/app/assinatura",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/assinatura",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "biblioteca-bloqueada--celular360--claro.png",
+    "caminho": "/app/biblioteca",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/biblioteca",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "biblioteca--computador--claro.png",
+    "caminho": "/app/biblioteca",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/biblioteca",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "biblioteca--computador--escuro.png",
+    "caminho": "/app/biblioteca",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/biblioteca",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "biblioteca--celular360--claro.png",
+    "caminho": "/app/biblioteca",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/biblioteca",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "biblioteca--celular360--escuro.png",
+    "caminho": "/app/biblioteca",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/biblioteca",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "leitor-ebook--computador--claro.png",
+    "caminho": "/app/biblioteca?ebook=00000000-0000-4000-8000-000000000101",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:5173/api/ebooks/00000000-0000-4000-8000-000000000101/arquivo",
+      "net::ERR_ABORTED http://127.0.0.1:5173/api/ebooks/00000000-0000-4000-8000-000000000101/arquivo"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next",
+      "g_d0_sf2"
+    ],
+    "urlFinal": "/app/biblioteca?ebook=00000000-0000-4000-8000-000000000101",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "leitor-ebook--celular360--claro.png",
+    "caminho": "/app/biblioteca?ebook=00000000-0000-4000-8000-000000000101",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:5173/api/ebooks/00000000-0000-4000-8000-000000000101/arquivo",
+      "net::ERR_ABORTED http://127.0.0.1:5173/api/ebooks/00000000-0000-4000-8000-000000000101/arquivo"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next",
+      "g_d0_sf2"
+    ],
+    "urlFinal": "/app/biblioteca?ebook=00000000-0000-4000-8000-000000000101",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "indicadores--computador--claro.png",
+    "caminho": "/app/indicadores",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/indicadores",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "indicadores--computador--escuro.png",
+    "caminho": "/app/indicadores",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/indicadores",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "indicadores--celular360--claro.png",
+    "caminho": "/app/indicadores",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/indicadores",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "indicadores--celular360--escuro.png",
+    "caminho": "/app/indicadores",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/indicadores",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "ferramentas--computador--claro.png",
+    "caminho": "/app/ferramentas",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/ferramentas",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "ferramentas--celular360--claro.png",
+    "caminho": "/app/ferramentas",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/ferramentas",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "aplicativo--computador--claro.png",
+    "caminho": "/app/aplicativo",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/aplicativo",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "aplicativo--celular360--claro.png",
+    "caminho": "/app/aplicativo",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/aplicativo",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "ajuda--computador--claro.png",
+    "caminho": "/app/ajuda",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/ajuda",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "ajuda--celular360--claro.png",
+    "caminho": "/app/ajuda",
+    "erros": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "falhas": [],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/app/ajuda",
+    "larguraPagina": 360
+  },
+  {
+    "arquivo": "admin--computador--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "admin--celular360--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 361
+  },
+  {
+    "arquivo": "admin-assinaturas--computador--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "admin-ebooks--computador--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "admin-exclusoes--computador--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "admin-acesso--computador--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "admin-contas--computador--escuro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  },
+  {
+    "arquivo": "admin-suporte--computador--claro.png",
+    "caminho": "/admin",
+    "erros": [],
+    "falhas": [
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/suporte_contatos?select=id&status=eq.aberto",
+      "net::ERR_ABORTED http://127.0.0.1:54321/rest/v1/solicitacoes_exclusao?select=id&status=eq.pendente"
+    ],
+    "estouroHorizontal": false,
+    "fontes": [
+      "Big Shoulders Display",
+      "Atkinson Hyperlegible Next"
+    ],
+    "urlFinal": "/admin",
+    "larguraPagina": 1440
+  }
+]
