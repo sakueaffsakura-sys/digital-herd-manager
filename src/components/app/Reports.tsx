@@ -5,6 +5,7 @@ import { CalfIcon } from "./CalfIcon";
 import { toast } from "sonner";
 import { Legend, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import type { TableName } from "./shared";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Delta, variacao, Empty, Metric, PageTitle, Panel, dateNow, money, pretty, type Row } from "./shared";
@@ -64,15 +65,17 @@ export default function Reports({ propertyId }: { propertyId: string }) {
   });
 
   const q = useQuery({
-    placeholderData: (old) => old,
     staleTime: 30_000,
     queryKey: ["reports", propertyId, f.type, range.de, range.ate],
     queryFn: async () => {
       const { de, ate } = range;
       let truncado = false;
       // ordem total (coluna + id): sem o desempate, as páginas do range repetem/pulam linhas com a mesma data
-      const inRange = async <T,>(table: string, sel: string, col = "data") => {
-        const r = await fetchAllRowsInfo<T>((a, b) => (supabase.from(table as "vendas").select(sel) as any).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).order("id").range(a, b));
+      const inRange = async <T,>(table: TableName, sel: string, col = "data") => {
+        const r = await fetchAllRowsInfo<T>(async (a, b) => {
+          const res = await supabase.from(table).select(sel).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).order("id").range(a, b);
+          return { data: res.data as unknown as T[] | null, error: res.error };
+        });
         if (r.truncated) truncado = true;
         return r.rows;
       };
@@ -106,7 +109,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
     enabled: f.type === "geral" || f.type === "financeiro",
     staleTime: 60_000,
     queryFn: async () => {
-      const list = await fetchAllRows<Row>((a, b) => supabase.from("movimentacoes_financeiras").select("tipo,valor").eq("propriedade_id", propertyId).gte("data", prevRange.de).lte("data", prevRange.ate).order("data").order("id").range(a, b) as any);
+      const list = await fetchAllRows<Row>((a, b) => supabase.from("movimentacoes_financeiras").select("tipo,valor").eq("propriedade_id", propertyId).gte("data", prevRange.de).lte("data", prevRange.ate).order("data").order("id").range(a, b));
       const t: Record<string, number> = {}; list.forEach((r) => { t[String(r.tipo)] = (t[String(r.tipo)] ?? 0) + Number(r.valor); }); return t;
     },
   });

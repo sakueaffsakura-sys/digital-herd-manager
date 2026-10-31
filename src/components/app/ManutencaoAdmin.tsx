@@ -39,9 +39,9 @@ function usePainel(f: Filtros) {
     queryKey: ["admin-seguranca-painel", f], refetchInterval: 10_000,
     queryFn: async () => {
       const r = await rpc("admin_seguranca_painel", {
-        _desde: f.desde ? new Date(f.desde + "T00:00:00").toISOString() : null,
-        _ate: f.ate ? new Date(f.ate + "T23:59:59").toISOString() : null,
-        _ip: f.ip.trim() || null, _dispositivo: f.dispositivo.trim() || null, _tipo: f.tipo || null, _status: f.status || null,
+        _desde: f.desde ? new Date(f.desde + "T00:00:00").toISOString() : undefined,
+        _ate: f.ate ? new Date(f.ate + "T23:59:59").toISOString() : undefined,
+        _ip: f.ip.trim() || undefined, _dispositivo: f.dispositivo.trim() || undefined, _tipo: f.tipo || undefined, _status: f.status || undefined,
       });
       if (r.error) throw new Error("Não foi possível carregar os dados de segurança.");
       return r.data as Painel;

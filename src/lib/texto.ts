@@ -17,7 +17,10 @@ export const LIMITES_TEXTO = {
 } as const;
 
 export function quitarControles(v: string): string {
-  return v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
+  return Array.from(v).filter((c) => {
+    const n = c.charCodeAt(0);
+    return n !== 127 && (n >= 32 || n === 9 || n === 10 || n === 13);
+  }).join("");
 }
 
 /** Sanitiza texto de uma única linha: remove tags/HTML, colapsa espaços e trunca. */

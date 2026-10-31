@@ -280,11 +280,13 @@ export function useMyProfile(userId?: string) {
     enabled: !!userId,
     queryFn: async (): Promise<ProfileRow | null> => {
       if (!userId) return null;
-      let { data, error } = await supabase
+      const response = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .maybeSingle();
+      let data = response.data;
+      const error = response.error;
       if (error) throw error;
       if (!data) {
         const { error: insErr } = await supabase
