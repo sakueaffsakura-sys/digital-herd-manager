@@ -267,7 +267,7 @@ function TempoRealTab() {
   const media = serie.length ? Math.round(serie.reduce((s, p) => s + p.latencia, 0) / serie.length) : null;
   const pico = serie.length ? Math.max(...serie.map((p) => p.latencia)) : null;
   const saude = !atual ? "…" : atual.latencia < 400 && (ultima?.bloqueios ?? 0) === 0 ? "Ótimo" : atual.latencia < 1200 ? "Atenção" : "Lento";
-  const corSaude = saude === "Ótimo" ? "text-primary" : saude === "Atenção" ? "text-aviso" : "text-alerta";
+  const corSaude = saude === "…" ? "text-muted-foreground" : saude === "Ótimo" ? "text-primary" : saude === "Atenção" ? "text-aviso" : "text-alerta";
   const uso = ultima ? Math.round((100 * ultima.conexoes_total) / ultima.conexoes_max) : 0;
   const eixo = { tick: { fontSize: 13, fill: "var(--muted-foreground)" }, axisLine: false, tickLine: false };
 
@@ -277,7 +277,7 @@ function TempoRealTab() {
         <span className="relative flex size-2.5">{!pausado && <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />}<span className={`relative inline-flex size-2.5 rounded-full ${pausado ? "bg-muted-foreground" : "bg-primary"}`} /></span>
         <span className="text-sm font-medium">{pausado ? "Pausado" : "Ao vivo"}</span>
         <span className="text-xs text-muted-foreground">{atual ? `Última leitura ${atual.hora}` : "Coletando…"} · {serie.length} leituras{erros ? ` · ${erros} falhas` : ""}</span>
-        <span className={`ml-auto text-sm font-semibold ${corSaude}`}>Situação: {saude}</span>
+        <span className={`ml-auto text-sm font-bold ${corSaude}`}>{saude === "…" ? "Coletando a situação…" : `Situação: ${saude}`}</span>
         <Button size="sm" variant="outline" onClick={() => setPausado((p) => !p)}>{pausado ? <><Play />Retomar</> : <><Pause />Pausar</>}</Button>
       </div>
 
@@ -711,7 +711,7 @@ function Shell({ children, tab, setTab, alertaCount = 0, pedidosCount = 0, supor
 function Card({ icon: Icon, label, value, sub }: { icon: typeof Users; label: string; value: React.ReactNode; sub: string }) {
   return (
     <div className="painel p-4">
-      <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground"><Icon className="size-5 shrink-0 text-primary" /><span className="min-w-0 truncate">{label}</span></div>
+      <div className="flex items-start gap-2 text-sm font-bold leading-tight text-muted-foreground"><Icon className="mt-0.5 size-5 shrink-0 text-primary" /><span className="min-w-0">{label}</span></div>
       <div className="mt-2 font-display text-[2rem] font-extrabold leading-none tabular-nums">{value}</div>
       <div className="mt-1.5 text-sm text-muted-foreground">{sub}</div>
     </div>

@@ -1,4 +1,5 @@
-import { Check, ChevronDown, Crown, Gauge, Info, KeyRound, LogOut, Monitor, Moon, Pencil, Plus, Search, Sun, UserRound } from "lucide-react";
+import { useState } from "react";
+import { Check, ChevronDown, Crown, Gauge, Info, KeyRound, LifeBuoy, LogOut, Monitor, Moon, Pencil, Plus, Search, Sun, UserRound } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -83,6 +84,7 @@ export function BarraTopo({
 
 function BotaoYui({ ehAdmin }: { ehAdmin: boolean }) {
   const foto = useYuiAvatar(ehAdmin);
+  const [quebrou, setQuebrou] = useState(false);
   return (
     <button
       type="button"
@@ -91,7 +93,11 @@ function BotaoYui({ ehAdmin }: { ehAdmin: boolean }) {
       className="flex h-12 items-center gap-2 rounded-[10px] px-1.5 hover:bg-accent sm:px-2"
       aria-label="Falar com a Yui, a assistente de ajuda"
     >
-      <img src={foto} alt="" width={36} height={36} className="size-9 rounded-full border-2 border-primary object-cover" />
+      {quebrou ? (
+        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-primary bg-sucesso-fundo text-primary"><LifeBuoy className="size-5" /></span>
+      ) : (
+        <img src={foto} alt="" width={36} height={36} className="size-9 rounded-full border-2 border-primary object-cover" onError={() => setQuebrou(true)} />
+      )}
       <span className="hidden text-[15px] font-bold xl:inline">Ajuda</span>
     </button>
   );
