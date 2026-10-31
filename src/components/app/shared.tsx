@@ -8,7 +8,7 @@ import { dataLocalISO } from "@/lib/datas";
 
 export type TableName = keyof Database["public"]["Tables"];
 export type Row = Record<string, unknown>;
-export type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina"; required?: boolean; options?: { value: string; label: string }[]; sex?: "M" | "F"; activeOnly?: boolean };
+export type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina"; required?: boolean; options?: { value: string; label: string }[]; sex?: "M" | "F"; activeOnly?: boolean; /** Exemplo do que escrever, dentro do campo vazio. */ dica?: string; /** Fica escondido atrás de "Mais detalhes" até alguém abrir. */ avancado?: boolean };
 export type FilterDef = { key: string; label: string; options: { value: string; label: string }[] };
 export type ImpliedFilter = { key: string; isNull?: boolean; value?: string };
 export type IconType = ComponentType<{ className?: string }>;

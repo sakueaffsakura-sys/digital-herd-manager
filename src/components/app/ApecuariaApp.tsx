@@ -103,7 +103,7 @@ export function ApecuariaApp() {
   const limparBusca = () => navigate({ to: "/app/$section", params: { section }, search: {}, replace: true });
   const isAdminQuery = useQuery({ queryKey: ["sou-admin"], queryFn: async () => { const r = await (supabase.rpc as unknown as (f: string) => Promise<{ data: unknown }>)("sou_admin"); return r.data === true; } });
   const signOut = async () => { await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({ to: "/", replace: true }); };
-  const pedido = { novo: busca.novo, editar: busca.editar, animal: busca.animal, limpar: limparBusca };
+  const pedido = { novo: busca.novo, editar: busca.editar, animal: busca.animal, anotacao: busca.anotacao, limpar: limparBusca };
 
   const secaoPropriedade = ["perfil-propriedade", "configuracoes", "assinatura", "diagnostico"].includes(section) || !["perfil", "seguranca"].includes(section);
   let conteudo: ReactNode;
@@ -120,7 +120,7 @@ export function ApecuariaApp() {
   else if (section === "diagnostico") conteudo = <Suspense fallback={<SectionLoading />}><Diagnostics propertyId={propertyId} /></Suspense>;
   else if (section === "comercial") conteudo = <Commerce key={propertyId} propertyId={propertyId} pedido={pedido} />;
   else if (section === "vacinacao") conteudo = <VaccinationArea key={propertyId} propertyId={propertyId} pedido={pedido} />;
-  else if (section === "producao") conteudo = <ProductionArea key={propertyId} propertyId={propertyId} pedido={pedido} />;
+  else if (section === "producao") conteudo = <ProductionArea key={propertyId} propertyId={propertyId} pedido={pedido} abrirAnimal={(id) => void abrirAnimal(id)} />;
   else if (section === "perfil-propriedade" || section === "configuracoes") conteudo = <div className="space-y-8"><SettingsPage property={currentProperty} onUpdated={() => queryClient.invalidateQueries({ queryKey: ["properties"] })} /><PropertyProfilePage propertyId={propertyId} /></div>;
   else if (section === "assinatura") conteudo = <Suspense fallback={<SectionLoading />}><AreaAssinante propriedades={propertiesQuery.data ?? []} propriedadeId={propertyId} ehAdmin={isAdminQuery.data === true} retorno={busca.retorno} aoIr={(c) => void go(c)} /></Suspense>;
   else if (section === "biblioteca") conteudo = <Suspense fallback={<SectionLoading />}><Biblioteca ebookAberto={busca.ebook} aoAbrir={(id) => void navigate({ to: "/app/$section", params: { section: "biblioteca" }, search: { ebook: id } })} aoFechar={() => void navigate({ to: "/app/$section", params: { section: "biblioteca" }, search: {}, replace: true })} aoIr={(c) => void go(c)} /></Suspense>;
@@ -169,7 +169,7 @@ export function ApecuariaApp() {
 }
 
 /** Pedido vindo do endereço: abrir o formulário de novo registro, editar um registro ou abrir a ficha de um animal. */
-type Pedido = { novo?: string; editar?: string; animal?: string; limpar: () => void };
+type Pedido = { novo?: string; editar?: string; animal?: string; anotacao?: string; limpar: () => void };
 
 function AboutDialog({ open, isAdmin, onClose }: { open: boolean; isAdmin: boolean; onClose: () => void }) {
   const criadores = useCriadores(open && isAdmin);
@@ -428,17 +428,18 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
   );
 }
 
-function ProductionArea({ propertyId, pedido }: { propertyId: string; pedido: Pedido }) {
-  const [tab, setTab] = useState<"milk" | "notes">(pedido.novo === "anotacao" ? "notes" : "milk");
+function ProductionArea({ propertyId, pedido, abrirAnimal }: { propertyId: string; pedido: Pedido; abrirAnimal: (id: string) => void }) {
+  const [tab, setTab] = useState<"milk" | "notes">(pedido.novo === "anotacao" || pedido.anotacao ? "notes" : "milk");
   const [novaAnotacao, setNovaAnotacao] = useState(pedido.novo === "anotacao");
   useEffect(() => { if (pedido.novo === "anotacao") { setTab("notes"); setNovaAnotacao(true); pedido.limpar(); } }, [pedido.novo]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (pedido.anotacao) setTab("notes"); }, [pedido.anotacao]);
   useEffect(() => { const showNotes = () => setTab("notes"); window.addEventListener("yui:show-notes", showNotes); return () => window.removeEventListener("yui:show-notes", showNotes); }, []);
   return (
     <div>
       <Abas rotulo="Leite" valor={tab} aoMudar={setTab} opcoes={[{ valor: "milk", rotulo: "Registros de leite" }, { valor: "notes", rotulo: "Anotações", tour: "notas-aba" }]} />
       {tab === "milk"
         ? <CrudModule key={`${propertyId}:producao`} config={modules["producao"] ?? productionNotes} propertyId={propertyId} globalSearch="" pedido={pedido} />
-        : <NotesMural key={propertyId} propertyId={propertyId} globalSearch="" abrirNova={novaAnotacao} aoAbrirNova={() => setNovaAnotacao(false)} />}
+        : <NotesMural key={propertyId} propertyId={propertyId} globalSearch="" abrirNova={novaAnotacao} aoAbrirNova={() => setNovaAnotacao(false)} abrirAnimal={abrirAnimal} anotacaoId={pedido.anotacao} aoAbrirAnotacao={pedido.limpar} />}
     </div>
   );
 }

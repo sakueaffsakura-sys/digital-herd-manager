@@ -42,6 +42,7 @@ const CENAS = [
   { nome: "lancar", caminho: "/app/inicio", logado: true, tamanhos: ["celular360"], temas: ["light"], acao: async (page) => { await page.getByRole("button", { name: "Lançar" }).click(); await page.waitForTimeout(600); } },
   { nome: "vacinacao", caminho: "/app/vacinacao", logado: true, tamanhos: ["computador"], temas: ["light", "dark"] },
   { nome: "producao", caminho: "/app/producao", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "anotacoes", caminho: "/app/producao", logado: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"], acao: async (page) => { await page.getByRole("tab", { name: "Anotações" }).click(); await page.waitForTimeout(1200); } },
   { nome: "financeiro", caminho: "/app/financeiro", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "relatorios", caminho: "/app/relatorios", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "perfil", caminho: "/app/perfil", logado: true, tamanhos: ["computador"], temas: ["light"] },

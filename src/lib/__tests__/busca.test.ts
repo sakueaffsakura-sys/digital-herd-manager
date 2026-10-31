@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BUSCA_MAX, escapeILikeValue, orSearch, quoteOrValue, termoDeBusca } from "../busca";
+import { BUSCA_MAX, escapeILikeValue, orInUuids, orSearch, quoteOrValue, termoDeBusca } from "../busca";
 
 describe("termoDeBusca", () => {
   it("tira espaços repetidos, controles e limita o tamanho", () => {
@@ -39,5 +39,36 @@ describe("orSearch", () => {
     expect(orSearch(["a"], "   ")).toBeNull();
     expect(orSearch([], "x")).toBeNull();
     expect(orSearch(undefined, "x")).toBeNull();
+  });
+});
+
+describe("orInUuids", () => {
+  const A = "11111111-1111-4111-8111-111111111111";
+  const B = "22222222-2222-4222-8222-222222222222";
+  it("monta o filtro com os identificadores", () => {
+    expect(orInUuids("animal_id", [A, B])).toBe(`animal_id.in.(${A},${B})`);
+  });
+  it("tira repetidos", () => {
+    expect(orInUuids("animal_id", [A, A])).toBe(`animal_id.in.(${A})`);
+  });
+  it("recusa o que não é identificador (nada de injeção)", () => {
+    expect(orInUuids("animal_id", ["não-é-uuid", "1);drop table animais;--"])).toBeNull();
+    expect(orInUuids("animal_id", [])).toBeNull();
+  });
+  it("respeita o limite de quantos entram", () => {
+    const muitos = Array.from({ length: 150 }, (_, i) => `1111111${i % 10}-1111-4111-8111-111111111111`);
+    expect(orInUuids("animal_id", muitos, 5)!.split(",").length).toBe(5);
+  });
+});
+
+describe("orSearch com extras", () => {
+  it("junta as colunas e as condições prontas no mesmo ou", () => {
+    expect(orSearch(["observacao"], "cio", ["animal_id.in.(a)"])).toBe('observacao.ilike."%cio%",animal_id.in.(a)');
+  });
+  it("funciona só com as condições prontas", () => {
+    expect(orSearch([], "cio", ["animal_id.in.(a)"])).toBe("animal_id.in.(a)");
+  });
+  it("sem termo digitado, não filtra nada", () => {
+    expect(orSearch(["observacao"], "   ", ["animal_id.in.(a)"])).toBeNull();
   });
 });

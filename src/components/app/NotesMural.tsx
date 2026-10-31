@@ -2,18 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   Milk,
   AlertCircle,
+  MoreHorizontal,
   NotebookPen,
   Pencil,
   Plus,
   RefreshCw,
   Search,
+  Star,
   Trash2,
+  Tractor,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +29,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { maxPage, pageSummary, pageWindow, PAGE_SIZES } from "@/lib/pagination";
 import { createPageableTable, useDebouncedValue, usePagedRows } from "./usePagedRows";
 import { Empty, PageTitle, friendlyError, pretty, type FormRefs, type Module, type Row } from "./shared";
-import { formatarDataBR } from "@/lib/datas";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { dataLocalISO, formatarDataBR, somarDias } from "@/lib/datas";
+import { orInUuids } from "@/lib/busca";
+import { plural } from "@/lib/texto";
+import { Brinco } from "./Brinco";
 import { RecordDialog } from "./RecordDialog";
 import { EXEMPLOS_NOTA } from "./yui/tourSteps";
 
@@ -35,7 +43,7 @@ export const productionNotes: Module = {
   table: "anotacoes_producao",
   icon: NotebookPen,
   description: "Comportamento, alimentação e observações ligadas à produção.",
-  searchColumns: ["observacao", "comportamento", "alimentacao"],
+  searchColumns: ["observacao", "comportamento", "alimentacao", "informacoes_adicionais"],
   columns: [
     { key: "data", label: "Data" },
     { key: "animal_id", label: "Animal" },
@@ -44,26 +52,71 @@ export const productionNotes: Module = {
     { key: "observacao", label: "Observação" },
   ],
   fields: [
-    { key: "animal_id", label: "Animal", type: "animal", activeOnly: true },
-    { key: "lote_id", label: "Lote", type: "lote" },
+    { key: "observacao", label: "O que aconteceu", type: "textarea", required: true, dica: "Ex.: Cio observado, produção caiu, vacina aplicada…" },
     { key: "data", label: "Data", type: "date", required: true },
-    { key: "producao", label: "Produção (L)", type: "number" },
-    { key: "observacao", label: "Observação", type: "textarea", required: true },
-    { key: "comportamento", label: "Comportamento" },
-    { key: "alimentacao", label: "Alimentação" },
-    { key: "informacoes_adicionais", label: "Informações adicionais", type: "textarea" },
+    { key: "animal_id", label: "Animal", type: "animal", activeOnly: true, dica: "Nenhum animal em especial" },
+    { key: "lote_id", label: "Lote", type: "lote", dica: "Nenhum lote em especial" },
+    { key: "comportamento", label: "Comportamento", avancado: true },
+    { key: "alimentacao", label: "Alimentação", avancado: true },
+    { key: "producao", label: "Produção do dia (litros)", type: "number", avancado: true },
+    { key: "informacoes_adicionais", label: "Informações adicionais", type: "textarea", avancado: true },
   ],
 };
 
 const NOTE_COLS =
-  "id,data,animal_id,lote_id,producao,observacao,comportamento,alimentacao,informacoes_adicionais,created_at";
+  "id,data,animal_id,lote_id,producao,observacao,comportamento,alimentacao,informacoes_adicionais,marcada,created_at";
 
-export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }: { propertyId: string; globalSearch: string; abrirNova?: boolean; aoAbrirNova?: () => void }) {
+/** Abas da lista, como no aplicativo. */
+const ABAS = [
+  { chave: "todas", rotulo: "Todas" },
+  { chave: "marcadas", rotulo: "Marcadas" },
+  { chave: "animais", rotulo: "De animais" },
+  { chave: "gerais", rotulo: "Gerais" },
+] as const;
+type Aba = (typeof ABAS)[number]["chave"];
+
+const FILTRO_DA_ABA: Record<Aba, { key: string; op: "eq" | "is-null" | "not-null"; value: string | null }[]> = {
+  todas: [],
+  marcadas: [{ key: "marcada", op: "eq", value: "true" }],
+  animais: [{ key: "animal_id", op: "not-null", value: null }],
+  gerais: [{ key: "animal_id", op: "is-null", value: null }],
+};
+
+const semAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+
+/** "Hoje", "Ontem" ou a data por extenso — o mesmo que o aplicativo mostra. */
+function rotuloDoDia(iso: string, hoje: string) {
+  if (iso === hoje) return "Hoje";
+  if (iso === somarDias(hoje, -1)) return "Ontem";
+  const [a, m, d] = iso.split("-").map(Number);
+  if (!a || !m || !d) return formatarDataBR(iso);
+  return new Date(Date.UTC(a, m - 1, d)).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+}
+
+/** Hora em que a anotação foi escrita (fica no rodapé do cartão). */
+function horaDe(valor: unknown) {
+  const t = Date.parse(String(valor ?? ""));
+  return Number.isFinite(t) ? new Date(t).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+}
+
+export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, abrirAnimal, anotacaoId, aoAbrirAnotacao }: {
+  propertyId: string;
+  globalSearch: string;
+  abrirNova?: boolean;
+  aoAbrirNova?: () => void;
+  /** Abre a ficha do animal da anotação (menu dos três pontinhos). */
+  abrirAnimal?: (id: string) => void;
+  /** `?editar=<id>` na barra de endereço: abre essa anotação direto. */
+  anotacaoId?: string;
+  aoAbrirAnotacao?: () => void;
+}) {
   const qc = useQueryClient();
   const [local, setLocal] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [open, setOpen] = useState(false);
+  const [aba, setAba] = useState<Aba>("todas");
+  const [diasFechados, setDiasFechados] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<Row | null>(null);
   const [demo, setDemo] = useState<Row | null>(null);
   const [demoIndice, setDemoIndice] = useState(0);
@@ -82,6 +135,21 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
     window.addEventListener("yui:demo-fim", fechar);
     return () => { window.removeEventListener("yui:demo-nota", abrir); window.removeEventListener("yui:demo-fim", fechar); };
   }, []);
+  // Link direto para uma anotação (?editar=<id>), inclusive vinda da busca ou de outro aparelho.
+  useEffect(() => {
+    if (!anotacaoId) return;
+    let vivo = true;
+    void (async () => {
+      const { data, error } = await supabase.from("anotacoes_producao").select(NOTE_COLS).eq("id", anotacaoId).eq("propriedade_id", propertyId).maybeSingle();
+      if (!vivo) return;
+      aoAbrirAnotacao?.();
+      if (error || !data) { toast.error("Não encontramos essa anotação."); return; }
+      setEditing(data as unknown as Row);
+      setOpen(true);
+    })();
+    return () => { vivo = false; };
+  }, [anotacaoId, propertyId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const deferredLocal = useDebouncedValue(local, 300);
   const search = (globalSearch || deferredLocal).trim();
 
@@ -91,6 +159,20 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
     staleTime: 5 * 60_000,
   });
 
+  // Procurar pelo brinco ou pelo nome do animal também: achamos os animais aqui e
+  // mandamos os identificadores junto no mesmo "ou" da consulta.
+  const animaisDaBusca = useMemo(() => {
+    const t = semAcento(search);
+    if (t.length < 2) return [];
+    return (refs.data?.animals ?? [])
+      .filter((a) => semAcento(`${a.numero_brinco} ${a.nome ?? ""}`).includes(t))
+      .map((a) => a.id);
+  }, [refs.data, search]);
+  const searchExtras = useMemo(() => {
+    const cond = orInUuids("animal_id", animaisDaBusca);
+    return cond ? [cond] : [];
+  }, [animaisDaBusca]);
+
   const paged = usePagedRows({
     table: "anotacoes_producao",
     propertyId,
@@ -99,6 +181,9 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
     pageSize,
     search,
     searchColumns: productionNotes.searchColumns,
+    searchExtras,
+    filters: FILTRO_DA_ABA[aba],
+    ordem: "data",
   });
 
   useEffect(() => {
@@ -109,7 +194,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
 
   useEffect(() => {
     setPage(1);
-  }, [search, pageSize]);
+  }, [search, pageSize, aba]);
 
   const invalidate = () => {
     createPageableTable({ table: "anotacoes_producao", propertyId }).invalidate(qc);
@@ -145,6 +230,14 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
     }
   };
 
+  const marcar = async (row: Row) => {
+    const nova = !row["marcada"];
+    const { error } = await supabase.from("anotacoes_producao").update({ marcada: nova }).eq("id", String(row["id"])).eq("propriedade_id", propertyId);
+    if (error) { toast.error(friendlyError(error)); return; }
+    toast.success(nova ? "Anotação marcada como importante." : "Marca retirada.");
+    invalidate();
+  };
+
   const animalName = (id: unknown) => {
     const a = refs.data?.animals.find((x) => x.id === id);
     return a ? a.nome || a.numero_brinco : "";
@@ -155,128 +248,183 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova }:
   const last = maxPage({ total: paged.total, pageSize });
   const pages = pageWindow(page, paged.total, pageSize);
   const rows = useMemo(() => paged.rows, [paged.rows]);
+  const hoje = dataLocalISO();
+  // Agrupa por dia, mantendo a ordem que veio do banco (mais novo primeiro).
+  const dias = useMemo(() => {
+    const mapa = new Map<string, Row[]>();
+    for (const r of rows) {
+      const dia = String(r["data"] ?? "");
+      const lista = mapa.get(dia);
+      if (lista) lista.push(r);
+      else mapa.set(dia, [r]);
+    }
+    return [...mapa.entries()];
+  }, [rows]);
+  const alternarDia = (dia: string) => setDiasFechados((antes) => {
+    const novo = new Set(antes);
+    if (novo.has(dia)) novo.delete(dia);
+    else novo.add(dia);
+    return novo;
+  });
 
   return (
     <div className="space-y-6">
       <PageTitle
-        icon={NotebookPen}
-        title="Anotações da Produção"
-        description="Comportamento, alimentação e observações ligadas à produção."
+        title="Anotações"
+        description="O caderno da fazenda: o que aconteceu, com qual animal e em que dia."
         action={
-          <Button data-tour="notas-nova" onClick={() => { setEditing(null); setOpen(true); }}>
+          <Button data-tour="notas-nova" className="h-12" onClick={() => { setEditing(null); setOpen(true); }}>
             <Plus />Nova anotação
           </Button>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3 border-y border-border py-4">
-        <div className="relative min-w-0 basis-full sm:max-w-lg sm:flex-1 sm:basis-auto">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative min-w-0 flex-1 basis-64 sm:max-w-md">
+          <span className="sr-only">Buscar anotações</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="h-11 bg-card pl-10"
-            aria-label="Buscar anotações"
+            className="pl-10"
             value={local}
             onChange={(e) => setLocal(e.target.value)}
-            placeholder="Buscar anotações…"
+            placeholder="Texto, brinco ou nome do animal"
           />
+        </label>
+        <div role="group" aria-label="Filtrar anotações" className="flex flex-wrap gap-2">
+          {ABAS.map((t) => (
+            <button
+              key={t.chave}
+              type="button"
+              aria-pressed={aba === t.chave}
+              onClick={() => setAba(t.chave)}
+              className={`h-11 rounded-full border px-4 text-sm font-bold ${aba === t.chave ? "border-primary bg-sucesso-fundo text-primary" : "border-input text-muted-foreground"}`}
+            >
+              {t.rotulo}
+            </button>
+          ))}
         </div>
-        <span className="flex items-center gap-2 text-xs text-muted-foreground sm:ml-auto">
-          <NotebookPen className="size-4 text-primary" />
-          {paged.totalReady ? <><strong className="text-foreground">{summary.total.toLocaleString("pt-BR")}</strong> anotações</> : "contando…"}
+        <span className="text-sm text-muted-foreground sm:ml-auto">
+          {paged.totalReady ? plural(summary.total, "anotação", "anotações") : "contando…"}
         </span>
       </div>
 
       {paged.isPending ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="h-60 animate-pulse rounded-lg border border-border bg-muted/30" />
-          ))}
+          {Array.from({ length: 6 }, (_, i) => <div key={i} className="h-52 animate-pulse rounded-2xl border border-border bg-muted/40" />)}
         </div>
       ) : paged.error ? (
-        <div role="alert" className="grid place-items-center gap-4 py-16 text-sm text-muted-foreground">
+        <div role="alert" className="painel grid place-items-center gap-4 p-10 text-center">
           <span className="grid size-12 place-items-center rounded-full bg-alerta-fundo text-alerta"><AlertCircle className="size-6" /></span>
-          <div className="grid place-items-center gap-1 text-center">
-            <span className="text-base font-semibold text-foreground">Não foi possível carregar as anotações</span>
-            <span className="max-w-xl text-xs text-alerta">{paged.error.message}</span>
+          <div>
+            <p className="font-bold">Não foi possível carregar as anotações</p>
+            <p className="mt-1 text-sm text-alerta">{paged.error.message}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => paged.refetch()}><RefreshCw />Tentar novamente</Button>
+          <Button variant="outline" className="h-12" onClick={() => paged.refetch()}><RefreshCw />Tentar de novo</Button>
         </div>
       ) : rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="mb-1 grid size-14 place-items-center rounded-lg border border-primary/20 bg-primary/10 text-primary"><NotebookPen className="size-6" /></span>
-          <h2 className="text-lg font-semibold">{search ? "Nenhuma anotação encontrada" : "Suas anotações aparecem aqui"}</h2>
-          {!search && <Button variant="outline" onClick={() => { setEditing(null); setOpen(true); }}><Plus />Nova anotação</Button>}
-        </div>
+        <Empty
+          message={
+            search ? "Nenhuma anotação com essa busca."
+              : aba === "marcadas" ? "Você ainda não marcou nenhuma anotação. Toque na estrela de uma anotação para guardá-la aqui."
+              : aba === "animais" ? "Nenhuma anotação ligada a um animal."
+              : aba === "gerais" ? "Todas as suas anotações estão ligadas a algum animal."
+              : "Ainda não há anotações. Escreva o que aconteceu hoje na fazenda."
+          }
+          action={!search && aba === "todas" ? { label: "Escrever a primeira anotação", onClick: () => { setEditing(null); setOpen(true); } } : undefined}
+        />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map((row) => {
-            const animal = animalName(row["animal_id"]);
-            const lote = loteName(row["lote_id"]);
-            const producao = Number(row["producao"]);
-            const quem = [animal, lote].filter(Boolean).join(" · ");
+        <div className="space-y-6">
+          {dias.map(([dia, doDia]) => {
+            const fechado = diasFechados.has(dia);
             return (
-              <article
-                key={String(row["id"])}
-                className="group flex min-w-0 flex-col gap-4 rounded-lg border border-border border-t-2 border-t-primary/45 bg-card p-5 shadow-sm transition-colors motion-reduce:transition-none hover:border-primary/40"
-              >
-                <header className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <CalendarDays className="size-3.5" />
-                    {formatarDataBR(row["data"])}
-                  </span>
-                  {producao > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-                      <Milk className="size-3.5" />{producao.toLocaleString("pt-BR")} L
-                    </span>
-                  )}
-                </header>
+              <section key={dia}>
+                <button
+                  type="button"
+                  onClick={() => alternarDia(dia)}
+                  aria-expanded={!fechado}
+                  className="mb-3 flex w-full items-center gap-2 border-b border-border pb-2 text-left"
+                >
+                  <CalendarDays className="size-5 shrink-0 text-primary" />
+                  <span className="min-w-0 flex-1 truncate font-bold capitalize">{rotuloDoDia(dia, hoje)}</span>
+                  <span className="shrink-0 text-sm text-muted-foreground">{plural(doDia.length, "anotação", "anotações")}</span>
+                  <ChevronDown className={`size-5 shrink-0 text-muted-foreground transition-transform ${fechado ? "-rotate-90" : ""}`} />
+                </button>
+                {!fechado && (
+                  <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {doDia.map((row) => {
+                      const animal = refs.data?.animals.find((x) => x.id === row["animal_id"]);
+                      const lote = loteName(row["lote_id"]);
+                      const producao = Number(row["producao"]);
+                      const marcada = row["marcada"] === true;
+                      const texto = String(row["observacao"] ?? "").trim() || pretty(row["comportamento"]) || pretty(row["alimentacao"]) || String(row["informacoes_adicionais"] ?? "") || "Anotação sem texto";
+                      const hora = horaDe(row["created_at"]);
+                      return (
+                        <li key={String(row["id"])}>
+                          <article className={`painel flex h-full min-w-0 flex-col gap-3 p-4 ${marcada ? "marca-ativa relative overflow-hidden" : ""}`}>
+                            <header className="flex items-start gap-2">
+                              {animal ? (
+                                <Brinco numero={animal.numero_brinco} tamanho="pequeno" />
+                              ) : (
+                                <span className="inline-flex h-11 items-center gap-1.5 rounded-full bg-muted px-3 text-sm font-bold text-muted-foreground">
+                                  <Tractor className="size-4" />Geral
+                                </span>
+                              )}
+                              <div className="min-w-0 flex-1 pt-1">
+                                <p className="truncate font-bold">{animal ? (animal.nome || animal.numero_brinco) : "Anotação geral"}</p>
+                                {lote && <p className="truncate text-sm text-muted-foreground">{lote}</p>}
+                              </div>
+                              <button
+                                type="button"
+                                aria-pressed={marcada}
+                                aria-label={marcada ? "Tirar a marca desta anotação" : "Marcar esta anotação como importante"}
+                                title={marcada ? "Tirar a marca" : "Marcar como importante"}
+                                className={`grid size-11 shrink-0 place-items-center rounded-[10px] ${marcada ? "text-brinco" : "text-muted-foreground hover:text-foreground"}`}
+                                onClick={() => void marcar(row)}
+                              >
+                                <Star className={`size-5 ${marcada ? "fill-current" : ""}`} />
+                              </button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" aria-label="Mais opções da anotação"><MoreHorizontal /></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => { setEditing(row); setOpen(true); }}><Pencil />Abrir e editar</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => void marcar(row)}><Star />{marcada ? "Tirar a marca" : "Marcar como importante"}</DropdownMenuItem>
+                                  {animal && abrirAnimal && (
+                                    <DropdownMenuItem onClick={() => abrirAnimal(animal.id)}><NotebookPen />Ver a ficha do animal</DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem className="text-alerta" onClick={() => void remove(row)}><Trash2 />Excluir</DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </header>
 
-                {quem && <p className="break-words text-sm font-semibold text-primary">{quem}</p>}
-                <p className="break-words whitespace-pre-wrap text-sm leading-7">{String(row["observacao"] ?? "")}</p>
+                            <p className="min-w-0 whitespace-pre-wrap break-words leading-relaxed">{texto}</p>
 
-                {!!(row["comportamento"] || row["alimentacao"]) && (
-                  <div className="grid gap-2 border-l-2 border-border pl-3">
-                    {!!row["comportamento"] && (
-                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-xs font-bold text-chart-4">Comportamento</span>{pretty(row["comportamento"])}</p>
-                    )}
-                    {!!row["alimentacao"] && (
-                      <p className="break-words text-xs leading-relaxed"><span className="mb-0.5 block text-xs font-bold text-chart-2">Alimentação</span>{pretty(row["alimentacao"])}</p>
-                    )}
-                  </div>
+                            {!!(row["comportamento"] || row["alimentacao"]) && (
+                              <div className="grid gap-1.5 border-l-2 border-border pl-3 text-sm">
+                                {!!row["comportamento"] && <p className="break-words"><span className="font-bold">Comportamento: </span>{pretty(row["comportamento"])}</p>}
+                                {!!row["alimentacao"] && <p className="break-words"><span className="font-bold">Alimentação: </span>{pretty(row["alimentacao"])}</p>}
+                              </div>
+                            )}
+                            {!!row["informacoes_adicionais"] && (
+                              <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{String(row["informacoes_adicionais"])}</p>
+                            )}
+
+                            <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-2.5 text-sm text-muted-foreground">
+                              <span>{formatarDataBR(row["data"])}{hora ? ` · ${hora}` : ""}</span>
+                              {producao > 0 && (
+                                <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-sucesso-fundo px-2.5 py-1 font-bold text-primary">
+                                  <Milk className="size-4" />{producao.toLocaleString("pt-BR")} L
+                                </span>
+                              )}
+                            </footer>
+                          </article>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
-
-                {!!row["informacoes_adicionais"] && (
-                  <p className="break-words whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
-                    {String(row["informacoes_adicionais"])}
-                  </p>
-                )}
-
-                <footer className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
-                  <span className="text-xs font-bold text-muted-foreground">Anotação da produção</span>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-9 text-muted-foreground hover:text-primary"
-                      title="Editar anotação"
-                      aria-label="Editar anotação"
-                      onClick={() => { setEditing(row); setOpen(true); }}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-9 text-muted-foreground hover:text-alerta"
-                      title="Excluir anotação"
-                      aria-label="Excluir anotação"
-                      onClick={() => remove(row)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </footer>
-              </article>
+              </section>
             );
           })}
         </div>

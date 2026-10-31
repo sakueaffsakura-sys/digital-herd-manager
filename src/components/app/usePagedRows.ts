@@ -8,7 +8,7 @@ export { escapeILikeValue };
 
 export type GridFilter = {
   key: string;
-  op: "eq" | "ilike" | "gte" | "lte" | "is-null";
+  op: "eq" | "ilike" | "gte" | "lte" | "is-null" | "not-null";
   value: string | null;
 };
 
@@ -23,8 +23,8 @@ export function useDebouncedValue<T>(value: T, delay = 350): T {
   return debounced;
 }
 
-const serialize = (filters: FilterBag | undefined, search: string) =>
-  `${search}\u0000${JSON.stringify(filters?.map((f) => [f.key, f.op, f.value]))}`;
+const serialize = (filters: FilterBag | undefined, search: string, extras: readonly string[] | undefined) =>
+  `${search}\u0000${JSON.stringify(filters?.map((f) => [f.key, f.op, f.value]))}\u0000${extras?.join("|") ?? ""}`;
 
 function baseScopedQuery(
   table: string,
@@ -34,6 +34,7 @@ function baseScopedQuery(
   filters: FilterBag | undefined,
   cols = "*",
   countOnly = false,
+  searchExtras: readonly string[] | undefined = undefined,
 ) {
   let q = supabaseDinamico.from(table).select(cols, countOnly ? { count: "exact", head: true } : undefined);
   q = q.eq("propriedade_id", propertyId);
@@ -43,13 +44,17 @@ function baseScopedQuery(
       q = q.is(f.key, null);
       continue;
     }
+    if (f.op === "not-null") {
+      q = q.not(f.key, "is", null);
+      continue;
+    }
     if (f.value === null || f.value === "") continue;
     if (f.op === "ilike") q = q.ilike(f.key, `%${escapeILikeValue(f.value)}%`);
     else if (f.op === "gte") q = q.gte(f.key, f.value);
     else if (f.op === "lte") q = q.lte(f.key, f.value);
     else q = q.eq(f.key, f.value);
   }
-  const compiled = orSearch(searchColumns, search);
+  const compiled = orSearch(searchColumns, search, searchExtras);
   if (compiled) q = q.or(compiled);
   return q;
 }
@@ -60,12 +65,14 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       search,
       searchColumns,
       filters,
+      searchExtras,
     }: {
       search: string;
       searchColumns?: string[];
       filters?: FilterBag;
+      searchExtras?: readonly string[];
     }) => {
-      const q = baseScopedQuery(table, propertyId, search, searchColumns, filters, "id", true);
+      const q = baseScopedQuery(table, propertyId, search, searchColumns, filters, "id", true, searchExtras);
       const { count, error } = await q;
       return { count: (count ?? 0) as number, error };
     },
@@ -77,6 +84,8 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       search,
       searchColumns,
       filters,
+      searchExtras,
+      ordem,
     }: {
       cols: string;
       page: number;
@@ -84,9 +93,13 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       search: string;
       searchColumns?: string[];
       filters?: FilterBag;
+      searchExtras?: readonly string[];
+      /** Coluna principal da ordenação (padrão: quando o registro foi criado). */
+      ordem?: string;
     }) => {
       const { from, to } = rangeOf(page, pageSize);
-      let q = baseScopedQuery(table, propertyId, search, searchColumns, filters, cols);
+      let q = baseScopedQuery(table, propertyId, search, searchColumns, filters, cols, false, searchExtras);
+      if (ordem) q = q.order(ordem, { ascending: false });
       q = q.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
       const { data, error } = await q;
       return { data: (data ?? []) as unknown as Record<string, unknown>[], error };
@@ -109,6 +122,8 @@ export type UsePagedRowsArgs = {
   search: string;
   searchColumns?: string[];
   filters?: FilterBag;
+  searchExtras?: readonly string[];
+  ordem?: string;
 };
 
 /**
@@ -129,13 +144,15 @@ export function usePagedRows({
   search,
   searchColumns,
   filters,
+  searchExtras,
+  ordem,
 }: UsePagedRowsArgs) {
   const finalPage = clampPage(page, Number.MAX_SAFE_INTEGER, pageSize);
   const termo = termoDeBusca(search);
-  const cacheKey = serialize(filters, termo);
+  const cacheKey = serialize(filters, termo, searchExtras);
 
   const list = useQuery({
-    queryKey: [table, propertyId, "rows", cols, finalPage, pageSize, cacheKey],
+    queryKey: [table, propertyId, "rows", cols, finalPage, pageSize, cacheKey, ordem ?? ""],
     queryFn: async () => {
       const res = await createPageableTable({ table, propertyId }).rows({
         cols,
@@ -144,6 +161,8 @@ export function usePagedRows({
         search: termo,
         searchColumns,
         filters,
+        searchExtras,
+        ordem,
       });
       if (res.error) throw res.error;
       return res.data;
@@ -158,6 +177,7 @@ export function usePagedRows({
         search: termo,
         searchColumns,
         filters,
+        searchExtras,
       });
       if (res.error) throw res.error;
       return res.count;

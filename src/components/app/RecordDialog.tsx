@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { CalendarDays, FileText, LoaderCircle, NotebookPen, Save } from "lucide-react";
+import { FileText, LoaderCircle, NotebookPen, Plus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,38 @@ export function RecordDialog({
   const submitLock = useRef(false);
   const queryClient = useQueryClient();
   const isNote = config.table === "anotacoes_producao";
+  const campos = config.fields;
+  const avancados = campos.filter((f) => f.avancado);
+  // Já abre os detalhes quando a anotação que está sendo editada tem algo preenchido ali.
+  const [detalhes, setDetalhes] = useState(false);
+  useEffect(() => {
+    setDetalhes(avancados.some((f) => {
+      const v = row?.[f.key];
+      return v !== undefined && v !== null && String(v).trim() !== "";
+    }));
+  }, [row, open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const campo = (f: Field) => (
+    <div key={f.key} className={`${f.type === "textarea" ? "sm:col-span-2" : ""} ${isNote ? "min-w-0 space-y-2" : ""}`}>
+      <Label htmlFor={`record-${f.key}`} className={isNote ? "text-[15px] font-bold" : ""}>{f.label}{isNote && f.required && <span className="ml-1 text-primary" aria-hidden="true">*</span>}</Label>
+      {f.type === "textarea" ? (
+        <Textarea id={`record-${f.key}`} placeholder={f.dica} className={isNote ? `resize-y leading-relaxed ${f.key === "observacao" ? "min-h-32" : "min-h-20"}` : undefined} required={f.required} value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+      ) : f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
+        <Input id={`record-${f.key}`} required={f.required} type="text" value={referenceText(f)} placeholder={f.dica ?? (f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : "Digite o nome do lote")} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
+      ) : f.type === "select" ? (
+        <Input id={`record-${f.key}`} required={f.required} type="text" value={f.options?.find((option) => option.value === form[f.key])?.label ?? String(form[f.key] ?? "")} placeholder={f.options?.map((option) => option.label).join(" / ")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+      ) : (
+        <Input
+          id={`record-${f.key}`}
+          required={f.required}
+          placeholder={f.dica}
+          type={f.type ?? "text"}
+          step={f.type === "number" ? "0.01" : undefined}
+          value={String(form[f.key] ?? "")}
+          onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+        />
+      )}
+    </div>
+  );
   useEffect(() => { setWrittenRefs({}); }, [row, open, config]);
   const referenceRows = (f: Field) => recordReferenceRows(f, refs, row?.[f.key]);
   const referenceText = (f: Field) => {
@@ -150,30 +182,21 @@ export function RecordDialog({
         </DialogHeader>
         <form onSubmit={submit} className={isNote ? "px-5 pt-5 sm:px-6" : ""}>
           <div className={`grid gap-4 sm:grid-cols-2 ${isNote ? "gap-y-5" : ""}`}>
-            {isNote && <div className="flex items-center gap-2 border-b border-border pb-2 text-sm font-semibold sm:col-span-2"><CalendarDays className="size-4 text-chart-2" />Registro da produção</div>}
-            {config.fields.map((f) => (
-              <div key={f.key} className={`${f.type === "textarea" ? "sm:col-span-2" : ""} ${isNote ? "min-w-0 space-y-2" : ""}`}>
-                {isNote && f.key === "observacao" && <div className="mb-4 mt-1 flex items-center gap-2 border-b border-border pb-2 text-sm font-semibold"><FileText className="size-4 text-chart-4" />Observações do dia</div>}
-                <Label htmlFor={`record-${f.key}`} className={isNote ? "text-xs font-medium text-muted-foreground" : ""}>{f.label}{isNote && f.required && <span className="ml-1 text-primary" aria-hidden="true">*</span>}</Label>
-                {f.type === "textarea" ? (
-                  <Textarea id={`record-${f.key}`} className={isNote ? `resize-y bg-background/50 leading-relaxed ${f.key === "observacao" ? "min-h-32" : "min-h-20"}` : undefined} required={f.required} value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-                ) : f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
-                  <Input id={`record-${f.key}`} className={isNote ? "h-11 bg-background/50" : undefined} required={f.required} type="text" value={referenceText(f)} placeholder={f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : "Digite o nome do lote"} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
-                ) : f.type === "select" ? (
-                  <Input id={`record-${f.key}`} required={f.required} type="text" value={f.options?.find((option) => option.value === form[f.key])?.label ?? String(form[f.key] ?? "")} placeholder={f.options?.map((option) => option.label).join(" / ")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-                ) : (
-                  <Input
-                    id={`record-${f.key}`}
-                    className={isNote ? "h-11 bg-background/50" : undefined}
-                    required={f.required}
-                    type={f.type ?? "text"}
-                    step={f.type === "number" ? "0.01" : undefined}
-                    value={String(form[f.key] ?? "")}
-                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                  />
-                )}
-              </div>
-            ))}
+            {campos.filter((f) => !f.avancado).map(campo)}
+            {avancados.length > 0 && (
+              detalhes ? (
+                <>
+                  <div className="flex items-center gap-2 border-b border-border pb-2 text-sm font-bold sm:col-span-2"><FileText className="size-4 text-primary" />Mais detalhes</div>
+                  {avancados.map(campo)}
+                </>
+              ) : (
+                <div className="sm:col-span-2">
+                  <Button type="button" variant="outline" className="h-11" onClick={() => setDetalhes(true)}>
+                    <Plus />Mais detalhes ({avancados.map((f) => f.label.toLowerCase()).slice(0, 2).join(", ")}…)
+                  </Button>
+                </div>
+              )
+            )}
           </div>
           {demo && demoExemplos && onDemoExemplo && (
             <div className="mt-4 rounded-lg border border-primary/30 bg-background/60 p-2.5">
