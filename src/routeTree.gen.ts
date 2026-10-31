@@ -20,6 +20,7 @@ import { Route as ApiPublicAppLoginRouteImport } from './routes/api/public/app/l
 import { Route as ApiPublicAppResumoRouteImport } from './routes/api/public/app/resumo'
 import { Route as ApiPublicAppSincronizarRouteImport } from './routes/api/public/app/sincronizar'
 import { Route as ApiPublicAppStatusRouteImport } from './routes/api/public/app/status'
+import { Route as ApiAdminContaRouteImport } from './routes/api/admin/conta'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -75,6 +76,11 @@ const ApiPublicAppStatusRoute = ApiPublicAppStatusRouteImport.update({
   path: '/api/public/app/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminContaRoute = ApiAdminContaRouteImport.update({
+  id: '/api/admin/conta',
+  path: '/api/admin/conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
+  '/api/admin/conta': typeof ApiAdminContaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
+  '/api/admin/conta': typeof ApiAdminContaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
+  '/api/admin/conta': typeof ApiAdminContaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/api/public/app/resumo'
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
+    | '/api/admin/conta'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/api/public/app/resumo'
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
+    | '/api/admin/conta'
   id:
     | '__root__'
     | '/'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/api/public/app/resumo'
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
+    | '/api/admin/conta'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   ApiPublicAppResumoRoute: typeof ApiPublicAppResumoRoute
   ApiPublicAppSincronizarRoute: typeof ApiPublicAppSincronizarRoute
   ApiPublicAppStatusRoute: typeof ApiPublicAppStatusRoute
+  ApiAdminContaRoute: typeof ApiAdminContaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAppStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/conta': {
+      id: '/api/admin/conta'
+      path: '/api/admin/conta'
+      fullPath: '/api/admin/conta'
+      preLoaderRoute: typeof ApiAdminContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAppResumoRoute: ApiPublicAppResumoRoute,
   ApiPublicAppSincronizarRoute: ApiPublicAppSincronizarRoute,
   ApiPublicAppStatusRoute: ApiPublicAppStatusRoute,
+  ApiAdminContaRoute: ApiAdminContaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

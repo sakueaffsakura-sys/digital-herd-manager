@@ -730,6 +730,7 @@ export type Database = {
           mensagem: string
           modulos: string[]
           status: string
+          termina_em: string | null
           titulo: string
         }
         Insert: {
@@ -740,6 +741,7 @@ export type Database = {
           mensagem?: string
           modulos?: string[]
           status?: string
+          termina_em?: string | null
           titulo?: string
         }
         Update: {
@@ -750,6 +752,7 @@ export type Database = {
           mensagem?: string
           modulos?: string[]
           status?: string
+          termina_em?: string | null
           titulo?: string
         }
         Relationships: []
@@ -1618,6 +1621,27 @@ export type Database = {
           },
         ]
       }
+      yui_uso: {
+        Row: {
+          dia: string
+          falas: number
+          mensagens: number
+          user_id: string
+        }
+        Insert: {
+          dia: string
+          falas?: number
+          mensagens?: number
+          user_id: string
+        }
+        Update: {
+          dia?: string
+          falas?: number
+          mensagens?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_animais_por_lote: {
@@ -1724,8 +1748,10 @@ export type Database = {
           propriedade_id: string | null
           proxima_aplicacao: string | null
           responsavel: string | null
+          status_atual: string | null
           status_calculado: string | null
           tipo_vacina_id: string | null
+          ultima_dose: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -1733,6 +1759,8 @@ export type Database = {
           created_at?: string | null
           data_aplicacao?: string | null
           dias_restantes?: never
+          status_atual?: never
+          ultima_dose?: never
           id?: string | null
           lote_id?: string | null
           observacao?: string | null
@@ -1748,6 +1776,8 @@ export type Database = {
           created_at?: string | null
           data_aplicacao?: string | null
           dias_restantes?: never
+          status_atual?: never
+          ultima_dose?: never
           id?: string | null
           lote_id?: string | null
           observacao?: string | null
@@ -1839,8 +1869,13 @@ export type Database = {
           _mensagem: string
           _modulos: string[]
           _status: string
+          _termina_em?: string
           _titulo: string
         }
+        Returns: Json
+      }
+      admin_bloquear: {
+        Args: { _minutos?: number; _motivo?: string; _tipo: string; _valor: string }
         Returns: Json
       }
       admin_metricas: { Args: never; Returns: Json }
@@ -1924,6 +1959,10 @@ export type Database = {
         Returns: Json
       }
       sou_admin: { Args: never; Returns: boolean }
+      yui_consumir: {
+        Args: { _limite: number; _tipo: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:

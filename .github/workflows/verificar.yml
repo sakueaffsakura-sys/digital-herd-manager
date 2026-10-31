@@ -1,0 +1,138 @@
+name: Verificar
+# Compila, confere os tipos e roda os testes em cada pull request e em ramos claude/*.
+# Erros de tipo que já existiam no main não reprovam: só os erros NOVOS reprovam.
+# O resultado fica num "check" chamado "Relatório" no commit e, no pull request,
+# num comentário que é atualizado a cada envio.
+on:
+  pull_request:
+  push:
+    branches: ["claude/**"]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: verificar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Achar a base de comparação
+        id: base
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE" ]; then BASE=$(git merge-base origin/main HEAD); fi
+          echo "sha=$BASE" >> "$GITHUB_OUTPUT"
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile 2>&1 | tee instalar.log; exit ${PIPESTATUS[0]}
+      - name: Build
+        id: build
+        continue-on-error: true
+        run: bun run build > build.log 2>&1; exit $?
+      - name: Tipos (tsc)
+        continue-on-error: true
+        run: bunx tsc --noEmit -p tsconfig.json > tipos.log 2>&1; exit $?
+      - name: Tipos na base (referência)
+        continue-on-error: true
+        run: |
+          git worktree add -f ../base "${{ steps.base.outputs.sha }}"
+          cd ../base
+          bun install --frozen-lockfile > /dev/null 2>&1 || bun install > /dev/null 2>&1
+          bunx tsc --noEmit -p tsconfig.json > "$GITHUB_WORKSPACE/tipos-base.log" 2>&1 || true
+      - name: Comparar erros de tipo
+        id: tipos
+        continue-on-error: true
+        run: |
+          # Sem linha/coluna e sem as contagens "... 12 more ..." (mudam quando o banco ganha tabelas).
+          norm() { grep -E "error TS[0-9]+" "$1" 2>/dev/null | sed -E 's/\([0-9]+,[0-9]+\)//; s/[0-9]+ more/N more/g' | sort; }
+          norm tipos.log > tipos-head.txt || true
+          norm tipos-base.log > tipos-base.txt || true
+          comm -13 tipos-base.txt tipos-head.txt > tipos-novos.txt
+          comm -23 tipos-base.txt tipos-head.txt > tipos-corrigidos.txt
+          echo "Na base: $(wc -l < tipos-base.txt) · agora: $(wc -l < tipos-head.txt) · novos: $(wc -l < tipos-novos.txt) · corrigidos: $(wc -l < tipos-corrigidos.txt)" > tipos-resumo.txt
+          cat tipos-resumo.txt
+          [ ! -s tipos-novos.txt ]
+      - name: Testes (vitest)
+        id: testes
+        continue-on-error: true
+        run: bun run test > testes.log 2>&1; exit $?
+      - name: Lint dos arquivos alterados (informativo)
+        id: lint
+        continue-on-error: true
+        run: |
+          git diff --name-only --diff-filter=ACMR "${{ steps.base.outputs.sha }}" HEAD -- '*.ts' '*.tsx' > alterados.txt || true
+          if [ -s alterados.txt ]; then
+            xargs -a alterados.txt bunx eslint --no-warn-ignored --rule "prettier/prettier: off" > lint.log 2>&1
+          else
+            echo "(nenhum arquivo .ts/.tsx alterado)" > lint.log
+          fi
+      - name: Relatório
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          BUILD: ${{ steps.build.outcome }}
+          TIPOS: ${{ steps.tipos.outcome }}
+          TESTES: ${{ steps.testes.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const ler = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } };
+            const cauda = (t, n, max = 12000) => (t || '(sem saída)').split('\n').slice(-n).join('\n').slice(-max);
+            const s = (v) => v === 'success' ? '✅ ok' : '❌ falhou';
+            // Blocos completos (com as linhas de explicação) só dos erros de tipo novos.
+            const norm = (l) => l.replace(/\(\d+,\d+\)/, '').replace(/\d+ more/g, 'N more');
+            const novos = new Map();
+            for (const l of ler('tipos-novos.txt').split('\n').filter(Boolean)) novos.set(l, (novos.get(l) || 0) + 1);
+            const blocos = [];
+            let atual = null;
+            for (const l of ler('tipos.log').split('\n')) {
+              if (/error TS\d+/.test(l) && !/^\s/.test(l)) { atual = [l]; blocos.push(atual); }
+              else if (atual && /^\s/.test(l)) atual.push(l);
+              else atual = null;
+            }
+            const blocosNovos = [];
+            for (const b of blocos) {
+              const k = norm(b[0]);
+              const n = novos.get(k) || 0;
+              if (n > 0) { blocosNovos.push(b.join('\n')); novos.set(k, n - 1); }
+            }
+            const ok = [process.env.BUILD, process.env.TIPOS, process.env.TESTES].every((v) => v === 'success');
+            const sha = context.payload.pull_request ? context.payload.pull_request.head.sha : context.sha;
+            const marca = '<!-- verificar-automatico -->';
+            const corpo = [marca, `## Verificação automática — ${sha.slice(0, 7)}`,
+              `- Build: ${s(process.env.BUILD)}`,
+              `- Tipos (só erros novos reprovam): ${s(process.env.TIPOS)} — ${ler('tipos-resumo.txt').trim()}`,
+              `- Testes (vitest): ${s(process.env.TESTES)}`,
+              `- Lint dos arquivos alterados (informativo): ${s(process.env.LINT)}`, '',
+              '<details><summary>erros de tipo novos</summary>', '', '```', cauda(blocosNovos.join('\n'), 400, 20000), '```', '</details>',
+              '<details><summary>testes</summary>', '', '```', cauda(ler('testes.log').replace(/\x1b\[[0-9;]*m/g, ''), 80), '```', '</details>',
+              '<details><summary>build</summary>', '', '```', cauda(ler('build.log').replace(/\x1b\[[0-9;]*m/g, ''), 40), '```', '</details>',
+              '<details><summary>lint</summary>', '', '```', cauda(ler('lint.log'), 120), '```', '</details>'].join('\n');
+            const { owner, repo } = context.repo;
+            await github.rest.checks.create({
+              owner, repo, name: 'Relatório', head_sha: sha, status: 'completed',
+              conclusion: ok ? 'success' : 'failure',
+              output: { title: ok ? 'Tudo certo' : 'Algo falhou', summary: corpo.slice(0, 65000) },
+            });
+            if (context.payload.pull_request) {
+              const issue_number = context.payload.pull_request.number;
+              const comentarios = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+              const antigo = comentarios.find((c) => c.body && c.body.includes(marca));
+              if (antigo) await github.rest.issues.updateComment({ owner, repo, comment_id: antigo.id, body: corpo });
+              else await github.rest.issues.createComment({ owner, repo, issue_number, body: corpo });
+            }
+      - name: Falhar se algo obrigatório falhou
+        if: steps.build.outcome != 'success' || steps.tipos.outcome != 'success' || steps.testes.outcome != 'success'
+        run: exit 1

@@ -382,3 +382,54 @@ Use uma conta de teste.
 4. Crie uma anotação no site; repita a chamada passando `p_apos_updated_at` e `p_apos_id` da última linha: deve vir só a nova.
 5. Apague a anotação no site; `SELECT * FROM public.registros_excluidos ORDER BY id DESC LIMIT 5` — deve haver a linha.
 6. No app: entre com a mesma conta, escolha a mesma propriedade e confira os números do passo 2.
+
+## 9. Manutenção, conta bloqueada e a API do servidor
+
+### Perguntar antes de sincronizar: `estado_manutencao`
+
+```http
+POST /rest/v1/rpc/estado_manutencao   {}
+→ { "status": "ativo" | "manutencao" | "bloqueado", "modulos": ["todos" | "rebanho" | ...],
+    "termina_em": "2026-10-31T14:00:00+00:00" | null, "titulo": "...", "mensagem": "...",
+    "sou_admin": false, "conta_bloqueada": false }
+```
+
+- `status` já vem **efetivo**: manutenção com `termina_em` no passado volta como `"ativo"` (toda manutenção tem fim:
+  padrão 2 h, máximo 72 h).
+- Durante a manutenção (ou com a conta bloqueada) o banco **não dá erro** nas tabelas afetadas: o RLS faz a leitura
+  voltar **vazia**, o `DELETE` apagar **zero linhas** (resposta 204/200 normal) e o `INSERT`/`upsert` falhar com
+  `42501`. Por isso, a cada rodada, o app deve:
+  1. chamar `estado_manutencao` antes de tudo;
+  2. com `conta_bloqueada` ou `status = "bloqueado"` ou `"todos"` em `modulos`: **pausar** a sincronização inteira
+     (não enviar, não baixar, não conferir ids, não apagar nada no aparelho) e avisar a pessoa;
+  3. com manutenção parcial: não baixar as tabelas das áreas em manutenção e **segurar todos os envios** (uma linha
+     filha não pode chegar antes da mãe, que está pausada);
+  4. nunca fazer "conferência de ids" (apagar no aparelho o que não veio do servidor) com qualquer área em manutenção;
+  5. no `DELETE`, pedir as linhas de volta (`Prefer: return=representation`, `select=id`): zero linhas + manutenção
+     = a exclusão **fica na fila**; zero linhas sem manutenção = já não existia (conta como feita).
+- Área de cada tabela (igual às políticas do banco): animais → `rebanho`; lotes → `lotes`; tipos_vacinas e
+  vacinacoes → `vacinacao`; inseminacoes → `inseminacao`; nascimentos → `nascimentos`; pesagens → `bezerros`;
+  producao_leite e anotacoes_producao → `producao`; movimentacoes_financeiras e investimentos → `financeiro`;
+  compras e vendas → `comercial`.
+- O app Apecuária Digital faz isso desde a versão 7.4.
+
+### Conta bloqueada
+
+- Bloquear uma conta no painel marca o perfil, cria um bloqueio de usuário (que o RLS respeita) e **bane o login** no
+  Auth: a conta não entra nem renova a sessão. Tokens já emitidos param de ver dados na hora (RLS).
+- `/api/public/app/*` responde `403 {"erro": "Esta conta está bloqueada."}`.
+
+### `/api/public/app/sincronizar` — exclusões com cursor próprio
+
+- `GET` aceita `apos_excluido_em` e `apos_exclusao_id` (o `exclusao_id` de cada item de `excluidos`) e devolve
+  `proximo_cursor_exclusoes`, `tem_mais_registros` e `tem_mais_exclusoes` (até 1000 por página, em ordem de
+  `(excluido_em, id)`). Sem esses parâmetros, usa o cursor dos registros, como antes.
+- Janela de segurança: ao começar cada rodada, volte os dois cursores 2 minutos e aplique tudo pelo id.
+- `POST`: erros em português, sem detalhes internos do banco; `origem_tipo`/`origem_id` de
+  `movimentacoes_financeiras` enviados pelo app são ignorados (quem cria esses lançamentos é o banco).
+
+### Datas
+
+"Hoje" e "este mês" no banco usam o dia de Brasília (`private.hoje_br()`), não o UTC do servidor. Em
+`v_vacinacoes_status`, use `status_atual` (`em_dia`, `proxima`, `vencida`, `substituida` = já teve reforço) e
+`ultima_dose`; `status_calculado` continua existindo para telas antigas.

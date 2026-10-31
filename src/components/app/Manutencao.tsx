@@ -8,6 +8,8 @@ export type EstadoManutencao = {
   status: "ativo" | "manutencao" | "bloqueado";
   titulo: string; mensagem: string; modulos: string[]; atualizado_em: string;
   sou_admin: boolean; conta_bloqueada: boolean;
+  /** Quando a manutenção termina sozinha (null = sem manutenção ou sem horário). */
+  termina_em?: string | null;
 };
 
 export const MODULOS_MANUTENCAO: { k: string; label: string }[] = [
@@ -64,6 +66,9 @@ export function TelaManutencao({ estado, onTentar }: { estado: EstadoManutencao;
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{titulo}</h1>
         <p className="mx-auto mt-3 max-w-md whitespace-pre-line text-muted-foreground">{mensagem}</p>
+        {!estado.conta_bloqueada && estado.termina_em && (
+          <p className="mt-3 text-sm font-medium">Previsão de volta: {new Date(estado.termina_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</p>
+        )}
         {!bloqueio && (
           <div className="mx-auto mt-6 h-1.5 w-40 overflow-hidden rounded-full bg-muted">
             <div className="h-full w-1/2 animate-pulse rounded-full bg-primary" />

@@ -2,7 +2,7 @@
 // O estado vem do banco (cache curto por worker); a decisão nunca depende de dados do navegador.
 import { renderManutencaoPage } from "./manutencao-page";
 
-type Estado = { status: "ativo" | "manutencao" | "bloqueado"; titulo: string; mensagem: string; modulos: string[] };
+type Estado = { status: "ativo" | "manutencao" | "bloqueado"; titulo: string; mensagem: string; modulos: string[]; termina_em?: string | null };
 type Cache = { estado: Estado; ips: Set<string>; disps: Set<string>; ate: number };
 
 const TTL = 8_000;
@@ -23,7 +23,7 @@ async function admin() {
 async function carregar(): Promise<Cache> {
   const sb = await admin();
   const [cfg, bl] = await Promise.all([
-    sb.from("manutencao_config").select("status,titulo,mensagem,modulos").eq("id", 1).maybeSingle(),
+    sb.from("manutencao_config").select("status,titulo,mensagem,modulos,termina_em").eq("id", 1).maybeSingle(),
     carregarBloqueios(sb),
   ]);
   if (cfg.error) throw cfg.error;
@@ -34,7 +34,10 @@ async function carregar(): Promise<Cache> {
     if (b.expira_em && new Date(b.expira_em).getTime() <= agora) continue;
     (b.tipo === "ip" ? ips : disps).add(b.valor);
   }
-  const estado = (cfg.data as Estado | null) ?? { status: "ativo", titulo: "", mensagem: "", modulos: [] };
+  const lido = (cfg.data as Estado | null) ?? { status: "ativo", titulo: "", mensagem: "", modulos: [] };
+  // Manutenção com horário vencido conta como "ativo" (volta ao normal sozinha, igual ao banco).
+  const venceu = lido.status !== "ativo" && !!lido.termina_em && new Date(lido.termina_em).getTime() <= agora;
+  const estado: Estado = venceu ? { ...lido, status: "ativo" } : lido;
   return { estado, ips, disps, ate: agora + TTL };
 }
 

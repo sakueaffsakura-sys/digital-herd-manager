@@ -1,13 +1,50 @@
 // Voz realista da Yui via Lovable AI Gateway (Gemini TTS) — retorna WAV completo.
+// Só fala o que é da própria Yui: uma resposta dela já salva para esta conta (por mensagem_id)
+// ou uma fala fixa do tour guiado. Texto livre vindo do navegador é recusado (a voz é paga).
 import { createClient } from "@supabase/supabase-js";
 import { allowRequest } from "./rate-limit";
+import { consumirCotaYui, ehAdministrador } from "./yui.server";
+import { TOUR } from "@/components/app/yui/tourSteps";
 
 const GATEWAY = "https://ai.gateway.lovable.dev";
 const MODEL = "google/gemini-3.1-flash-tts-preview";
 const VOICE = "Callirrhoe";
+const MAX_FALA = 1500;
+
+/** Falas do tour que podem ir para a voz do servidor (o texto tem que ser exatamente um destes). */
+const FALAS_DO_TOUR = new Set(TOUR.map((p) => p.fala.trim()));
 
 function respostaErro(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), { status, headers: { "content-type": "application/json" } });
+}
+
+/** Corta no fim de uma frase para caber no limite da voz. */
+function cortarFala(t: string): string {
+  if (t.length <= MAX_FALA) return t;
+  const parte = t.slice(0, MAX_FALA);
+  const fim = Math.max(parte.lastIndexOf(". "), parte.lastIndexOf("! "), parte.lastIndexOf("? "), parte.lastIndexOf("\n"));
+  return (fim > MAX_FALA * 0.5 ? parte.slice(0, fim + 1) : parte).trim();
+}
+
+/** Texto de uma resposta da Yui salva para esta conta. Espera um pouco: a resposta acaba de ser gravada. */
+async function textoDaResposta(supabase: ReturnType<typeof createClient>, userId: string, mensagemId: string): Promise<string> {
+  for (let tentativa = 0; tentativa < 4; tentativa++) {
+    const { data } = await supabase.from("suporte_mensagens" as never).select("partes")
+      .eq("user_id" as never, userId as never).eq("mensagem_id" as never, mensagemId as never).eq("papel" as never, "assistant" as never)
+      .maybeSingle();
+    const partes = (data as { partes?: unknown } | null)?.partes;
+    if (Array.isArray(partes)) {
+      const texto = partes
+        .map((p) => (p && typeof p === "object" && (p as { type?: unknown }).type === "text" ? String((p as { text?: unknown }).text ?? "") : ""))
+        .join("\n")
+        .replace(/[*#`_>]/g, "")
+        .replace(/\n{2,}/g, "\n")
+        .trim();
+      if (texto) return cortarFala(texto);
+    }
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  return "";
 }
 
 export async function handleYuiVoz(request: Request) {
@@ -31,12 +68,22 @@ export async function handleYuiVoz(request: Request) {
 
   if (!allowRequest(`yui-voz:${u.user.id}`, 90, 60_000, 30_000)) return respostaErro(429, "Muitas falas seguidas. Espere um minutinho.");
 
-  let texto: string;
+  let corpo: { texto?: unknown; mensagem_id?: unknown };
   try {
-    const body = (await request.json()) as { texto?: string };
-    texto = typeof body.texto === "string" ? body.texto.trim() : "";
+    corpo = (await request.json()) as { texto?: unknown; mensagem_id?: unknown };
   } catch { return respostaErro(400, "Pedido inválido."); }
-  if (!texto || texto.length > 1500) return respostaErro(400, "Texto inválido.");
+  let texto = "";
+  if (typeof corpo.mensagem_id === "string" && corpo.mensagem_id.length > 0 && corpo.mensagem_id.length <= 100) {
+    texto = await textoDaResposta(supabase as never, u.user.id, corpo.mensagem_id);
+    if (!texto) return respostaErro(404, "Não achei essa resposta da Yui para ler em voz alta.");
+  } else if (typeof corpo.texto === "string" && FALAS_DO_TOUR.has(corpo.texto.trim())) {
+    texto = corpo.texto.trim();
+  } else {
+    return respostaErro(400, "A voz lê só as respostas da Yui e as falas do tour.");
+  }
+  if (!(await ehAdministrador(supabase)) && !(await consumirCotaYui(u.user.id, "fala"))) {
+    return respostaErro(429, "Você usou as falas de hoje da Yui. Amanhã libera de novo; até lá ela continua respondendo por escrito.");
+  }
 
   // Controlador próprio: o cancelamento do navegador chega via stream.cancel(), sem rejeição solta.
   const upstreamAbort = new AbortController();

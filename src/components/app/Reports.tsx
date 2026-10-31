@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Legend, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import type { TableName } from "./shared";
+import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Delta, variacao, Empty, Metric, PageTitle, Panel, dateNow, money, pretty, type Row } from "./shared";
@@ -73,7 +74,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
       // ordem total (coluna + id): sem o desempate, as páginas do range repetem/pulam linhas com a mesma data
       const inRange = async <T,>(table: TableName, sel: string, col = "data") => {
         const r = await fetchAllRowsInfo<T>(async (a, b) => {
-          const res = await supabase.from(table).select(sel).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).order("id").range(a, b);
+          const res = await supabaseDinamico.from(table).select(sel).eq("propriedade_id", propertyId).gte(col, de).lte(col, ate).order(col).order("id").range(a, b);
           return { data: res.data as unknown as T[] | null, error: res.error };
         });
         if (r.truncated) truncado = true;
