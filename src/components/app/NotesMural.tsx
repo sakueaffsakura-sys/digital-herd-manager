@@ -363,7 +363,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
                           <article className={`painel flex h-full min-w-0 flex-col gap-3 p-4 ${marcada ? "marca-ativa relative overflow-hidden" : ""}`}>
                             <header className="flex items-start gap-2">
                               {animal ? (
-                                <Brinco numero={animal.numero_brinco} tamanho="pequeno" />
+                                <Brinco valor={animal.numero_brinco} tamanho="pequeno" rotulo={`Anotação do animal ${animal.numero_brinco}`} />
                               ) : (
                                 <span className="inline-flex h-11 items-center gap-1.5 rounded-full bg-muted px-3 text-sm font-bold text-muted-foreground">
                                   <Tractor className="size-4" />Geral

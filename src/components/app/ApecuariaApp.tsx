@@ -75,7 +75,7 @@ const lerPropriedadeSalva = () => { try { return localStorage.getItem(CHAVE_PROP
 
 export function ApecuariaApp() {
   const { section = "inicio" } = useParams({ strict: false }) as { section?: string };
-  const busca = useSearch({ strict: false }) as { novo?: string; editar?: string; animal?: string; ebook?: string; retorno?: "sucesso" | "pendente" | "falha" };
+  const busca = useSearch({ strict: false }) as { novo?: string; editar?: string; animal?: string; ebook?: string; anotacao?: string; retorno?: "sucesso" | "pendente" | "falha" };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [menuAberto, setMenuAberto] = useState(false);
