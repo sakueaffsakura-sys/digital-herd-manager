@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { avaliarSenha, motivoSenhaFraca } from "@/lib/senha";
 import { CampoSenha, RegrasSenha } from "@/components/app/conta/CampoSenha";
-import { BrincoIlustrado } from "@/components/app/conta/BrincoIlustrado";
 import marcaBranca from "@/assets/marca/marca-branca.webp";
 
 export const Route = createFileRoute("/")({
@@ -158,12 +157,9 @@ function Entrar() {
           <img src={marcaBranca} alt="" width={44} height={44} className="size-11 object-contain" />
           <span className="font-display text-[1.7rem] font-extrabold leading-none">Pecuária Digital</span>
         </div>
-        <div className="mt-8 flex items-end gap-5 lg:mt-auto lg:block lg:pt-10">
-          <BrincoIlustrado className="h-28 w-auto shrink-0 -rotate-6 lg:h-[min(44vh,380px)] lg:-rotate-3" />
-          <div className="lg:mt-10">
-            <h1 className="font-display text-[2.6rem] font-extrabold leading-[0.95] lg:text-[clamp(3.5rem,6vw,5.5rem)]">Sua fazenda, anotada.</h1>
-            <p className="mt-3 hidden max-w-md text-lg text-white/85 sm:block">Rebanho, vacinas, reprodução, leite e dinheiro num lugar só. No computador e no celular, com aplicativo que funciona sem internet.</p>
-          </div>
+        <div className="mt-8 lg:mt-auto lg:pt-10">
+          <h1 className="font-display text-[2.6rem] font-extrabold leading-[0.95] lg:text-[clamp(3.5rem,6vw,5.5rem)]">Sua fazenda, anotada.</h1>
+          <p className="mt-3 hidden max-w-md text-lg text-white/85 sm:block">Rebanho, vacinas, reprodução, leite e dinheiro num lugar só. No computador e no celular, com aplicativo que funciona sem internet.</p>
         </div>
       </section>
 
