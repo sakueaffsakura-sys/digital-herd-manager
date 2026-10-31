@@ -36,14 +36,14 @@ jobs:
           npx playwright install --with-deps chromium > /dev/null
       - name: Subir o site
         run: |
-          nohup bunx vite dev --host 127.0.0.1 --port 5173 > dev.log 2>&1 &
+          nohup bunx vite dev --host 127.0.0.1 --port 5173 --strictPort > dev.log 2>&1 &
           for i in $(seq 1 90); do
-            URL=$(grep -oE "http://(127\.0\.0\.1|localhost):[0-9]+" dev.log | head -1)
-            if [ -n "$URL" ] && curl -sf "$URL/" > /dev/null; then break; fi
+            URL=$(sed 's/\x1b\[[0-9;]*m//g' dev.log | grep -oE "http://(127\.0\.0\.1|localhost):[0-9]+" | head -1)
+            if [ -n "$URL" ] && curl -sf --max-time 90 "$URL/" > /dev/null; then break; fi
             sleep 2
           done
           echo "BASE_URL=$URL" >> "$GITHUB_ENV"
-          curl -sf "$URL/" > /dev/null || (tail -80 dev.log; exit 1)
+          curl -sf --max-time 90 "$URL/" > /dev/null || (tail -80 dev.log; exit 1)
       - name: Fotos
         env:
           PW_DIR: /tmp/pw
