@@ -1,4 +1,4 @@
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 
 export function renderManutencaoPage(titulo: string, mensagem: string, tipo: "manutencao" | "bloqueado" = "manutencao") {
   const cor = tipo === "bloqueado" ? "#f87171" : "#4ade80";
