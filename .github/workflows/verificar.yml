@@ -1,0 +1,73 @@
+name: Verificar
+# Compila, confere os tipos e roda os testes em cada pull request e em ramos claude/*.
+# No pull request, deixa um comentário com o resultado (o mesmo comentário é atualizado a cada envio).
+on:
+  pull_request:
+  push:
+    branches: ["claude/**"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: verificar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile 2>&1 | tee instalar.log; exit ${PIPESTATUS[0]}
+      - name: Build
+        id: build
+        continue-on-error: true
+        run: bun run build 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+      - name: Tipos (tsc)
+        id: tipos
+        continue-on-error: true
+        run: bunx tsc --noEmit -p tsconfig.json 2>&1 | tee tipos.log; exit ${PIPESTATUS[0]}
+      - name: Testes (vitest)
+        id: testes
+        continue-on-error: true
+        run: bun run test 2>&1 | tee testes.log; exit ${PIPESTATUS[0]}
+      - name: Lint (só informativo)
+        id: lint
+        continue-on-error: true
+        run: bun run lint 2>&1 | tail -n 80 > lint.log; exit ${PIPESTATUS[0]}
+      - name: Comentar resultado no pull request
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          BUILD: ${{ steps.build.outcome }}
+          TIPOS: ${{ steps.tipos.outcome }}
+          TESTES: ${{ steps.testes.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const cauda = (f, n) => { try { return fs.readFileSync(f, 'utf8').split('\n').slice(-n).join('\n').slice(-12000); } catch { return '(sem saída)'; } };
+            const s = (v) => v === 'success' ? '✅ ok' : '❌ falhou';
+            const marca = '<!-- verificar-automatico -->';
+            const corpo = [marca, `## Verificação automática — ${context.sha.slice(0, 7)}`,
+              `- Build: ${s(process.env.BUILD)}`, `- Tipos (tsc): ${s(process.env.TIPOS)}`,
+              `- Testes (vitest): ${s(process.env.TESTES)}`, `- Lint (informativo): ${s(process.env.LINT)}`, '',
+              '<details><summary>tsc</summary>', '', '```', cauda('tipos.log', 150), '```', '</details>',
+              '<details><summary>testes</summary>', '', '```', cauda('testes.log', 80), '```', '</details>',
+              '<details><summary>build</summary>', '', '```', cauda('build.log', 60), '```', '</details>',
+              '<details><summary>lint</summary>', '', '```', cauda('lint.log', 80), '```', '</details>'].join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comentarios = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const antigo = comentarios.find((c) => c.body && c.body.includes(marca));
+            if (antigo) await github.rest.issues.updateComment({ owner, repo, comment_id: antigo.id, body: corpo });
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body: corpo });
+      - name: Falhar se algo obrigatório falhou
+        if: steps.build.outcome != 'success' || steps.tipos.outcome != 'success' || steps.testes.outcome != 'success'
+        run: exit 1

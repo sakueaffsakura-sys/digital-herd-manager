@@ -21,7 +21,7 @@ const BOAS_VINDAS = "yui-boas-vindas-v1";
 
 type Etapa = "chat" | "pergunta1" | "pergunta2";
 
-export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: string; go: (s: string) => void | Promise<void>; abrirMenu: (aberto: boolean) => void; isAdmin: boolean }) {
+export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }: { section: string; go: (s: string) => void | Promise<void>; abrirMenu: (aberto: boolean) => void; isAdmin: boolean; propriedadeId?: string | null }) {
   const yuiAvatar = useYuiAvatar(isAdmin);
   const { data: wallpaper } = useYuiWallpaper();
   const [aberto, setAberto] = useState(false);
@@ -33,6 +33,9 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
   const [convite, setConvite] = useState(false);
   const secaoRef = useRef(section);
   secaoRef.current = section;
+  // A Yui responde com os números da propriedade que está aberta no topo.
+  const propRef = useRef(propriedadeId ?? null);
+  propRef.current = propriedadeId ?? null;
 
   const transport = useMemo(() => new DefaultChatTransport({
     api: "/api/yui",
@@ -41,7 +44,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
       const t = data.session?.access_token;
       return t ? { Authorization: `Bearer ${t}` } : ({} as Record<string, string>);
     },
-    body: () => ({ pagina: secaoRef.current }),
+    body: () => ({ pagina: secaoRef.current, propriedade_id: propRef.current }),
   }), []);
 
   const { messages, sendMessage, status, stop, setMessages, error, regenerate } = useChat({
@@ -216,7 +219,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin }: { section: str
                     {m.role === "assistant" && texto && !(ultima && status === "streaming") && (
                       <div className="mt-1 flex gap-1 opacity-70 transition group-hover:opacity-100">
                         <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Copiar resposta" title="Copiar" onClick={() => { void navigator.clipboard.writeText(texto); toast.success("Resposta copiada"); }}><Copy className="size-3.5" /></Button>
-                        <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Ouvir resposta" title="Ouvir" onClick={() => void falar(texto.replace(/[*#`_>]/g, ""), true)}><Volume2 className="size-3.5" /></Button>
+                        <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Ouvir resposta" title="Ouvir" onClick={() => void falar(texto.replace(/[*#`_>]/g, ""), true, undefined, m.id)}><Volume2 className="size-3.5" /></Button>
                         {ultima && <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Gerar de novo" title="Gerar de novo" onClick={() => void regenerate()}><RefreshCw className="size-3.5" /></Button>}
                       </div>
                     )}

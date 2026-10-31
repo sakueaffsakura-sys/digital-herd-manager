@@ -2,8 +2,77 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId, withLovableAiGatewayRunIdHeader } from "./ai/run-id.server";
-import { allowRequest } from "./rate-limit";
+import { allowRequest, clientIp } from "./rate-limit";
+import { limiteBanco } from "./limite-banco.server";
 import { dataNoFuso, somarDias } from "./datas";
+
+/** Cotas diárias por conta (dia de Brasília). Administradores não têm cota. */
+export const COTA_MENSAGENS_DIA = 40;
+export const COTA_FALAS_DIA = 60;
+const MAX_MENSAGENS = 20;
+const MAX_CARACTERES = 24_000;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type RpcSolta = (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+
+/**
+ * Consome uma unidade da cota diária no banco (vale entre servidores). true = pode seguir.
+ * Se o contador falhar, deixa passar: o limite por minuto em memória continua valendo.
+ */
+export async function consumirCotaYui(userId: string, tipo: "mensagem" | "fala"): Promise<boolean> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rpc = supabaseAdmin.rpc.bind(supabaseAdmin) as unknown as RpcSolta;
+    const { data, error } = await rpc("yui_consumir", { _user: userId, _tipo: tipo, _limite: tipo === "mensagem" ? COTA_MENSAGENS_DIA : COTA_FALAS_DIA });
+    if (error) {
+      console.error("Yui: falha ao contar a cota", error);
+      return true;
+    }
+    return data !== false;
+  } catch (e) {
+    console.error("Yui: falha ao contar a cota", e);
+    return true;
+  }
+}
+
+/** A conta é administradora? (pergunta ao banco com o token da própria pessoa) */
+export async function ehAdministrador(supabase: object): Promise<boolean> {
+  try {
+    // Chamada como método (mantém o "this" do cliente do Supabase).
+    const cliente = supabase as { rpc: RpcSolta };
+    const r = await cliente.rpc("sou_admin");
+    return !r.error && r.data === true;
+  } catch {
+    return false;
+  }
+}
+
+type ParteTexto = { type: "text"; text: string };
+
+/**
+ * Só confia no que faz sentido vir do navegador: as últimas 20 mensagens, papéis user/assistant, só texto,
+ * no máximo 24 mil caracteres no total (corta as mais antigas). Mensagens "system" vindas do cliente são descartadas.
+ */
+export function limparHistorico(lista: unknown): UIMessage[] {
+  if (!Array.isArray(lista)) return [];
+  const saida: UIMessage[] = [];
+  for (const m of lista.slice(-MAX_MENSAGENS)) {
+    if (!m || typeof m !== "object") continue;
+    const { id, role, parts } = m as { id?: unknown; role?: unknown; parts?: unknown };
+    if (role !== "user" && role !== "assistant") continue;
+    if (!Array.isArray(parts)) continue;
+    const textos: ParteTexto[] = parts
+      .filter((p): p is ParteTexto => !!p && typeof p === "object" && (p as { type?: unknown }).type === "text" && typeof (p as { text?: unknown }).text === "string")
+      .map((p) => ({ type: "text", text: p.text.slice(0, 8000) }));
+    if (!textos.length) continue;
+    const idOk = typeof id === "string" && id.length > 0 && id.length <= 100 ? id : crypto.randomUUID();
+    saida.push({ id: idOk, role, parts: textos } as UIMessage);
+  }
+  const tamanho = (m: UIMessage) => m.parts.reduce((t, p) => t + ((p as { text?: string }).text?.length ?? 0), 0);
+  let total = saida.reduce((t, m) => t + tamanho(m), 0);
+  while (saida.length > 1 && total > MAX_CARACTERES) total -= tamanho(saida.shift()!);
+  return saida;
+}
 
 const MODEL = "openai/gpt-6-astra";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1";
@@ -57,22 +126,36 @@ COMO RESPONDER MELHOR:
 - Considere o histórico da conversa para não repetir introduções, adapte a orientação ao que a pessoa já tentou e não trate exemplos da demonstração como dados reais da conta.
 - Também pode dar orientações gerais de manejo pecuário (vacinação, pesagem, reprodução, leite), deixando claro que não substitui um veterinário.`;
 
-async function contextoConta(supabase: ReturnType<typeof createClient>) {
+/**
+ * Números da PROPRIEDADE SELECIONADA (os mesmos do Início, via dashboard_resumo). O RLS garante que só entram
+ * propriedades da própria pessoa; se o id enviado não for dela, usa a primeira que ela tem.
+ */
+async function contextoConta(supabase: ReturnType<typeof createClient>, propriedadeId: string | null) {
   try {
     const hoje = dataNoFuso();
     const daqui30 = somarDias(hoje, 30);
-    const c = (t: string) => supabase.from(t as never).select("id", { count: "exact", head: true });
-    const [props, animais, lotes, vacinas, vencidas, insem, partos, pesagens, leite] = await Promise.all([
-      supabase.from("propriedades" as never).select("nome").limit(10),
-      c("animais"), c("lotes"), c("vacinacoes"),
-      c("vacinacoes").lt("proxima_aplicacao" as never, hoje as never),
-      c("inseminacoes"),
-      c("inseminacoes").gte("previsao_parto" as never, hoje as never).lte("previsao_parto" as never, daqui30 as never),
-      c("pesagens"), c("producao_leite"),
+    const props = await supabase.from("propriedades" as never).select("id,nome").order("nome" as never).limit(20);
+    const lista = ((props.data ?? []) as { id: string; nome: string }[]);
+    if (!lista.length) return "\n\nDADOS DA CONTA: a pessoa ainda não cadastrou nenhuma propriedade.";
+    const atual = lista.find((p) => p.id === propriedadeId) ?? lista[0];
+    const c = (t: string) => supabase.from(t as never).select("id", { count: "exact", head: true }).eq("propriedade_id" as never, atual.id as never);
+    const [resumo, vencidas, partos, pesagens] = await Promise.all([
+      supabase.rpc("dashboard_resumo" as never, { _propriedade_id: atual.id } as never),
+      c("v_vacinacoes_status").eq("status_atual" as never, "vencida" as never),
+      c("inseminacoes").gte("previsao_parto" as never, hoje as never).lte("previsao_parto" as never, daqui30 as never).in("situacao" as never, ["em_andamento", "confirmada"] as never),
+      c("pesagens"),
     ]);
-    const n = (r: { count: number | null; error: unknown }) => (r.error ? "?" : (r.count ?? 0).toLocaleString("pt-BR"));
-    const nomes = ((props.data ?? []) as { nome?: string }[]).map((p) => p.nome).filter(Boolean).join(", ");
-    return `\n\nDADOS DA CONTA (agora, somente desta pessoa):\n- Propriedades: ${nomes || "nenhuma cadastrada"}\n- Animais: ${n(animais)} · Lotes: ${n(lotes)} · Pesagens: ${n(pesagens)}\n- Vacinações: ${n(vacinas)} (vencidas: ${n(vencidas)})\n- Inseminações: ${n(insem)} (partos previstos em 30 dias: ${n(partos)})\n- Registros de leite: ${n(leite)}`;
+    const r = (resumo.data ?? {}) as Record<string, unknown>;
+    const n = (v: unknown) => (typeof v === "number" ? v.toLocaleString("pt-BR") : "?");
+    const reais = (v: unknown) => (typeof v === "number" ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "?");
+    const qtd = (x: { count: number | null; error: unknown }) => (x.error ? "?" : (x.count ?? 0).toLocaleString("pt-BR"));
+    const outras = lista.length > 1 ? ` A pessoa tem ${lista.length} propriedades: ${lista.map((p) => p.nome).join(", ")}.` : "";
+    return `\n\nDADOS DA CONTA (agora, só da propriedade selecionada: ${atual.nome}).${outras}\n` +
+      `- Animais ativos: ${n(r.animais_ativos)} · bezerros (até 12 meses): ${n(r.bezerros)} · lotes: ${n(r.total_lotes)}\n` +
+      `- Vacinas vencidas (última dose de cada vacina): ${qtd(vencidas)} · vacinações em dia: ${n(r.vacinacoes_em_dia)}\n` +
+      `- Inseminações em andamento ou confirmadas: ${n(r.inseminacoes)} · partos previstos em 30 dias: ${qtd(partos)}\n` +
+      `- Neste mês: ${n(r.leite_mes)} litros de leite, receitas ${reais(r.receitas_mes)}, despesas ${reais(r.despesas_mes)}, nascimentos ${n(r.nascidos_mes)}\n` +
+      `- Pesagens registradas: ${qtd(pesagens)}`;
   } catch (e) {
     console.error("Falha ao carregar contexto da conta", e);
     return "";
@@ -105,13 +188,19 @@ export async function handleYuiChat(request: Request) {
 
   if (!allowRequest(`yui:${userId}`, 15, 60_000, 60_000)) return respostaErro(429, "Muitas mensagens seguidas. Espere um minutinho e tente de novo.");
 
-  let body: { messages?: UIMessage[]; pagina?: string };
+  if (!(await limiteBanco(`yui-ip:${clientIp(request)}`, 120, 3600))) return respostaErro(429, "Muitas mensagens seguidas. Espere um pouco e tente de novo.");
+
+  let body: { messages?: unknown; pagina?: unknown; propriedade_id?: unknown };
   try { body = await request.json(); } catch { return respostaErro(400, "Mensagem inválida."); }
-   const messages = Array.isArray(body.messages) ? body.messages : [];
+  const messages = limparHistorico(body.messages);
   const ultima = messages[messages.length - 1];
   if (!ultima || ultima.role !== "user") return respostaErro(400, "Mensagem inválida.");
   const texto = ultima.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
   if (!texto.trim() || texto.length > 4000) return respostaErro(400, "Escreva uma mensagem de até 4000 caracteres.");
+  if (!(await ehAdministrador(supabase)) && !(await consumirCotaYui(userId, "mensagem"))) {
+    return respostaErro(429, "Você usou as conversas de hoje com a Yui. Amanhã libera de novo.");
+  }
+  const propriedadeId = typeof body.propriedade_id === "string" && UUID.test(body.propriedade_id) ? body.propriedade_id : null;
 
   const salvo = await supabase.from("suporte_mensagens" as never).upsert({ user_id: userId, mensagem_id: ultima.id, papel: "user", partes: ultima.parts } as never, { onConflict: "user_id,mensagem_id" });
   if (salvo.error) console.error("Falha ao salvar mensagem do usuário", salvo.error);
@@ -152,7 +241,7 @@ export async function handleYuiChat(request: Request) {
     headers: { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
     fetch: runIdFetch.fetch,
   });
-  const dadosConta = await contextoConta(supabase as never);
+  const dadosConta = await contextoConta(supabase as never, propriedadeId);
   const pagina = typeof body.pagina === "string" ? body.pagina.slice(0, 60) : "";
   const result = streamText({
     model: provider.responses(MODEL),
@@ -160,13 +249,16 @@ export async function handleYuiChat(request: Request) {
     messages: await convertToModelMessages(messages),
     abortSignal: request.signal,
     providerOptions: {
-      openai: { forceReasoning: true, reasoningEffort: "medium", reasoningSummary: "auto", store: false, include: ["reasoning.encrypted_content"] },
+      openai: { forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", store: false, include: ["reasoning.encrypted_content"] },
     },
   });
 
   return withLovableAiGatewayRunIdHeader(
     result.toUIMessageStreamResponse({
       originalMessages: messages,
+      // Sem isto a resposta era salva com id vazio e cada resposta nova apagava a anterior no histórico.
+      // Com o id gerado aqui, o navegador recebe o mesmo id e a voz pode ler a resposta salva.
+      generateMessageId: () => crypto.randomUUID(),
       sendReasoning: false,
       onFinish: async ({ responseMessage }) => {
         const partes = responseMessage.parts.filter((p) => p.type === "text");

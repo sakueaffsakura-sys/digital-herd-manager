@@ -59,7 +59,14 @@ export async function autenticar(request: Request): Promise<{ supabase: Supabase
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return erro(401, "Sua sessão expirou. Entre novamente.");
   if (!allowRequest(`app-user:${data.user.id}`, 240, 60_000, 30_000)) return erro(429, "Muitas requisições. Aguarde um minuto.");
+  if (await contaBloqueada(supabase)) return erro(403, "Esta conta está bloqueada.");
   return { supabase, userId: data.user.id };
+}
+
+/** A conta (do token deste cliente) está bloqueada? Mesma regra do banco: perfil bloqueado ou bloqueio de usuário ativo. */
+export async function contaBloqueada(supabase: SupabaseClient): Promise<boolean> {
+  const r = await supabase.rpc("estado_manutencao");
+  return !r.error && (r.data as { conta_bloqueada?: boolean } | null)?.conta_bloqueada === true;
 }
 
 export async function lerJson<T>(request: Request, max = 1_000_000): Promise<T | null> {

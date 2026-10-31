@@ -134,7 +134,7 @@ export function ApecuariaApp() {
     </div>
     <PropertyDialog open={propertyDialog} userId={userQuery.data?.id} onClose={()=>setPropertyDialog(false)} onCreated={(id)=>{setPropertyId(id);setPropertyDialog(false);queryClient.invalidateQueries({queryKey:["properties"]});}}/>
     <AboutDialog open={aboutOpen} isAdmin={isAdminQuery.data===true} onClose={()=>setAboutOpen(false)}/>
-    <YuiAssistant section={section} go={go} abrirMenu={setMobileOpen} isAdmin={isAdminQuery.data===true}/>
+    <YuiAssistant section={section} go={go} abrirMenu={setMobileOpen} isAdmin={isAdminQuery.data===true} propriedadeId={propertyId}/>
   </div>;
 }
 

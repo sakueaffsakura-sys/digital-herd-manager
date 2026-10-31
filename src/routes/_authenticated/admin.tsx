@@ -14,7 +14,7 @@ import { YuiFotoAdmin } from "@/components/app/yui/YuiFotoAdmin";
 import { YuiWallpaperAdmin } from "@/components/app/yui/YuiWallpaperAdmin";
 import { CriadoresAdmin } from "@/components/app/CriadoresAdmin";
 import { ImagensSiteAdmin } from "@/components/app/ImagensSiteAdmin";
-import { ManutencaoAdmin, MonitoramentoSeguranca } from "@/components/app/ManutencaoAdmin";
+import { FaixaManutencaoAdmin, ManutencaoAdmin, MonitoramentoSeguranca } from "@/components/app/ManutencaoAdmin";
 import { Hammer, Siren } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -68,6 +68,20 @@ type Saude = {
 
 const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
 
+/** Bloquear/desbloquear e virar administrador passam pelo servidor, que também trava o login (Auth) da conta. */
+async function definirConta(user_id: string, a: { bloqueado?: boolean; admin?: boolean }) {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
+  const resp = await fetch("/api/admin/conta", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ user_id, bloqueado: a.bloqueado, admin: a.admin }),
+  });
+  const corpo = (await resp.json().catch(() => ({}))) as { ok?: boolean; erro?: string };
+  if (!resp.ok || corpo.ok !== true) throw new Error(corpo.erro ?? "Não foi possível alterar a conta.");
+}
+
 const bytes = (n: number) => {
   if (!n) return "0 B";
   const u = ["B", "KB", "MB", "GB", "TB"]; const i = Math.min(4, Math.floor(Math.log(n) / Math.log(1024)));
@@ -110,10 +124,7 @@ function AdminPage() {
   const contas = useQuery({ queryKey: ["admin-contas"], enabled: isAdmin.data === true, queryFn: async () => { const r = await rpc("admin_contas"); if (r.error) throw r.error; return (r.data ?? []) as Conta[]; } });
 
   const acao = useMutation({
-    mutationFn: async (a: { user_id: string; bloqueado?: boolean; admin?: boolean }) => {
-      const r = await rpc("admin_definir_conta", { _user_id: a.user_id, _bloqueado: a.bloqueado ?? null, _admin: a.admin ?? null });
-      if (r.error) throw r.error;
-    },
+    mutationFn: async (a: { user_id: string; bloqueado?: boolean; admin?: boolean }) => definirConta(a.user_id, { bloqueado: a.bloqueado, admin: a.admin }),
     onSuccess: () => { toast.success("Conta atualizada."); qc.invalidateQueries({ queryKey: ["admin-contas"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -449,7 +460,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
     onError: (e: Error) => toast.error(e.message),
   });
   const acao = useMutation({
-    mutationFn: async (a: { bloqueado?: boolean; admin?: boolean }) => { const r = await rpc("admin_definir_conta", { _user_id: id, _bloqueado: a.bloqueado ?? null, _admin: a.admin ?? null }); if (r.error) throw r.error; },
+    mutationFn: async (a: { bloqueado?: boolean; admin?: boolean }) => definirConta(id, a),
     onSuccess: () => { toast.success("Conta atualizada."); qc.invalidateQueries({ queryKey: ["admin-conta", id] }); qc.invalidateQueries({ queryKey: ["admin-contas"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -570,6 +581,7 @@ const ABAS: { k: Aba; label: string; icon: typeof Users }[] = [
 function Shell({ children, tab, setTab, alertaCount }: { children: React.ReactNode; tab?: Aba; setTab?: (t: Aba) => void; alertaCount?: number }) {
   return (
     <main className="dark min-h-screen bg-background text-foreground">
+      {setTab && <FaixaManutencaoAdmin />}
       <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
         <aside className="border-b border-border bg-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:shrink-0 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-2 p-4">

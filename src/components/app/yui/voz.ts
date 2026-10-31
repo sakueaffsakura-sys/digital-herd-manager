@@ -68,8 +68,13 @@ function falarNavegador(texto: string, minha: number): Promise<boolean> {
 // e eliminar a espera entre uma fala e outra.
 const cache = new Map<string, Promise<Blob | null>>();
 
-function gerarAudio(texto: string): Promise<Blob | null> {
-  const existente = cache.get(texto);
+/**
+ * O servidor só gera voz para falas fixas do tour (pelo texto exato) ou para uma resposta da Yui já salva
+ * (pelo id da mensagem) — nunca para texto livre.
+ */
+function gerarAudio(texto: string, mensagemId?: string): Promise<Blob | null> {
+  const chave = mensagemId ? `msg:${mensagemId}` : texto;
+  const existente = cache.get(chave);
   if (existente) return existente;
   const p = (async () => {
     const { data } = await supabase.auth.getSession();
@@ -80,7 +85,7 @@ function gerarAudio(texto: string): Promise<Blob | null> {
         signal: AbortSignal.timeout(20000),
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
-        body: JSON.stringify({ texto }),
+        body: JSON.stringify(mensagemId ? { mensagem_id: mensagemId } : { texto }),
       });
       if (!resp.ok) return null;
       const blob = await resp.blob();
@@ -89,9 +94,9 @@ function gerarAudio(texto: string): Promise<Blob | null> {
       return null;
     }
   })();
-  cache.set(texto, p);
+  cache.set(chave, p);
   // Falhas não ficam no cache, para poder tentar de novo depois.
-  void p.then((b) => { if (!b) cache.delete(texto); });
+  void p.then((b) => { if (!b) cache.delete(chave); });
   if (cache.size > 40) cache.delete(cache.keys().next().value as string);
   return p;
 }
@@ -101,9 +106,9 @@ export function prepararVoz(texto: string) {
   void gerarAudio(texto);
 }
 
-async function falarIA(texto: string, minha: number, aoComecar?: () => void): Promise<boolean> {
+async function falarIA(texto: string, minha: number, aoComecar?: () => void, mensagemId?: string): Promise<boolean> {
   // Se a voz demorar demais, desiste e usa a voz do navegador para não travar o tour.
-  const blob = await Promise.race([gerarAudio(texto), new Promise<null>((r) => setTimeout(() => r(null), 15000))]);
+  const blob = await Promise.race([gerarAudio(texto, mensagemId), new Promise<null>((r) => setTimeout(() => r(null), 15000))]);
   if (minha !== geracao || !blob) return false;
 
   return new Promise((ok) => {
@@ -146,8 +151,11 @@ async function falarIA(texto: string, minha: number, aoComecar?: () => void): Pr
   });
 }
 
-/** Fala o texto; resolve true se terminou, false se foi cancelada. */
-export async function falar(texto: string, comVoz: boolean, aoComecar?: () => void): Promise<boolean> {
+/**
+ * Fala o texto; resolve true se terminou, false se foi cancelada.
+ * `mensagemId`: id de uma resposta da Yui já salva (para a voz do servidor ler essa resposta).
+ */
+export async function falar(texto: string, comVoz: boolean, aoComecar?: () => void, mensagemId?: string): Promise<boolean> {
   const minha = ++geracao;
   if (!comVoz) {
     return new Promise((ok) => setTimeout(() => ok(minha === geracao), Math.max(3500, texto.length * 55)));
@@ -156,7 +164,7 @@ export async function falar(texto: string, comVoz: boolean, aoComecar?: () => vo
   if (temSintese()) speechSynthesis.cancel();
 
   // Tenta a voz realista de IA; se falhar, usa a voz do navegador.
-  const falou = await falarIA(texto, minha, aoComecar);
+  const falou = await falarIA(texto, minha, aoComecar, mensagemId);
   if (falou || minha !== geracao) return falou;
   aoComecar?.();
   return falarNavegador(texto, minha);

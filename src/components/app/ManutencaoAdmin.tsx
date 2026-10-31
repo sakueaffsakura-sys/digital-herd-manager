@@ -10,10 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { dispositivoLocal, MODULOS_MANUTENCAO } from "./Manutencao";
+import { dispositivoLocal, MODULOS_MANUTENCAO, useEstadoManutencao } from "./Manutencao";
 
 type Status = "ativo" | "manutencao" | "bloqueado";
-type Config = { status: Status; titulo: string; mensagem: string; modulos: string[]; duracao_bloqueio_min: number; atualizado_em: string };
+type Config = { status: Status; titulo: string; mensagem: string; modulos: string[]; duracao_bloqueio_min: number; atualizado_em: string; termina_em?: string | null };
 type Incidente = { id: string; criado_em: string; tipo: string; severidade: string; ip: string | null; dispositivo: string | null; user_id: string | null; email: string | null; caminho: string | null; metodo: string | null; agente: string | null; motivo: string; detalhes: Record<string, unknown>; bloqueou: boolean };
 type Bloqueio = { id: string; tipo: "ip" | "dispositivo" | "usuario"; valor: string; email: string | null; motivo: string; criado_em: string; expira_em: string | null; situacao: "ativo" | "removido" | "expirado"; tentativas: number; ultima_tentativa: string | null; incidente_id: string | null; removido_em: string | null };
 type Historico = { id: string; criado_em: string; email: string | null; status_anterior: string | null; status_novo: string; detalhes: { titulo?: string; modulos?: string[] }; ip: string | null };
@@ -21,6 +21,11 @@ type Painel = { config: Config; totais: { suspeitas: number; negados: number; ip
 type Filtros = { desde: string; ate: string; ip: string; dispositivo: string; tipo: string; status: string };
 
 const rpc = supabase.rpc.bind(supabase);
+/** Para funções novas do banco que ainda não estão nos tipos gerados. */
+const rpcSolta = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+/** Opções de duração da manutenção (ela volta sozinha ao normal no fim). */
+const HORAS_MANUTENCAO = [1, 2, 4, 8, 12, 24, 48, 72];
+const MAX_BLOQUEIO_MIN = 1440;
 const dt = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR") : "—");
 const STATUS: Record<Status, { label: string; cls: string }> = {
   ativo: { label: "Ativo", cls: "bg-primary/15 text-primary border-primary/30" },
@@ -55,19 +60,23 @@ export function ManutencaoAdmin() {
   const qc = useQueryClient();
   const q = usePainel(VAZIO);
   const cfg = q.data?.config;
-  const [form, setForm] = useState<Omit<Config, "atualizado_em" | "status"> | null>(null);
+  const [form, setForm] = useState<(Omit<Config, "atualizado_em" | "status" | "termina_em"> & { horas: number }) | null>(null);
+  const [mudouHoras, setMudouHoras] = useState(false);
   const [confirmar, setConfirmar] = useState<Status | null>(null);
-  useEffect(() => { if (cfg && !form) setForm({ titulo: cfg.titulo, mensagem: cfg.mensagem, modulos: cfg.modulos, duracao_bloqueio_min: cfg.duracao_bloqueio_min }); }, [cfg, form]);
+  useEffect(() => { if (cfg && !form) setForm({ titulo: cfg.titulo, mensagem: cfg.mensagem, modulos: cfg.modulos, duracao_bloqueio_min: Math.min(cfg.duracao_bloqueio_min, MAX_BLOQUEIO_MIN), horas: 2 }); }, [cfg, form]);
 
   const salvar = useMutation({
     mutationFn: async (status: Status) => {
       if (!form) return;
-      const r = await rpc("admin_manutencao_definir", { _status: status, _titulo: form.titulo, _mensagem: form.mensagem, _modulos: form.modulos, _duracao_bloqueio_min: form.duracao_bloqueio_min, _dispositivo: dispositivoLocal() });
+      // Toda manutenção tem fim: mantém o horário atual ao só editar textos; senão, agora + horas escolhidas.
+      const fimAtual = cfg?.termina_em && Date.parse(cfg.termina_em) > Date.now() + 6 * 60_000 ? cfg.termina_em : null;
+      const termina = status === "ativo" ? null : status === cfg?.status && fimAtual && !mudouHoras ? fimAtual : new Date(Date.now() + form.horas * 3_600_000).toISOString();
+      const r = await rpcSolta("admin_manutencao_definir", { _status: status, _titulo: form.titulo, _mensagem: form.mensagem, _modulos: form.modulos, _duracao_bloqueio_min: form.duracao_bloqueio_min, _dispositivo: dispositivoLocal(), _termina_em: termina });
       if (r.error) throw new Error("Não foi possível salvar. Tente novamente.");
       const d = r.data as { ok: boolean; erro?: string };
       if (!d.ok) throw new Error(d.erro ?? "Não foi possível salvar.");
     },
-    onSuccess: () => { toast.success("Configuração salva. As telas atualizam em até 15 segundos."); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); qc.invalidateQueries({ queryKey: ["estado-manutencao"] }); },
+    onSuccess: () => { setMudouHoras(false); toast.success("Configuração salva. As telas atualizam em até 15 segundos."); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); qc.invalidateQueries({ queryKey: ["estado-manutencao"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -93,6 +102,7 @@ export function ManutencaoAdmin() {
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Status atual do sistema</p>
               <span className={`mt-1 inline-flex rounded-full border px-3 py-0.5 text-sm font-semibold ${st.cls}`}>{st.label}</span>
               <p className="mt-1 text-xs text-muted-foreground">Atualizado em {dt(cfg.atualizado_em)}</p>
+              {cfg.status !== "ativo" && cfg.termina_em && <p className="mt-1 text-xs font-medium text-foreground">Volta ao normal sozinho em {dt(cfg.termina_em)}</p>}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -109,8 +119,16 @@ export function ManutencaoAdmin() {
           <div className="space-y-1.5"><Label htmlFor="m-titulo">Título</Label><Input id="m-titulo" maxLength={120} value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} /></div>
           <div className="space-y-1.5"><Label htmlFor="m-msg">Mensagem</Label><Textarea id="m-msg" rows={5} maxLength={1000} value={form.mensagem} onChange={(e) => setForm({ ...form, mensagem: e.target.value })} /></div>
           <div className="space-y-1.5">
-            <Label htmlFor="m-dur">Duração do bloqueio automático (minutos, 0 = até remover manualmente)</Label>
-            <Input id="m-dur" type="number" min={0} max={525600} value={form.duracao_bloqueio_min} onChange={(e) => setForm({ ...form, duracao_bloqueio_min: Math.max(0, Math.min(525600, Number(e.target.value) || 0)) })} />
+            <Label htmlFor="m-horas">Quanto tempo a manutenção dura</Label>
+            <select id="m-horas" className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={form.horas} onChange={(e) => { setMudouHoras(true); setForm({ ...form, horas: Number(e.target.value) }); }}>
+              {HORAS_MANUTENCAO.map((h) => <option key={h} value={h}>{h === 1 ? "1 hora" : `${h} horas`}</option>)}
+            </select>
+            <p className="text-xs text-muted-foreground">No fim desse tempo o site volta ao normal sozinho, mesmo que ninguém desligue.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="m-dur">Bloqueio automático de quem insistir (minutos, 0 = até remover; máximo 1440 = 24 horas)</Label>
+            <Input id="m-dur" type="number" min={0} max={MAX_BLOQUEIO_MIN} value={form.duracao_bloqueio_min} onChange={(e) => setForm({ ...form, duracao_bloqueio_min: Math.max(0, Math.min(MAX_BLOQUEIO_MIN, Number(e.target.value) || 0)) })} />
+            <p className="text-xs text-muted-foreground">Bloqueia só o aparelho e a conta, nunca o IP: na internet de celular muita gente usa o mesmo IP.</p>
           </div>
           <div className="rounded-xl border border-dashed border-border p-4 text-center">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Prévia</p>
@@ -161,6 +179,18 @@ export function MonitoramentoSeguranca() {
   const desbloquear = useMutation({
     mutationFn: async (id: string) => { const r = await rpc("admin_desbloquear", { _id: id }); if (r.error || !(r.data as { ok?: boolean } | null)?.ok) throw new Error("Não foi possível desbloquear. O bloqueio pode já ter sido removido."); },
     onSuccess: () => { toast.success("Bloqueio removido. Pode levar alguns segundos para valer em todos os servidores."); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const [novoBloqueio, setNovoBloqueio] = useState({ tipo: "dispositivo" as "ip" | "dispositivo", valor: "", motivo: "", minutos: "60" });
+  const bloquear = useMutation({
+    mutationFn: async () => {
+      const minutos = novoBloqueio.minutos.trim() ? Number(novoBloqueio.minutos) : null;
+      const r = await rpcSolta("admin_bloquear", { _tipo: novoBloqueio.tipo, _valor: novoBloqueio.valor.trim(), _motivo: novoBloqueio.motivo.trim() || null, _minutos: minutos });
+      const d = r.data as { ok?: boolean; erro?: string } | null;
+      if (r.error || !d?.ok) throw new Error(d?.erro ?? "Não foi possível bloquear.");
+    },
+    onSuccess: () => { toast.success("Bloqueio criado. Pode levar alguns segundos para valer em todos os servidores."); setNovoBloqueio((b) => ({ ...b, valor: "", motivo: "" })); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -217,6 +247,19 @@ export function MonitoramentoSeguranca() {
             <Button size="sm" variant="ghost" onClick={() => setDetalhe(i)}><Eye /> Detalhes</Button>])} />
       )}
       {d && aba === "bloqueios" && (
+        <form className="grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5" onSubmit={(e) => { e.preventDefault(); if (novoBloqueio.valor.trim().length >= 3) bloquear.mutate(); }}>
+          <div className="space-y-1"><Label className="text-xs" htmlFor="nb-tipo">Bloquear</Label>
+            <select id="nb-tipo" className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={novoBloqueio.tipo} onChange={(e) => setNovoBloqueio({ ...novoBloqueio, tipo: e.target.value as "ip" | "dispositivo" })}>
+              <option value="dispositivo">Dispositivo</option><option value="ip">IP</option>
+            </select></div>
+          <div className="space-y-1"><Label className="text-xs" htmlFor="nb-valor">{novoBloqueio.tipo === "ip" ? "Endereço IP" : "Identificador do dispositivo"}</Label><Input id="nb-valor" maxLength={80} value={novoBloqueio.valor} onChange={(e) => setNovoBloqueio({ ...novoBloqueio, valor: e.target.value })} /></div>
+          <div className="space-y-1"><Label className="text-xs" htmlFor="nb-motivo">Motivo</Label><Input id="nb-motivo" maxLength={300} value={novoBloqueio.motivo} onChange={(e) => setNovoBloqueio({ ...novoBloqueio, motivo: e.target.value })} /></div>
+          <div className="space-y-1"><Label className="text-xs" htmlFor="nb-min">Minutos (vazio = sem prazo)</Label><Input id="nb-min" type="number" min={1} max={525600} value={novoBloqueio.minutos} onChange={(e) => setNovoBloqueio({ ...novoBloqueio, minutos: e.target.value })} /></div>
+          <div className="flex items-end"><Button type="submit" variant="destructive" className="w-full" disabled={bloquear.isPending || novoBloqueio.valor.trim().length < 3}><Ban /> Bloquear</Button></div>
+          {novoBloqueio.tipo === "ip" && <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-5">Atenção: na internet de celular muitas pessoas usam o mesmo IP. Prefira bloquear o dispositivo ou a conta (na aba Contas).</p>}
+        </form>
+      )}
+      {d && aba === "bloqueios" && (
         <Tabela vazio="Nenhum bloqueio registrado." cab={["Tipo", "Valor", "Motivo", "Bloqueado em", "Expira", "Tentativas", "Status", ""]}
           linhas={bloqueiosFiltrados.map((b) => [b.tipo === "ip" ? "IP" : b.tipo === "dispositivo" ? "Dispositivo" : "Conta", <code className="text-xs">{b.email ?? b.valor}</code>, <span className="line-clamp-2 max-w-xs">{b.motivo}</span>, dt(b.criado_em), b.expira_em ? dt(b.expira_em) : "Até remover", b.tentativas,
             b.situacao === "ativo" ? <Pill c="destructive">Ativo</Pill> : <Pill>{b.situacao === "expirado" ? "Expirado" : `Removido ${dt(b.removido_em)}`}</Pill>,
@@ -265,6 +308,40 @@ function Tabela({ cab, linhas, vazio }: { cab: string[]; linhas: React.ReactNode
         <thead className="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground"><tr>{cab.map((c, i) => <th key={i} className="whitespace-nowrap px-3 py-2.5">{c}</th>)}</tr></thead>
         <tbody>{linhas.map((l, i) => <tr key={i} className="border-t border-border hover:bg-muted/20">{l.map((c, j) => <td key={j} className="px-3 py-2 align-top">{c}</td>)}</tr>)}</tbody>
       </table>
+    </div>
+  );
+}
+
+/** Faixa vermelha no topo do painel enquanto o site estiver em manutenção ou bloqueado, com o botão de voltar ao normal. */
+export function FaixaManutencaoAdmin() {
+  const qc = useQueryClient();
+  const estado = useEstadoManutencao();
+  const e = estado.data;
+  const voltar = useMutation({
+    mutationFn: async () => {
+      if (!e) return;
+      const painel = await rpcSolta("admin_seguranca_painel", {});
+      const cfg = (painel.data as { config?: Config } | null)?.config;
+      const r = await rpcSolta("admin_manutencao_definir", {
+        _status: "ativo", _titulo: cfg?.titulo ?? e.titulo, _mensagem: cfg?.mensagem ?? e.mensagem,
+        _modulos: cfg?.modulos?.length ? cfg.modulos : e.modulos.length ? e.modulos : ["todos"],
+        _duracao_bloqueio_min: Math.min(cfg?.duracao_bloqueio_min ?? 60, MAX_BLOQUEIO_MIN), _dispositivo: dispositivoLocal(),
+      });
+      const d = r.data as { ok?: boolean; erro?: string } | null;
+      if (r.error || !d?.ok) throw new Error(d?.erro ?? "Não foi possível voltar ao normal.");
+    },
+    onSuccess: () => { toast.success("O site voltou ao normal para todos."); qc.invalidateQueries({ queryKey: ["estado-manutencao"] }); qc.invalidateQueries({ queryKey: ["admin-seguranca-painel"] }); },
+    onError: (err: Error) => toast.error(err.message),
+  });
+  if (!e || e.status === "ativo") return null;
+  const fim = e.termina_em ? new Date(e.termina_em).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : null;
+  return (
+    <div role="alert" className="sticky top-0 z-30 flex flex-col gap-2 border-b border-destructive/40 bg-destructive px-4 py-3 text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm font-medium">
+        {e.status === "bloqueado" ? "O site está BLOQUEADO para os clientes." : "O site está em manutenção para os clientes."}
+        {fim ? ` Volta sozinho em ${fim}.` : ""}
+      </p>
+      <Button size="sm" variant="secondary" onClick={() => voltar.mutate()} disabled={voltar.isPending}><ShieldCheck /> Voltar ao normal</Button>
     </div>
   );
 }
