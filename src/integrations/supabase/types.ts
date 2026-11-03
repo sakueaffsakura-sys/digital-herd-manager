@@ -118,6 +118,7 @@ export type Database = {
           id: string
           informacoes_adicionais: string | null
           lote_id: string | null
+          marcada: boolean
           observacao: string
           producao: number | null
           propriedade_id: string
@@ -132,6 +133,7 @@ export type Database = {
           id?: string
           informacoes_adicionais?: string | null
           lote_id?: string | null
+          marcada?: boolean
           observacao: string
           producao?: number | null
           propriedade_id: string
@@ -146,6 +148,7 @@ export type Database = {
           id?: string
           informacoes_adicionais?: string | null
           lote_id?: string | null
+          marcada?: boolean
           observacao?: string
           producao?: number | null
           propriedade_id?: string
@@ -422,18 +425,26 @@ export type Database = {
         Insert: {
           criado_em?: string
           ebook_id: string
-          id?: number
+          id?: never
           ip_mascarado?: string | null
           user_id: string
         }
         Update: {
           criado_em?: string
           ebook_id?: string
-          id?: number
+          id?: never
           ip_mascarado?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ebook_acessos_ebook_id_fkey"
+            columns: ["ebook_id"]
+            isOneToOne: false
+            referencedRelation: "ebooks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ebooks: {
         Row: {
@@ -1047,10 +1058,10 @@ export type Database = {
       pagamentos: {
         Row: {
           aprovado_em: string | null
+          atualizado_em: string
           criado_em: string
           detalhes: Json
           estornado_em: string | null
-          atualizado_em: string
           id: string
           meses: number
           metodo: string | null
@@ -1066,10 +1077,10 @@ export type Database = {
         }
         Insert: {
           aprovado_em?: string | null
+          atualizado_em?: string
           criado_em?: string
           detalhes?: Json
           estornado_em?: string | null
-          atualizado_em?: string
           id?: string
           meses: number
           metodo?: string | null
@@ -1085,10 +1096,10 @@ export type Database = {
         }
         Update: {
           aprovado_em?: string | null
+          atualizado_em?: string
           criado_em?: string
           detalhes?: Json
           estornado_em?: string | null
-          atualizado_em?: string
           id?: string
           meses?: number
           metodo?: string | null
@@ -1102,7 +1113,22 @@ export type Database = {
           user_id?: string
           valor_centavos?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pesagens: {
         Row: {
@@ -1151,42 +1177,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      planos: {
-        Row: {
-          ativo: boolean
-          atualizado_em: string
-          criado_em: string
-          descricao: string | null
-          id: string
-          meses: number
-          nome: string
-          ordem: number
-          preco_centavos: number
-        }
-        Insert: {
-          ativo?: boolean
-          atualizado_em?: string
-          criado_em?: string
-          descricao?: string | null
-          id?: string
-          meses: number
-          nome: string
-          ordem?: number
-          preco_centavos?: number
-        }
-        Update: {
-          ativo?: boolean
-          atualizado_em?: string
-          criado_em?: string
-          descricao?: string | null
-          id?: string
-          meses?: number
-          nome?: string
-          ordem?: number
-          preco_centavos?: number
-        }
-        Relationships: []
       }
       plano_auditoria: {
         Row: {
@@ -1246,6 +1236,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          meses: number
+          nome: string
+          ordem: number
+          preco_centavos: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          meses: number
+          nome: string
+          ordem?: number
+          preco_centavos?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          meses?: number
+          nome?: string
+          ordem?: number
+          preco_centavos?: number
+        }
+        Relationships: []
       }
       presenca_usuarios: {
         Row: {
@@ -1554,6 +1580,42 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitacoes_exclusao: {
+        Row: {
+          atendida_por: string | null
+          concluida_em: string | null
+          criado_em: string
+          email: string | null
+          id: string
+          motivo: string | null
+          prazo: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          atendida_por?: string | null
+          concluida_em?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          motivo?: string | null
+          prazo?: string
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          atendida_por?: string | null
+          concluida_em?: string | null
+          criado_em?: string
+          email?: string | null
+          id?: string
+          motivo?: string | null
+          prazo?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suporte_contatos: {
         Row: {
           assunto: string
@@ -1594,43 +1656,15 @@ export type Database = {
           status?: string
           user_id?: string
         }
-        Relationships: []
-      }
-      solicitacoes_exclusao: {
-        Row: {
-          atendida_por: string | null
-          concluida_em: string | null
-          criado_em: string
-          email: string | null
-          id: string
-          motivo: string | null
-          prazo: string
-          status: string
-          user_id: string
-        }
-        Insert: {
-          atendida_por?: string | null
-          concluida_em?: string | null
-          criado_em?: string
-          email?: string | null
-          id?: string
-          motivo?: string | null
-          prazo?: string
-          status?: string
-          user_id?: string
-        }
-        Update: {
-          atendida_por?: string | null
-          concluida_em?: string | null
-          criado_em?: string
-          email?: string | null
-          id?: string
-          motivo?: string | null
-          prazo?: string
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suporte_contatos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suporte_mensagens: {
         Row: {
@@ -2009,40 +2043,6 @@ export type Database = {
           ultima_dose: boolean | null
           updated_at: string | null
         }
-        Insert: {
-          animal_id?: string | null
-          created_at?: string | null
-          data_aplicacao?: string | null
-          dias_restantes?: never
-          status_atual?: never
-          ultima_dose?: never
-          id?: string | null
-          lote_id?: string | null
-          observacao?: string | null
-          propriedade_id?: string | null
-          proxima_aplicacao?: string | null
-          responsavel?: string | null
-          status_calculado?: never
-          tipo_vacina_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          animal_id?: string | null
-          created_at?: string | null
-          data_aplicacao?: string | null
-          dias_restantes?: never
-          status_atual?: never
-          ultima_dose?: never
-          id?: string | null
-          lote_id?: string | null
-          observacao?: string | null
-          propriedade_id?: string | null
-          proxima_aplicacao?: string | null
-          responsavel?: string | null
-          status_calculado?: never
-          tipo_vacina_id?: string | null
-          updated_at?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "vacinacoes_animal_id_fkey"
@@ -2090,77 +2090,25 @@ export type Database = {
       }
     }
     Functions: {
-      admin_ebooks_resumo: {
-        Args: never
-        Returns: {
-          aberturas: number
-          ebook_id: string
-          leitores: number
-          ultima: string | null
-        }[]
-      }
-      admin_pagamentos: {
-        Args: { _limite?: number; _status?: string }
-        Returns: {
-          aprovado_em: string | null
-          criado_em: string
-          email: string | null
-          id: string
-          meses: number
-          metodo: string | null
-          mp_payment_id: string | null
-          plano_nome: string
-          propriedade: string | null
-          status: string
-          valor_centavos: number
-        }[]
-      }
-      minha_area_assinante: { Args: never; Returns: Json }
-      sou_assinante: { Args: never; Returns: boolean }
-      admin_concluir_exclusao: { Args: { _id: string }; Returns: Json }
       admin_2fa_resumo: {
         Args: never
-        Returns: { email: string; eu: boolean; tem_2fa: boolean }[]
-      }
-      indicadores_propriedade: { Args: { _propriedade_id: string }; Returns: Json }
-      admin_suporte: {
-        Args: { _limite?: number; _status?: string }
         Returns: {
-          assunto: string
-          criado_em: string
-          email: string | null
-          id: string
-          mensagem: string
-          propriedade: string | null
-          respondido_em: string | null
-          resposta: string | null
-          status: string
-        }[]
-      }
-      admin_responder_suporte: {
-        Args: { _fechar?: boolean; _id: string; _resposta: string }
-        Returns: boolean
-      }
-      admin_exigir_2fa: { Args: { _ligar: boolean }; Returns: boolean }
-      agenda_periodo: {
-        Args: { _ate: string; _de: string; _propriedade_id: string }
-        Returns: Json
-      }
-      central_avisos: { Args: { _propriedade_id: string }; Returns: Json }
-      encerrar_sessao: { Args: { _id: string }; Returns: boolean }
-      minhas_sessoes: {
-        Args: never
-        Returns: {
-          aal: string
-          atual: boolean
-          criada_em: string
-          id: string
-          ip: string
-          navegador: string
-          ultimo_uso: string
+          email: string
+          eu: boolean
+          tem_2fa: boolean
         }[]
       }
       admin_alertas: { Args: never; Returns: Json }
+      admin_bloquear: {
+        Args: {
+          _minutos?: number
+          _motivo?: string
+          _tipo: string
+          _valor: string
+        }
+        Returns: Json
+      }
+      admin_concluir_exclusao: { Args: { _id: string }; Returns: Json }
       admin_conta_detalhe: { Args: { _user_id: string }; Returns: Json }
       admin_contas: {
         Args: never
@@ -2186,7 +2134,17 @@ export type Database = {
         Returns: undefined
       }
       admin_desbloquear: { Args: { _id: string }; Returns: Json }
+      admin_ebooks_resumo: {
+        Args: never
+        Returns: {
+          aberturas: number
+          ebook_id: string
+          leitores: number
+          ultima: string
+        }[]
+      }
       admin_excluir_conta: { Args: { _user_id: string }; Returns: Json }
+      admin_exigir_2fa: { Args: { _ligar: boolean }; Returns: boolean }
       admin_manutencao_definir: {
         Args: {
           _dispositivo?: string
@@ -2199,11 +2157,27 @@ export type Database = {
         }
         Returns: Json
       }
-      admin_bloquear: {
-        Args: { _minutos?: number; _motivo?: string; _tipo: string; _valor: string }
-        Returns: Json
-      }
       admin_metricas: { Args: never; Returns: Json }
+      admin_pagamentos: {
+        Args: { _limite?: number; _status?: string }
+        Returns: {
+          aprovado_em: string
+          criado_em: string
+          email: string
+          id: string
+          meses: number
+          metodo: string
+          mp_payment_id: string
+          plano_nome: string
+          propriedade: string
+          status: string
+          valor_centavos: number
+        }[]
+      }
+      admin_responder_suporte: {
+        Args: { _fechar?: boolean; _id: string; _resposta: string }
+        Returns: boolean
+      }
       admin_saude: { Args: never; Returns: Json }
       admin_seguranca_painel: {
         Args: {
@@ -2217,7 +2191,25 @@ export type Database = {
         Returns: Json
       }
       admin_sistema: { Args: never; Returns: Json }
+      admin_suporte: {
+        Args: { _limite?: number; _status?: string }
+        Returns: {
+          assunto: string
+          criado_em: string
+          email: string
+          id: string
+          mensagem: string
+          propriedade: string
+          respondido_em: string
+          resposta: string
+          status: string
+        }[]
+      }
       admin_tempo_real: { Args: never; Returns: Json }
+      agenda_periodo: {
+        Args: { _ate: string; _de: string; _propriedade_id: string }
+        Returns: Json
+      }
       app_diagnostico: { Args: { p_propriedade_id: string }; Returns: Json }
       app_sincronizar: {
         Args: {
@@ -2233,6 +2225,7 @@ export type Database = {
         Args: { _motivo?: string; _propriedade_id: string }
         Returns: Json
       }
+      central_avisos: { Args: { _propriedade_id: string }; Returns: Json }
       checar_limite: {
         Args: { _chave: string; _max: number; _segundos: number }
         Returns: boolean
@@ -2242,8 +2235,53 @@ export type Database = {
         Args: { _propriedade_id: string }
         Returns: Json
       }
+      ebook_registrar_acesso: {
+        Args: { _ebook: string; _ip: string; _user: string }
+        Returns: Json
+      }
+      encerrar_sessao: { Args: { _id: string }; Returns: boolean }
       estado_manutencao: { Args: never; Returns: Json }
+      indicadores_propriedade: {
+        Args: { _propriedade_id: string }
+        Returns: Json
+      }
+      minha_area_assinante: { Args: never; Returns: Json }
       minha_assinatura: { Args: { _propriedade_id: string }; Returns: Json }
+      minhas_sessoes: {
+        Args: never
+        Returns: {
+          aal: string
+          atual: boolean
+          criada_em: string
+          id: string
+          ip: string
+          navegador: string
+          ultimo_uso: string
+        }[]
+      }
+      mp_ativar_assinatura: {
+        Args: {
+          _detalhes: Json
+          _metodo: string
+          _mp_payment_id: string
+          _pagamento: string
+        }
+        Returns: Json
+      }
+      mp_estornar: {
+        Args: { _motivo: string; _mp_payment_id: string }
+        Returns: Json
+      }
+      mp_registrar_status: {
+        Args: {
+          _detalhes: Json
+          _metodo: string
+          _mp_payment_id: string
+          _pagamento: string
+          _status: string
+        }
+        Returns: undefined
+      }
       pode_gerenciar_planos: { Args: never; Returns: boolean }
       registros_inconsistentes: {
         Args: { _propriedade_id: string }
@@ -2284,6 +2322,7 @@ export type Database = {
         Returns: Json
       }
       sou_admin: { Args: never; Returns: boolean }
+      sou_assinante: { Args: never; Returns: boolean }
       yui_consumir: {
         Args: { _limite: number; _tipo: string; _user: string }
         Returns: boolean

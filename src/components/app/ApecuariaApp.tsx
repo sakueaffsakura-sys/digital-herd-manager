@@ -406,7 +406,7 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
         render={render}
         actions={acoes}
         rowLabel={(row) => (config.table === "animais" ? `animal ${String(row["numero_brinco"] ?? "")}` : config.singular)}
-        emptyMessage={filtrando ? "Nada encontrado com essa busca ou período." : `Ainda não há ${config.title.toLowerCase()} cadastrados.`}
+        emptyMessage={filtrando ? "Nada encontrado com essa busca ou período." : `Nenhum registro em ${config.title} ainda.`}
         emptyAction={filtrando ? undefined : { label: config.primeiro ?? (config.novo ?? "Cadastrar"), onClick: novo }}
       />
       <RecordDialog open={open} onClose={() => { setOpen(false); setEditing(null); }} config={config} row={editing} refs={refs.data} onSave={(p) => save.mutate(p)} saving={save.isPending} propertyId={propertyId} />

@@ -54,7 +54,10 @@ async function carregarBloqueios(sb: Awaited<ReturnType<typeof admin>>) {
 
 async function obter(): Promise<Cache | null> {
   if (cache && cache.ate > Date.now()) return cache;
-  carregando ??= carregar().finally(() => { carregando = null; });
+  // Uma falha passageira (rede, relógio do token) ganha uma nova tentativa antes de responder indisponível.
+  carregando ??= carregar()
+    .catch(async () => { await new Promise((r) => setTimeout(r, 400)); return carregar(); })
+    .finally(() => { carregando = null; });
   try { cache = await carregando; } catch (e) { console.error("manutencao: falha ao ler estado", e); }
   return cache; // em falha mantém o último estado; sem estado inicial responde indisponível
 }
