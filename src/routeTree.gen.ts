@@ -11,31 +11,31 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiYuiRouteImport } from './routes/api/yui'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app/$section'
+import { Route as ApiAdminContaRouteImport } from './routes/api/admin/conta'
+import { Route as ApiAdminExclusaoRouteImport } from './routes/api/admin/exclusao'
+import { Route as ApiAdminPagamentosEstadoRouteImport } from './routes/api/admin/pagamentos-estado'
+import { Route as ApiAssinaturaCheckoutRouteImport } from './routes/api/assinatura/checkout'
+import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
+import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
+import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
+import { Route as ApiContaMeusDadosRouteImport } from './routes/api/conta/meus-dados'
 import { Route as ApiYuiVozRouteImport } from './routes/api/yui/voz'
+import { Route as ApiEbooksIdArquivoRouteImport } from './routes/api/ebooks/$id/arquivo'
 import { Route as ApiPublicAppEuRouteImport } from './routes/api/public/app/eu'
 import { Route as ApiPublicAppLoginRouteImport } from './routes/api/public/app/login'
 import { Route as ApiPublicAppResumoRouteImport } from './routes/api/public/app/resumo'
 import { Route as ApiPublicAppSincronizarRouteImport } from './routes/api/public/app/sincronizar'
 import { Route as ApiPublicAppStatusRouteImport } from './routes/api/public/app/status'
-import { Route as ApiAdminContaRouteImport } from './routes/api/admin/conta'
-import { Route as ApiPublicContaRecuperarRouteImport } from './routes/api/public/conta/recuperar'
 import { Route as ApiPublicContaCadastroRouteImport } from './routes/api/public/conta/cadastro'
-import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
-import { Route as ApiContaMeusDadosRouteImport } from './routes/api/conta/meus-dados'
-import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
-import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
-import { Route as PrivacidadeRouteImport } from './routes/privacidade'
-import { Route as TermosRouteImport } from './routes/termos'
-import { Route as ApiAssinaturaCheckoutRouteImport } from './routes/api/assinatura/checkout'
+import { Route as ApiPublicContaRecuperarRouteImport } from './routes/api/public/conta/recuperar'
 import { Route as ApiPublicMercadopagoWebhookRouteImport } from './routes/api/public/mercadopago/webhook'
-import { Route as ApiAdminPagamentosEstadoRouteImport } from './routes/api/admin/pagamentos-estado'
-import { Route as ApiEbooksIdArquivoRouteImport } from './routes/api/ebooks/$id/arquivo'
-import { Route as ApiAdminExclusaoRouteImport } from './routes/api/admin/exclusao'
-import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
-import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -44,6 +44,26 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -61,10 +81,56 @@ const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
   path: '/app/$section',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiAdminContaRoute = ApiAdminContaRouteImport.update({
+  id: '/api/admin/conta',
+  path: '/api/admin/conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminExclusaoRoute = ApiAdminExclusaoRouteImport.update({
+  id: '/api/admin/exclusao',
+  path: '/api/admin/exclusao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminPagamentosEstadoRoute =
+  ApiAdminPagamentosEstadoRouteImport.update({
+    id: '/api/admin/pagamentos-estado',
+    path: '/api/admin/pagamentos-estado',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAssinaturaCheckoutRoute = ApiAssinaturaCheckoutRouteImport.update({
+  id: '/api/assinatura/checkout',
+  path: '/api/assinatura/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiClimaAgoraRoute = ApiClimaAgoraRouteImport.update({
+  id: '/api/clima/agora',
+  path: '/api/clima/agora',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiClimaLugaresRoute = ApiClimaLugaresRouteImport.update({
+  id: '/api/clima/lugares',
+  path: '/api/clima/lugares',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
+  id: '/api/conta/conferir-senha',
+  path: '/api/conta/conferir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaMeusDadosRoute = ApiContaMeusDadosRouteImport.update({
+  id: '/api/conta/meus-dados',
+  path: '/api/conta/meus-dados',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiYuiVozRoute = ApiYuiVozRouteImport.update({
   id: '/voz',
   path: '/voz',
   getParentRoute: () => ApiYuiRoute,
+} as any)
+const ApiEbooksIdArquivoRoute = ApiEbooksIdArquivoRouteImport.update({
+  id: '/api/ebooks/$id/arquivo',
+  path: '/api/ebooks/$id/arquivo',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAppEuRoute = ApiPublicAppEuRouteImport.update({
   id: '/api/public/app/eu',
@@ -91,9 +157,9 @@ const ApiPublicAppStatusRoute = ApiPublicAppStatusRouteImport.update({
   path: '/api/public/app/status',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminContaRoute = ApiAdminContaRouteImport.update({
-  id: '/api/admin/conta',
-  path: '/api/admin/conta',
+const ApiPublicContaCadastroRoute = ApiPublicContaCadastroRouteImport.update({
+  id: '/api/public/conta/cadastro',
+  path: '/api/public/conta/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicContaRecuperarRoute = ApiPublicContaRecuperarRouteImport.update({
@@ -101,276 +167,212 @@ const ApiPublicContaRecuperarRoute = ApiPublicContaRecuperarRouteImport.update({
   path: '/api/public/conta/recuperar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicContaCadastroRoute = ApiPublicContaCadastroRouteImport.update({
-  id: '/api/public/conta/cadastro',
-  path: '/api/public/conta/cadastro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
-  id: '/api/conta/conferir-senha',
-  path: '/api/conta/conferir-senha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiContaMeusDadosRoute = ApiContaMeusDadosRouteImport.update({
-  id: '/api/conta/meus-dados',
-  path: '/api/conta/meus-dados',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
-  id: '/recuperar-senha',
-  path: '/recuperar-senha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
-  id: '/redefinir-senha',
-  path: '/redefinir-senha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacidadeRoute = PrivacidadeRouteImport.update({
-  id: '/privacidade',
-  path: '/privacidade',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermosRoute = TermosRouteImport.update({
-  id: '/termos',
-  path: '/termos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAssinaturaCheckoutRoute = ApiAssinaturaCheckoutRouteImport.update({
-  id: '/api/assinatura/checkout',
-  path: '/api/assinatura/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicMercadopagoWebhookRoute = ApiPublicMercadopagoWebhookRouteImport.update({
-  id: '/api/public/mercadopago/webhook',
-  path: '/api/public/mercadopago/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAdminPagamentosEstadoRoute = ApiAdminPagamentosEstadoRouteImport.update({
-  id: '/api/admin/pagamentos-estado',
-  path: '/api/admin/pagamentos-estado',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiEbooksIdArquivoRoute = ApiEbooksIdArquivoRouteImport.update({
-  id: '/api/ebooks/$id/arquivo',
-  path: '/api/ebooks/$id/arquivo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAdminExclusaoRoute = ApiAdminExclusaoRouteImport.update({
-  id: '/api/admin/exclusao',
-  path: '/api/admin/exclusao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiClimaAgoraRoute = ApiClimaAgoraRouteImport.update({
-  id: '/api/clima/agora',
-  path: '/api/clima/agora',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiClimaLugaresRoute = ApiClimaLugaresRouteImport.update({
-  id: '/api/clima/lugares',
-  path: '/api/clima/lugares',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiPublicMercadopagoWebhookRoute =
+  ApiPublicMercadopagoWebhookRouteImport.update({
+    id: '/api/public/mercadopago/webhook',
+    path: '/api/public/mercadopago/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/admin/conta': typeof ApiAdminContaRoute
+  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
+  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
+  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/clima/agora': typeof ApiClimaAgoraRoute
+  '/api/clima/lugares': typeof ApiClimaLugaresRoute
+  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
+  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/public/app/eu': typeof ApiPublicAppEuRoute
   '/api/public/app/login': typeof ApiPublicAppLoginRoute
   '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
-  '/api/admin/conta': typeof ApiAdminContaRoute
-  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
   '/api/public/conta/cadastro': typeof ApiPublicContaCadastroRoute
-  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
-  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
-  '/recuperar-senha': typeof RecuperarSenhaRoute
-  '/redefinir-senha': typeof RedefinirSenhaRoute
-  '/privacidade': typeof PrivacidadeRoute
-  '/termos': typeof TermosRoute
-  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
-  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
-  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
-  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
-  '/api/clima/agora': typeof ApiClimaAgoraRoute
-  '/api/clima/lugares': typeof ApiClimaLugaresRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/admin/conta': typeof ApiAdminContaRoute
+  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
+  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
+  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/clima/agora': typeof ApiClimaAgoraRoute
+  '/api/clima/lugares': typeof ApiClimaLugaresRoute
+  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
+  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/public/app/eu': typeof ApiPublicAppEuRoute
   '/api/public/app/login': typeof ApiPublicAppLoginRoute
   '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
-  '/api/admin/conta': typeof ApiAdminContaRoute
-  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
   '/api/public/conta/cadastro': typeof ApiPublicContaCadastroRoute
-  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
-  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
-  '/recuperar-senha': typeof RecuperarSenhaRoute
-  '/redefinir-senha': typeof RedefinirSenhaRoute
-  '/privacidade': typeof PrivacidadeRoute
-  '/termos': typeof TermosRoute
-  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
-  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
-  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
-  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
-  '/api/clima/agora': typeof ApiClimaAgoraRoute
-  '/api/clima/lugares': typeof ApiClimaLugaresRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/admin/conta': typeof ApiAdminContaRoute
+  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
+  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
+  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/clima/agora': typeof ApiClimaAgoraRoute
+  '/api/clima/lugares': typeof ApiClimaLugaresRoute
+  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
+  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/public/app/eu': typeof ApiPublicAppEuRoute
   '/api/public/app/login': typeof ApiPublicAppLoginRoute
   '/api/public/app/resumo': typeof ApiPublicAppResumoRoute
   '/api/public/app/sincronizar': typeof ApiPublicAppSincronizarRoute
   '/api/public/app/status': typeof ApiPublicAppStatusRoute
-  '/api/admin/conta': typeof ApiAdminContaRoute
-  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
   '/api/public/conta/cadastro': typeof ApiPublicContaCadastroRoute
-  '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
-  '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
-  '/recuperar-senha': typeof RecuperarSenhaRoute
-  '/redefinir-senha': typeof RedefinirSenhaRoute
-  '/privacidade': typeof PrivacidadeRoute
-  '/termos': typeof TermosRoute
-  '/api/assinatura/checkout': typeof ApiAssinaturaCheckoutRoute
+  '/api/public/conta/recuperar': typeof ApiPublicContaRecuperarRoute
   '/api/public/mercadopago/webhook': typeof ApiPublicMercadopagoWebhookRoute
-  '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
-  '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
-  '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
-  '/api/clima/agora': typeof ApiClimaAgoraRoute
-  '/api/clima/lugares': typeof ApiClimaLugaresRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/privacidade'
+    | '/recuperar-senha'
+    | '/redefinir-senha'
+    | '/termos'
     | '/admin'
     | '/api/yui'
     | '/app/$section'
+    | '/api/admin/conta'
+    | '/api/admin/exclusao'
+    | '/api/admin/pagamentos-estado'
+    | '/api/assinatura/checkout'
+    | '/api/clima/agora'
+    | '/api/clima/lugares'
+    | '/api/conta/conferir-senha'
+    | '/api/conta/meus-dados'
     | '/api/yui/voz'
+    | '/api/ebooks/$id/arquivo'
     | '/api/public/app/eu'
     | '/api/public/app/login'
     | '/api/public/app/resumo'
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
-    | '/api/admin/conta'
-    | '/api/public/conta/recuperar'
     | '/api/public/conta/cadastro'
-    | '/api/conta/conferir-senha'
-    | '/api/conta/meus-dados'
-    | '/recuperar-senha'
-    | '/redefinir-senha'
-    | '/privacidade'
-    | '/termos'
-    | '/api/assinatura/checkout'
+    | '/api/public/conta/recuperar'
     | '/api/public/mercadopago/webhook'
-    | '/api/admin/pagamentos-estado'
-    | '/api/ebooks/$id/arquivo'
-    | '/api/admin/exclusao'
-    | '/api/clima/agora'
-    | '/api/clima/lugares'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/privacidade'
+    | '/recuperar-senha'
+    | '/redefinir-senha'
+    | '/termos'
     | '/admin'
     | '/api/yui'
     | '/app/$section'
+    | '/api/admin/conta'
+    | '/api/admin/exclusao'
+    | '/api/admin/pagamentos-estado'
+    | '/api/assinatura/checkout'
+    | '/api/clima/agora'
+    | '/api/clima/lugares'
+    | '/api/conta/conferir-senha'
+    | '/api/conta/meus-dados'
     | '/api/yui/voz'
+    | '/api/ebooks/$id/arquivo'
     | '/api/public/app/eu'
     | '/api/public/app/login'
     | '/api/public/app/resumo'
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
-    | '/api/admin/conta'
+    | '/api/public/conta/cadastro'
+    | '/api/public/conta/recuperar'
+    | '/api/public/mercadopago/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/privacidade'
+    | '/recuperar-senha'
+    | '/redefinir-senha'
+    | '/termos'
     | '/_authenticated/admin'
     | '/api/yui'
     | '/_authenticated/app/$section'
+    | '/api/admin/conta'
+    | '/api/admin/exclusao'
+    | '/api/admin/pagamentos-estado'
+    | '/api/assinatura/checkout'
+    | '/api/clima/agora'
+    | '/api/clima/lugares'
+    | '/api/conta/conferir-senha'
+    | '/api/conta/meus-dados'
     | '/api/yui/voz'
+    | '/api/ebooks/$id/arquivo'
     | '/api/public/app/eu'
     | '/api/public/app/login'
     | '/api/public/app/resumo'
     | '/api/public/app/sincronizar'
     | '/api/public/app/status'
-    | '/api/admin/conta'
-    | '/api/public/conta/recuperar'
-    | '/api/public/conta/recuperar'
     | '/api/public/conta/cadastro'
-    | '/api/public/conta/cadastro'
-    | '/api/conta/conferir-senha'
-    | '/api/conta/conferir-senha'
-    | '/api/conta/meus-dados'
-    | '/api/conta/meus-dados'
-    | '/recuperar-senha'
-    | '/recuperar-senha'
-    | '/redefinir-senha'
-    | '/redefinir-senha'
-    | '/privacidade'
-    | '/privacidade'
-    | '/termos'
-    | '/termos'
-    | '/api/assinatura/checkout'
-    | '/api/assinatura/checkout'
+    | '/api/public/conta/recuperar'
     | '/api/public/mercadopago/webhook'
-    | '/api/public/mercadopago/webhook'
-    | '/api/admin/pagamentos-estado'
-    | '/api/admin/pagamentos-estado'
-    | '/api/ebooks/$id/arquivo'
-    | '/api/ebooks/$id/arquivo'
-    | '/api/admin/exclusao'
-    | '/api/admin/exclusao'
-    | '/api/clima/agora'
-    | '/api/clima/agora'
-    | '/api/clima/lugares'
-    | '/api/clima/lugares'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
+  TermosRoute: typeof TermosRoute
   ApiYuiRoute: typeof ApiYuiRouteWithChildren
+  ApiAdminContaRoute: typeof ApiAdminContaRoute
+  ApiAdminExclusaoRoute: typeof ApiAdminExclusaoRoute
+  ApiAdminPagamentosEstadoRoute: typeof ApiAdminPagamentosEstadoRoute
+  ApiAssinaturaCheckoutRoute: typeof ApiAssinaturaCheckoutRoute
+  ApiClimaAgoraRoute: typeof ApiClimaAgoraRoute
+  ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
+  ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
+  ApiContaMeusDadosRoute: typeof ApiContaMeusDadosRoute
+  ApiEbooksIdArquivoRoute: typeof ApiEbooksIdArquivoRoute
   ApiPublicAppEuRoute: typeof ApiPublicAppEuRoute
   ApiPublicAppLoginRoute: typeof ApiPublicAppLoginRoute
   ApiPublicAppResumoRoute: typeof ApiPublicAppResumoRoute
   ApiPublicAppSincronizarRoute: typeof ApiPublicAppSincronizarRoute
   ApiPublicAppStatusRoute: typeof ApiPublicAppStatusRoute
-  ApiAdminContaRoute: typeof ApiAdminContaRoute
-  ApiPublicContaRecuperarRoute: typeof ApiPublicContaRecuperarRoute
   ApiPublicContaCadastroRoute: typeof ApiPublicContaCadastroRoute
-  ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
-  ApiContaMeusDadosRoute: typeof ApiContaMeusDadosRoute
-  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
-  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
-  PrivacidadeRoute: typeof PrivacidadeRoute
-  TermosRoute: typeof TermosRoute
-  ApiAssinaturaCheckoutRoute: typeof ApiAssinaturaCheckoutRoute
+  ApiPublicContaRecuperarRoute: typeof ApiPublicContaRecuperarRoute
   ApiPublicMercadopagoWebhookRoute: typeof ApiPublicMercadopagoWebhookRoute
-  ApiAdminPagamentosEstadoRoute: typeof ApiAdminPagamentosEstadoRoute
-  ApiEbooksIdArquivoRoute: typeof ApiEbooksIdArquivoRoute
-  ApiAdminExclusaoRoute: typeof ApiAdminExclusaoRoute
-  ApiClimaAgoraRoute: typeof ApiClimaAgoraRoute
-  ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -387,6 +389,34 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -410,12 +440,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/admin/conta': {
+      id: '/api/admin/conta'
+      path: '/api/admin/conta'
+      fullPath: '/api/admin/conta'
+      preLoaderRoute: typeof ApiAdminContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/exclusao': {
+      id: '/api/admin/exclusao'
+      path: '/api/admin/exclusao'
+      fullPath: '/api/admin/exclusao'
+      preLoaderRoute: typeof ApiAdminExclusaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/pagamentos-estado': {
+      id: '/api/admin/pagamentos-estado'
+      path: '/api/admin/pagamentos-estado'
+      fullPath: '/api/admin/pagamentos-estado'
+      preLoaderRoute: typeof ApiAdminPagamentosEstadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assinatura/checkout': {
+      id: '/api/assinatura/checkout'
+      path: '/api/assinatura/checkout'
+      fullPath: '/api/assinatura/checkout'
+      preLoaderRoute: typeof ApiAssinaturaCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/clima/agora': {
+      id: '/api/clima/agora'
+      path: '/api/clima/agora'
+      fullPath: '/api/clima/agora'
+      preLoaderRoute: typeof ApiClimaAgoraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/clima/lugares': {
+      id: '/api/clima/lugares'
+      path: '/api/clima/lugares'
+      fullPath: '/api/clima/lugares'
+      preLoaderRoute: typeof ApiClimaLugaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/conferir-senha': {
+      id: '/api/conta/conferir-senha'
+      path: '/api/conta/conferir-senha'
+      fullPath: '/api/conta/conferir-senha'
+      preLoaderRoute: typeof ApiContaConferirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/meus-dados': {
+      id: '/api/conta/meus-dados'
+      path: '/api/conta/meus-dados'
+      fullPath: '/api/conta/meus-dados'
+      preLoaderRoute: typeof ApiContaMeusDadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/yui/voz': {
       id: '/api/yui/voz'
       path: '/voz'
       fullPath: '/api/yui/voz'
       preLoaderRoute: typeof ApiYuiVozRouteImport
       parentRoute: typeof ApiYuiRoute
+    }
+    '/api/ebooks/$id/arquivo': {
+      id: '/api/ebooks/$id/arquivo'
+      path: '/api/ebooks/$id/arquivo'
+      fullPath: '/api/ebooks/$id/arquivo'
+      preLoaderRoute: typeof ApiEbooksIdArquivoRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/app/eu': {
       id: '/api/public/app/eu'
@@ -452,11 +545,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAppStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/admin/conta': {
-      id: '/api/admin/conta'
-      path: '/api/admin/conta'
-      fullPath: '/api/admin/conta'
-      preLoaderRoute: typeof ApiAdminContaRouteImport
+    '/api/public/conta/cadastro': {
+      id: '/api/public/conta/cadastro'
+      path: '/api/public/conta/cadastro'
+      fullPath: '/api/public/conta/cadastro'
+      preLoaderRoute: typeof ApiPublicContaCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/conta/recuperar': {
@@ -466,102 +559,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicContaRecuperarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/conta/cadastro': {
-      id: '/api/public/conta/cadastro'
-      path: '/api/public/conta/cadastro'
-      fullPath: '/api/public/conta/cadastro'
-      preLoaderRoute: typeof ApiPublicContaCadastroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/conta/conferir-senha': {
-      id: '/api/conta/conferir-senha'
-      path: '/api/conta/conferir-senha'
-      fullPath: '/api/conta/conferir-senha'
-      preLoaderRoute: typeof ApiContaConferirSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/conta/meus-dados': {
-      id: '/api/conta/meus-dados'
-      path: '/api/conta/meus-dados'
-      fullPath: '/api/conta/meus-dados'
-      preLoaderRoute: typeof ApiContaMeusDadosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recuperar-senha': {
-      id: '/recuperar-senha'
-      path: '/recuperar-senha'
-      fullPath: '/recuperar-senha'
-      preLoaderRoute: typeof RecuperarSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/redefinir-senha': {
-      id: '/redefinir-senha'
-      path: '/redefinir-senha'
-      fullPath: '/redefinir-senha'
-      preLoaderRoute: typeof RedefinirSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacidade': {
-      id: '/privacidade'
-      path: '/privacidade'
-      fullPath: '/privacidade'
-      preLoaderRoute: typeof PrivacidadeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/termos': {
-      id: '/termos'
-      path: '/termos'
-      fullPath: '/termos'
-      preLoaderRoute: typeof TermosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/assinatura/checkout': {
-      id: '/api/assinatura/checkout'
-      path: '/api/assinatura/checkout'
-      fullPath: '/api/assinatura/checkout'
-      preLoaderRoute: typeof ApiAssinaturaCheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/mercadopago/webhook': {
       id: '/api/public/mercadopago/webhook'
       path: '/api/public/mercadopago/webhook'
       fullPath: '/api/public/mercadopago/webhook'
       preLoaderRoute: typeof ApiPublicMercadopagoWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/admin/pagamentos-estado': {
-      id: '/api/admin/pagamentos-estado'
-      path: '/api/admin/pagamentos-estado'
-      fullPath: '/api/admin/pagamentos-estado'
-      preLoaderRoute: typeof ApiAdminPagamentosEstadoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ebooks/$id/arquivo': {
-      id: '/api/ebooks/$id/arquivo'
-      path: '/api/ebooks/$id/arquivo'
-      fullPath: '/api/ebooks/$id/arquivo'
-      preLoaderRoute: typeof ApiEbooksIdArquivoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/admin/exclusao': {
-      id: '/api/admin/exclusao'
-      path: '/api/admin/exclusao'
-      fullPath: '/api/admin/exclusao'
-      preLoaderRoute: typeof ApiAdminExclusaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/clima/agora': {
-      id: '/api/clima/agora'
-      path: '/api/clima/agora'
-      fullPath: '/api/clima/agora'
-      preLoaderRoute: typeof ApiClimaAgoraRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/clima/lugares': {
-      id: '/api/clima/lugares'
-      path: '/api/clima/lugares'
-      fullPath: '/api/clima/lugares'
-      preLoaderRoute: typeof ApiClimaLugaresRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -594,28 +596,28 @@ const ApiYuiRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  PrivacidadeRoute: PrivacidadeRoute,
+  RecuperarSenhaRoute: RecuperarSenhaRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
+  TermosRoute: TermosRoute,
   ApiYuiRoute: ApiYuiRouteWithChildren,
+  ApiAdminContaRoute: ApiAdminContaRoute,
+  ApiAdminExclusaoRoute: ApiAdminExclusaoRoute,
+  ApiAdminPagamentosEstadoRoute: ApiAdminPagamentosEstadoRoute,
+  ApiAssinaturaCheckoutRoute: ApiAssinaturaCheckoutRoute,
+  ApiClimaAgoraRoute: ApiClimaAgoraRoute,
+  ApiClimaLugaresRoute: ApiClimaLugaresRoute,
+  ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
+  ApiContaMeusDadosRoute: ApiContaMeusDadosRoute,
+  ApiEbooksIdArquivoRoute: ApiEbooksIdArquivoRoute,
   ApiPublicAppEuRoute: ApiPublicAppEuRoute,
   ApiPublicAppLoginRoute: ApiPublicAppLoginRoute,
   ApiPublicAppResumoRoute: ApiPublicAppResumoRoute,
   ApiPublicAppSincronizarRoute: ApiPublicAppSincronizarRoute,
   ApiPublicAppStatusRoute: ApiPublicAppStatusRoute,
-  ApiAdminContaRoute: ApiAdminContaRoute,
-  ApiPublicContaRecuperarRoute: ApiPublicContaRecuperarRoute,
   ApiPublicContaCadastroRoute: ApiPublicContaCadastroRoute,
-  ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
-  ApiContaMeusDadosRoute: ApiContaMeusDadosRoute,
-  RecuperarSenhaRoute: RecuperarSenhaRoute,
-  RedefinirSenhaRoute: RedefinirSenhaRoute,
-  PrivacidadeRoute: PrivacidadeRoute,
-  TermosRoute: TermosRoute,
-  ApiAssinaturaCheckoutRoute: ApiAssinaturaCheckoutRoute,
+  ApiPublicContaRecuperarRoute: ApiPublicContaRecuperarRoute,
   ApiPublicMercadopagoWebhookRoute: ApiPublicMercadopagoWebhookRoute,
-  ApiAdminPagamentosEstadoRoute: ApiAdminPagamentosEstadoRoute,
-  ApiEbooksIdArquivoRoute: ApiEbooksIdArquivoRoute,
-  ApiAdminExclusaoRoute: ApiAdminExclusaoRoute,
-  ApiClimaAgoraRoute: ApiClimaAgoraRoute,
-  ApiClimaLugaresRoute: ApiClimaLugaresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
