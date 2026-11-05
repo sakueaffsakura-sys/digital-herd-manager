@@ -50,6 +50,13 @@
       "when": 1793744786363,
       "tag": "0006_restringir_leitura_imagens_capas_apk",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793881249965,
+      "tag": "0007_chaves_sistema",
+      "breakpoints": true
     }
   ]
 }

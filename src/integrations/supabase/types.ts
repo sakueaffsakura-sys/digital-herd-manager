@@ -298,6 +298,30 @@ export type Database = {
           },
         ]
       }
+      chaves_sistema: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          final: string
+          nome: string
+          valor_cifrado: string
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          final: string
+          nome: string
+          valor_cifrado: string
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          final?: string
+          nome?: string
+          valor_cifrado?: string
+        }
+        Relationships: []
+      }
       compras: {
         Row: {
           categoria: string
