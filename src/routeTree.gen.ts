@@ -14,10 +14,13 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as ResgateRouteImport } from './routes/resgate'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiYuiRouteImport } from './routes/api/yui'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app/$section'
+import { Route as ApiAdminChavesRouteImport } from './routes/api/admin/chaves'
+import { Route as ApiAdminChavesTestarRouteImport } from './routes/api/admin/chaves-testar'
 import { Route as ApiAdminContaRouteImport } from './routes/api/admin/conta'
 import { Route as ApiAdminExclusaoRouteImport } from './routes/api/admin/exclusao'
 import { Route as ApiAdminPagamentosEstadoRouteImport } from './routes/api/admin/pagamentos-estado'
@@ -26,6 +29,7 @@ import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
 import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
 import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
 import { Route as ApiContaMeusDadosRouteImport } from './routes/api/conta/meus-dados'
+import { Route as ApiPublicResgateRouteImport } from './routes/api/public/resgate'
 import { Route as ApiYuiVozRouteImport } from './routes/api/yui/voz'
 import { Route as ApiEbooksIdArquivoRouteImport } from './routes/api/ebooks/$id/arquivo'
 import { Route as ApiPublicAppEuRouteImport } from './routes/api/public/app/eu'
@@ -61,6 +65,11 @@ const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
   path: '/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResgateRoute = ResgateRouteImport.update({
+  id: '/resgate',
+  path: '/resgate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermosRoute = TermosRouteImport.update({
   id: '/termos',
   path: '/termos',
@@ -80,6 +89,16 @@ const AuthenticatedAppSectionRoute = AuthenticatedAppSectionRouteImport.update({
   id: '/app/$section',
   path: '/app/$section',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiAdminChavesRoute = ApiAdminChavesRouteImport.update({
+  id: '/api/admin/chaves',
+  path: '/api/admin/chaves',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminChavesTestarRoute = ApiAdminChavesTestarRouteImport.update({
+  id: '/api/admin/chaves-testar',
+  path: '/api/admin/chaves-testar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminContaRoute = ApiAdminContaRouteImport.update({
   id: '/api/admin/conta',
@@ -120,6 +139,11 @@ const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
 const ApiContaMeusDadosRoute = ApiContaMeusDadosRouteImport.update({
   id: '/api/conta/meus-dados',
   path: '/api/conta/meus-dados',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicResgateRoute = ApiPublicResgateRouteImport.update({
+  id: '/api/public/resgate',
+  path: '/api/public/resgate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiYuiVozRoute = ApiYuiVozRouteImport.update({
@@ -179,10 +203,13 @@ export interface FileRoutesByFullPath {
   '/privacidade': typeof PrivacidadeRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/resgate': typeof ResgateRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/admin/chaves': typeof ApiAdminChavesRoute
+  '/api/admin/chaves-testar': typeof ApiAdminChavesTestarRoute
   '/api/admin/conta': typeof ApiAdminContaRoute
   '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
   '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
@@ -191,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
+  '/api/public/resgate': typeof ApiPublicResgateRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
   '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/public/app/eu': typeof ApiPublicAppEuRoute
@@ -207,10 +235,13 @@ export interface FileRoutesByTo {
   '/privacidade': typeof PrivacidadeRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/resgate': typeof ResgateRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/admin/chaves': typeof ApiAdminChavesRoute
+  '/api/admin/chaves-testar': typeof ApiAdminChavesTestarRoute
   '/api/admin/conta': typeof ApiAdminContaRoute
   '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
   '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
@@ -219,6 +250,7 @@ export interface FileRoutesByTo {
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
+  '/api/public/resgate': typeof ApiPublicResgateRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
   '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/public/app/eu': typeof ApiPublicAppEuRoute
@@ -237,10 +269,13 @@ export interface FileRoutesById {
   '/privacidade': typeof PrivacidadeRoute
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/resgate': typeof ResgateRoute
   '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
+  '/api/admin/chaves': typeof ApiAdminChavesRoute
+  '/api/admin/chaves-testar': typeof ApiAdminChavesTestarRoute
   '/api/admin/conta': typeof ApiAdminContaRoute
   '/api/admin/exclusao': typeof ApiAdminExclusaoRoute
   '/api/admin/pagamentos-estado': typeof ApiAdminPagamentosEstadoRoute
@@ -249,6 +284,7 @@ export interface FileRoutesById {
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
+  '/api/public/resgate': typeof ApiPublicResgateRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
   '/api/ebooks/$id/arquivo': typeof ApiEbooksIdArquivoRoute
   '/api/public/app/eu': typeof ApiPublicAppEuRoute
@@ -267,10 +303,13 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/recuperar-senha'
     | '/redefinir-senha'
+    | '/resgate'
     | '/termos'
     | '/admin'
     | '/api/yui'
     | '/app/$section'
+    | '/api/admin/chaves'
+    | '/api/admin/chaves-testar'
     | '/api/admin/conta'
     | '/api/admin/exclusao'
     | '/api/admin/pagamentos-estado'
@@ -279,6 +318,7 @@ export interface FileRouteTypes {
     | '/api/clima/lugares'
     | '/api/conta/conferir-senha'
     | '/api/conta/meus-dados'
+    | '/api/public/resgate'
     | '/api/yui/voz'
     | '/api/ebooks/$id/arquivo'
     | '/api/public/app/eu'
@@ -295,10 +335,13 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/recuperar-senha'
     | '/redefinir-senha'
+    | '/resgate'
     | '/termos'
     | '/admin'
     | '/api/yui'
     | '/app/$section'
+    | '/api/admin/chaves'
+    | '/api/admin/chaves-testar'
     | '/api/admin/conta'
     | '/api/admin/exclusao'
     | '/api/admin/pagamentos-estado'
@@ -307,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/clima/lugares'
     | '/api/conta/conferir-senha'
     | '/api/conta/meus-dados'
+    | '/api/public/resgate'
     | '/api/yui/voz'
     | '/api/ebooks/$id/arquivo'
     | '/api/public/app/eu'
@@ -324,10 +368,13 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/recuperar-senha'
     | '/redefinir-senha'
+    | '/resgate'
     | '/termos'
     | '/_authenticated/admin'
     | '/api/yui'
     | '/_authenticated/app/$section'
+    | '/api/admin/chaves'
+    | '/api/admin/chaves-testar'
     | '/api/admin/conta'
     | '/api/admin/exclusao'
     | '/api/admin/pagamentos-estado'
@@ -336,6 +383,7 @@ export interface FileRouteTypes {
     | '/api/clima/lugares'
     | '/api/conta/conferir-senha'
     | '/api/conta/meus-dados'
+    | '/api/public/resgate'
     | '/api/yui/voz'
     | '/api/ebooks/$id/arquivo'
     | '/api/public/app/eu'
@@ -354,8 +402,11 @@ export interface RootRouteChildren {
   PrivacidadeRoute: typeof PrivacidadeRoute
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
+  ResgateRoute: typeof ResgateRoute
   TermosRoute: typeof TermosRoute
   ApiYuiRoute: typeof ApiYuiRouteWithChildren
+  ApiAdminChavesRoute: typeof ApiAdminChavesRoute
+  ApiAdminChavesTestarRoute: typeof ApiAdminChavesTestarRoute
   ApiAdminContaRoute: typeof ApiAdminContaRoute
   ApiAdminExclusaoRoute: typeof ApiAdminExclusaoRoute
   ApiAdminPagamentosEstadoRoute: typeof ApiAdminPagamentosEstadoRoute
@@ -364,6 +415,7 @@ export interface RootRouteChildren {
   ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
   ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
   ApiContaMeusDadosRoute: typeof ApiContaMeusDadosRoute
+  ApiPublicResgateRoute: typeof ApiPublicResgateRoute
   ApiEbooksIdArquivoRoute: typeof ApiEbooksIdArquivoRoute
   ApiPublicAppEuRoute: typeof ApiPublicAppEuRoute
   ApiPublicAppLoginRoute: typeof ApiPublicAppLoginRoute
@@ -412,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resgate': {
+      id: '/resgate'
+      path: '/resgate'
+      fullPath: '/resgate'
+      preLoaderRoute: typeof ResgateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/termos': {
       id: '/termos'
       path: '/termos'
@@ -439,6 +498,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/$section'
       preLoaderRoute: typeof AuthenticatedAppSectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/admin/chaves': {
+      id: '/api/admin/chaves'
+      path: '/api/admin/chaves'
+      fullPath: '/api/admin/chaves'
+      preLoaderRoute: typeof ApiAdminChavesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/chaves-testar': {
+      id: '/api/admin/chaves-testar'
+      path: '/api/admin/chaves-testar'
+      fullPath: '/api/admin/chaves-testar'
+      preLoaderRoute: typeof ApiAdminChavesTestarRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/admin/conta': {
       id: '/api/admin/conta'
@@ -494,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/api/conta/meus-dados'
       fullPath: '/api/conta/meus-dados'
       preLoaderRoute: typeof ApiContaMeusDadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/resgate': {
+      id: '/api/public/resgate'
+      path: '/api/public/resgate'
+      fullPath: '/api/public/resgate'
+      preLoaderRoute: typeof ApiPublicResgateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/yui/voz': {
@@ -599,8 +679,11 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacidadeRoute: PrivacidadeRoute,
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
+  ResgateRoute: ResgateRoute,
   TermosRoute: TermosRoute,
   ApiYuiRoute: ApiYuiRouteWithChildren,
+  ApiAdminChavesRoute: ApiAdminChavesRoute,
+  ApiAdminChavesTestarRoute: ApiAdminChavesTestarRoute,
   ApiAdminContaRoute: ApiAdminContaRoute,
   ApiAdminExclusaoRoute: ApiAdminExclusaoRoute,
   ApiAdminPagamentosEstadoRoute: ApiAdminPagamentosEstadoRoute,
@@ -609,6 +692,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiClimaLugaresRoute: ApiClimaLugaresRoute,
   ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
   ApiContaMeusDadosRoute: ApiContaMeusDadosRoute,
+  ApiPublicResgateRoute: ApiPublicResgateRoute,
   ApiEbooksIdArquivoRoute: ApiEbooksIdArquivoRoute,
   ApiPublicAppEuRoute: ApiPublicAppEuRoute,
   ApiPublicAppLoginRoute: ApiPublicAppLoginRoute,
