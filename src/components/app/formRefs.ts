@@ -25,8 +25,12 @@ export async function loadFormRefs(propertyId: string, extras: readonly RefExtra
     fetchAllRows((a, b) => supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).order("numero_brinco").order("id").range(a, b)),
     fetchAllRows((a, b) => supabase.from("lotes").select("id,nome").eq("propriedade_id", propertyId).eq("ativo", true).order("id").range(a, b)),
     fetchAllRows((a, b) => supabase.from("tipos_vacinas").select("id,nome").eq("propriedade_id", propertyId).eq("ativo", true).order("id").range(a, b)),
+    // A coluna do nome muda por tabela, então a lista de colunas é montada em tempo de
+    // execução; o `as "*"` só avisa o TypeScript disso (o cliente aqui já é sem tipos).
     ...extras.map((e) =>
-      fetchAllRows((a, b) => supabaseDinamico.from(e.tabela).select(`id,${e.rotulo}`).eq("propriedade_id", propertyId).order(e.rotulo).order("id").range(a, b)) as Promise<Record<string, unknown>[]>,
+      fetchAllRows<Record<string, unknown>>((a, b) =>
+        supabaseDinamico.from(e.tabela).select(`id,${e.rotulo}` as "*").eq("propriedade_id", propertyId).order(e.rotulo).order("id").range(a, b),
+      ),
     ),
   ]);
   const extrasPorTabela: Record<string, { id: string; nome: string }[]> = {};
