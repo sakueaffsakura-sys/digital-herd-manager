@@ -122,6 +122,19 @@ for (const cena of CENAS) {
         }).catch(() => []);
         // Largura real do conteúdo: no celular, maior que a tela = rolagem para o lado.
         info.larguraPagina = await page.evaluate(() => document.documentElement.scrollWidth);
+        // Quem está passando da tela: sem isto, "estouro horizontal" vira caça ao tesouro.
+        info.culpados = await page.evaluate(() => {
+          const limite = window.innerWidth + 1;
+          const achados = [];
+          for (const el of document.querySelectorAll("body *")) {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.right <= limite) continue;
+            if ([...el.children].some((f) => f.getBoundingClientRect().right > limite)) continue; // só o mais interno
+            achados.push(`${el.tagName.toLowerCase()}.${(el.className || "").toString().split(" ").slice(0, 3).join(".")} → ${Math.round(r.right)}px`);
+            if (achados.length >= 5) break;
+          }
+          return achados;
+        }).catch(() => []);
         if (TAMANHOS[tamanho].viewport.width < info.larguraPagina - 1) info.estouroHorizontal = true;
         await page.screenshot({ path: join(SAIDA, arquivo), fullPage: true });
       } catch (e) {
