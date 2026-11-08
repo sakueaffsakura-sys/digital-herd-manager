@@ -357,7 +357,7 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
   };
   const render = (row: Row, col: { key: string }) =>
     col.key === "numero_brinco" ? <Brinco tamanho="pequeno" valor={String(row[col.key] ?? "—")} />
-      : col.key === "situacao" || col.key === "tipo" ? <Status value={String(row[col.key])} />
+      : col.key === "situacao" || col.key === "tipo" || col.key === "status" ? <Status value={String(row[col.key])} />
         : lookup(col.key, row[col.key]);
   const paged = usePagedRows({ table: config.table, propertyId, cols: selectCols, page, pageSize, search, searchColumns: config.searchColumns, filters, ordem: config.ordem, ordemCrescente: config.ordemCrescente });
   useEffect(() => { if (!paged.totalReady) return; const last = Math.max(1, Math.ceil(paged.total / pageSize)); if (page > last) setPage(last); }, [paged.total, paged.totalReady, pageSize, page]);

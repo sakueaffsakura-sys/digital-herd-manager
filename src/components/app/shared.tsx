@@ -193,6 +193,8 @@ const SELOS: Record<string, SeloInfo> = {
   Pago: { rotulo: "Pago", cor: "pasto", icone: Check },
   Receita: { rotulo: "Receita", cor: "pasto", icone: ArrowDownLeft },
   Despesa: { rotulo: "Despesa", cor: "alerta", icone: ArrowUpRight },
+  "A receber": { rotulo: "A receber", cor: "pasto", icone: ArrowDownLeft },
+  "A pagar": { rotulo: "A pagar", cor: "cinza", icone: ArrowUpRight },
 };
 const COR_SELO: Record<SeloInfo["cor"], string> = {
   alerta: "bg-alerta-fundo text-alerta",

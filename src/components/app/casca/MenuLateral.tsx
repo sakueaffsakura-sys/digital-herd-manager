@@ -72,7 +72,9 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
                         }`}
                       >
                         <Icone className="size-5 shrink-0" />
-                        <span className="min-w-0 truncate">{rotulo}</span>
+                        {/* Nome comprido ("Movimentação de animais") quebra em duas linhas em vez
+                            de virar reticências: o menu é o único lugar onde ele aparece inteiro. */}
+                        <span className="min-w-0 py-2 leading-snug">{rotulo}</span>
                       </button>
                     </li>
                   );
