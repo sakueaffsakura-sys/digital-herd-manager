@@ -74,7 +74,10 @@ const CENAS = [
   { nome: "contas", caminho: "/app/contas", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "plantios", caminho: "/app/plantios", logado: true, tamanhos: ["computador"], temas: ["light"] },
   { nome: "cios-vazio", caminho: "/app/cios", logado: true, tamanhos: ["celular360"], temas: ["light"] },
-  { nome: "novo-produto", caminho: "/app/estoque_itens?novo=1", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "novo-produto", caminho: "/app/estoque_itens", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"], acao: async (page) => { await page.getByRole("button", { name: "Novo produto" }).click(); await page.waitForTimeout(800); } },
+  // Conferem se o endereço com ?novo=1 abre o formulário (é o caminho do botão "Lançar" do Início).
+  { nome: "novo-produto-endereco", caminho: "/app/estoque_itens?novo=1", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "novo-animal-endereco", caminho: "/app/rebanho?novo=1", logado: true, tamanhos: ["computador"], temas: ["light"] },
 ];
 
 const filtro = process.env.CENAS ? new Set(process.env.CENAS.split(",")) : null;

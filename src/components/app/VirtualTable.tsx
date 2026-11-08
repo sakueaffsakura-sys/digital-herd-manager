@@ -132,7 +132,9 @@ export function VirtualTable({
                 <span className="min-w-0">
                   <span className="block truncate font-bold">{titulo ? render(row, titulo, i) : null}</span>
                   <span className="mt-0.5 block text-sm text-muted-foreground">
-                    {detalhes.map((c) => (
+                    {/* No celular o campo vazio some, em vez de virar um traço solto no meio da linha.
+                        Falso e zero continuam aparecendo: dizem alguma coisa. */}
+                    {detalhes.filter((c) => row[c.key] !== null && row[c.key] !== undefined && row[c.key] !== "").map((c) => (
                       <span key={c.key} className="mr-3 inline-block">
                         <span className="sr-only">{c.label}: </span>
                         {render(row, c, i)}
@@ -218,7 +220,7 @@ export function VirtualTable({
             </>
           )}
           <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
-            <SelectTrigger className="h-11 w-36" aria-label="Registros por página"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-11 w-auto min-w-[9.5rem] max-w-full" aria-label="Registros por página"><SelectValue /></SelectTrigger>
             <SelectContent>{PAGE_SIZES.map((s) => <SelectItem value={String(s)} key={s}>{s} por página</SelectItem>)}</SelectContent>
           </Select>
         </div>
