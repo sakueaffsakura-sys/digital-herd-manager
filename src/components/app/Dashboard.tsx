@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, CalendarClock, CheckCircle2, Info, Milk, NotebookPen, Plus, Scale, Syringe } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardCheck, Info, Milk, NotebookPen, Plus, Scale, Stethoscope, Syringe } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -238,6 +238,8 @@ export default function Dashboard({
               <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("vacinacao", "1")}><Syringe />Registrar vacina</Button>
               <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("bezerros", "1")}><Scale />Registrar pesagem</Button>
               <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("producao", "anotacao")}><NotebookPen />Fazer uma anotação</Button>
+              <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("tarefas", "1")}><ClipboardCheck />Anotar uma tarefa</Button>
+              <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("tratamentos", "1")}><Stethoscope />Registrar tratamento</Button>
             </div>
           </section>
         </aside>
