@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/app/$section")({
     editar: z.string().max(40).optional().catch(undefined),
     animal: z.string().max(40).optional().catch(undefined),
     ebook: z.string().max(40).optional().catch(undefined),
+    anotacao: z.string().max(40).optional().catch(undefined),
     retorno: z.enum(["sucesso", "pendente", "falha"]).optional().catch(undefined),
   }),
   head: ({ params }) => {

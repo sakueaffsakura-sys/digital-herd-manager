@@ -140,9 +140,18 @@ const compras = [["Ração 40 kg (sacos)", 30, 3900, "Agropecuária Boa Safra"],
 const vendas = [["Bezerro macho desmamado", 3, 6300, "Sítio São José"], ["Esterco curtido (t)", 4, 1200, "Horta Verde"]].map(([item, quantidade, valor, comprador], i) => ({ id: uuid(), propriedade_id: P, item, quantidade, valor, comprador, categoria: i ? "Outros" : "Animais", animal_id: null, data: dataISO(-i * 11 - 1), observacao: null, movimentacao_id: null, created_at: iso(hoje.getTime()), updated_at: iso(hoje.getTime()) }));
 
 const anotacoes = [
-  ["Mimosa comeu pouco pela manhã; observar à tarde.", "Silagem + concentrado", "Calma"], ["Lote das lactantes mudou para o piquete 3.", null, null],
-  ["Estrela com casco sensível — chamar a veterinária.", null, "Mancando"],
-].map(([observacao, alimentacao, comportamento], i) => ({ id: uuid(), propriedade_id: P, animal_id: animais[12 + i].id, lote_id: null, data: dataISO(-i), observacao, alimentacao, comportamento, producao: 18 - i, informacoes_adicionais: null, created_at: iso(hoje.getTime() - i * DIA), updated_at: iso(hoje.getTime() - i * DIA) }));
+  ["Mimosa comeu pouco pela manhã; observar à tarde.", "Silagem + concentrado", "Calma", 0, true, true],
+  ["Lote das lactantes mudou para o piquete 3.", null, null, 0, false, false],
+  ["Estrela com casco sensível — chamar a veterinária.", null, "Mancando", 1, true, true],
+  ["Cerca do piquete 2 arrebentada; consertar antes de soltar o gado.", null, null, 1, false, false],
+  ["Chuva forte à tarde, ordenha atrasou meia hora.", null, null, 2, false, false],
+  ["Faceira entrou em cio de novo — avisar o inseminador.", null, "Agitada", 3, true, false],
+].map(([observacao, alimentacao, comportamento, dias, temAnimal, marcada], i) => ({
+  id: uuid(), propriedade_id: P, animal_id: temAnimal ? animais[12 + i].id : null, lote_id: null,
+  data: dataISO(-dias), observacao, alimentacao, comportamento, producao: temAnimal ? 18 - i : null,
+  informacoes_adicionais: null, marcada,
+  created_at: iso(hoje.getTime() - dias * DIA - i * 3600e3), updated_at: iso(hoje.getTime() - dias * DIA),
+}));
 
 const meses12 = Array.from({ length: 12 }, (_, i) => mesISO(i - 11));
 const vProducaoMensal = meses12.map((mes, i) => ({ propriedade_id: P, mes, total_litros: 7200 + Math.round(Math.sin(i / 2) * 900) + i * 60, valor_total: (7200 + i * 60) * 2.4, media_registro: 17.2 }));

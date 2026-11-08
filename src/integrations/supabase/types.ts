@@ -114,6 +114,7 @@ export type Database = {
           animal_id: string | null
           comportamento: string | null
           created_at: string
+          marcada: boolean
           data: string
           id: string
           informacoes_adicionais: string | null
@@ -129,6 +130,7 @@ export type Database = {
           animal_id?: string | null
           comportamento?: string | null
           created_at?: string
+          marcada?: boolean
           data?: string
           id?: string
           informacoes_adicionais?: string | null
@@ -144,6 +146,7 @@ export type Database = {
           animal_id?: string | null
           comportamento?: string | null
           created_at?: string
+          marcada?: boolean
           data?: string
           id?: string
           informacoes_adicionais?: string | null
