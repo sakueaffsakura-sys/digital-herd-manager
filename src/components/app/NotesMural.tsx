@@ -449,7 +449,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
               </>
             )}
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-              <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-11 w-auto min-w-[9.5rem] max-w-full" aria-label="Quantas anotações por página"><SelectValue /></SelectTrigger>
               <SelectContent>{PAGE_SIZES.map((s) => <SelectItem value={String(s)} key={s}>{s} por página</SelectItem>)}</SelectContent>
             </Select>
           </div>
