@@ -240,8 +240,8 @@ export function pdfDeExemplo(titulo = "Ordenha limpa, leite de qualidade", pagin
 // ---------------------------------------------------------------------------
 const comum = { propriedade_id: P, created_at: iso(hoje.getTime() - 40 * DIA), updated_at: iso(hoje.getTime() - DIA) };
 const fornecedores = [
-  { ...comum, id: uuid(), nome: "Agro Patos Insumos", categoria: "Ração e sal", contato: "Seu Ailton", telefone: "(34) 3821-4400", email: null, cidade: "Patos de Minas", condicoes: "28 dias", ativo: true, obs: null },
-  { ...comum, id: uuid(), nome: "Veterinária Boi Forte", categoria: "Medicamento", contato: "Dra. Lúcia", telefone: "(34) 99812-7001", email: null, cidade: "Patos de Minas", condicoes: "À vista", ativo: true, obs: null },
+  { ...comum, id: uuid(), nome: "Agro Patos Insumos", categoria: "Ração e insumos", contato: "Seu Ailton", telefone: "(34) 3821-4400", email: null, cidade: "Patos de Minas", condicoes: "28 dias", ativo: true, obs: null },
+  { ...comum, id: uuid(), nome: "Veterinária Boi Forte", categoria: "Veterinária", contato: "Dra. Lúcia", telefone: "(34) 99812-7001", email: null, cidade: "Patos de Minas", condicoes: "À vista", ativo: true, obs: null },
 ];
 const funcionarios = [
   { ...comum, id: uuid(), nome: "José Pereira", funcao: "Vaqueiro", setor: "Ordenha", telefone: "(34) 99700-1122", admissao: dataISO(-900), situacao: "Ativo", salario: 2400, obs: null },
