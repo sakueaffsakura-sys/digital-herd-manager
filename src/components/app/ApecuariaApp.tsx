@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { formatarDataBR } from "@/lib/datas";
-import { loadFormRefs } from "./formRefs";
+import { chaveDeReferencias, loadFormRefs, tabelasDeReferencia } from "./formRefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,7 @@ import { BarraTopo } from "./casca/BarraTopo";
 import { BarraInferior } from "./casca/BarraInferior";
 import { BuscaGlobal } from "./casca/BuscaGlobal";
 import { filtrarMenu } from "./casca/navegacao";
+import { MODULOS_APLICATIVO, SECOES_APLICATIVO } from "./modulos-aplicativo";
 import { SegurancaPage } from "./conta/Seguranca";
 
 const Dashboard = lazy(() => import("./Dashboard"));
@@ -53,6 +54,7 @@ const Aplicativo = lazy(() => import("./aplicativo/Aplicativo"));
 const Ajuda = lazy(() => import("./ajuda/Ajuda"));
 
 const modules: Record<string, Module> = {
+  ...MODULOS_APLICATIVO,
   rebanho: { title: "Meu rebanho", singular: "animal", novo: "Novo animal", primeiro: "Cadastrar o primeiro animal", table: "animais", icon: HerdIcon, description: "Todos os animais, com brinco, lote e situação. Toque num animal para ver a ficha.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
     {key:"numero_brinco",label:"Número do brinco",required:true},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo",type:"select",required:true,options:[{value:"F",label:"Fêmea"},{value:"M",label:"Macho"}]},{key:"raca",label:"Raça"},{key:"data_nascimento",label:"Data de nascimento",type:"date"},{key:"lote_id",label:"Lote",type:"lote"},{key:"mae_id",label:"Mãe",type:"animal",sex:"F"},{key:"pai_id",label:"Pai",type:"animal",sex:"M"},{key:"situacao",label:"Situação",type:"select",required:true,options:[["ativo","Ativo"],["vendido","Vendido"],["perdido","Perdido"],["falecido","Morto"],["transferido","Transferido"]].map(([value,label])=>({value,label}))},{key:"observacoes",label:"Observações",type:"textarea"}
   ]},
@@ -67,7 +69,7 @@ const modules: Record<string, Module> = {
 
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", novo:"Novo tipo de vacina", primeiro:"Cadastrar a primeira vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"As vacinas que você usa e de quantos em quantos dias repetir.", searchColumns:["nome"], columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
 
-const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "indicadores", "ferramentas", "biblioteca", "assinatura", "aplicativo", "ajuda", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
+const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "indicadores", "ferramentas", "biblioteca", "assinatura", "aplicativo", "ajuda", "perfil", "perfil-propriedade", "seguranca", "diagnostico", ...SECOES_APLICATIVO]);
 const GRUPOS = filtrarMenu((chave) => IMPLEMENTADAS.has(chave));
 const GRUPOS_LATERAL = filtrarMenu((chave) => IMPLEMENTADAS.has(chave), { lateral: true });
 const CHAVE_PROPRIEDADE = "pd-propriedade";
@@ -288,7 +290,8 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
     return bag;
   }, [config, filterValues, dateMode, dateValue]);
   useEffect(() => { setPage(1); }, [search, filterValues, pageSize, dateMode, dateValue]);
-  const refs = useQuery({ queryKey: ["form-refs", propertyId], queryFn: () => loadFormRefs(propertyId), staleTime: 5 * 60_000 });
+  const extrasRef = useMemo(() => tabelasDeReferencia(config.fields), [config]);
+  const refs = useQuery({ queryKey: ["form-refs", propertyId, chaveDeReferencias(extrasRef)], queryFn: () => loadFormRefs(propertyId, extrasRef), staleTime: 5 * 60_000 });
   const invalidateRelated = () => {
     const related: Record<string, string[]> = { animais: ["animais", "form-refs", "dashboard", "reports", "agenda", "avisos"], vacinacoes: ["form-refs", "dashboard", "agenda", "avisos"], tipos_vacinas: ["form-refs"], inseminacoes: ["dashboard", "agenda", "avisos"], nascimentos: ["animais", "form-refs", "dashboard", "reports"], lotes: ["form-refs", "animais", "dashboard"], producao_leite: ["dashboard", "reports", "avisos"], movimentacoes_financeiras: ["dashboard", "reports"], compras: ["movimentacoes_financeiras", "dashboard", "reports"], vendas: ["movimentacoes_financeiras", "dashboard", "reports"], pesagens: ["animal-history", "agenda", "avisos"], anotacoes_producao: ["animal-history"] };
     qc.invalidateQueries({ queryKey: [config.table, propertyId] });
@@ -330,8 +333,14 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
   }, [pedidoNovo, pedidoEditar, pedidoAnimal]);
 
   const animalRef = (value: unknown) => refs.data?.animals.find((x) => x.id === value);
+  const campoDe = (key: string) => config.fields.find((f) => f.key === key);
   const lookup = (key: string, value: unknown): ReactNode => {
     if (value == null || value === "") return "—";
+    const campo = campoDe(key);
+    // Cadastro ligado (pasto, máquina, item de estoque…): mostra o nome, não o identificador.
+    if (campo?.type === "ref") return refs.data?.extras?.[campo.refTabela ?? ""]?.find((x) => x.id === value)?.nome || "—";
+    if (campo?.moeda) return money(value);
+    if (campo?.type === "date") return formatarDataBR(value);
     if (key.includes("animal") || key === "vaca_id" || key === "bezerro_id") {
       const a = animalRef(value);
       if (!a) return "—";
@@ -350,7 +359,7 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
     col.key === "numero_brinco" ? <Brinco tamanho="pequeno" valor={String(row[col.key] ?? "—")} />
       : col.key === "situacao" || col.key === "tipo" ? <Status value={String(row[col.key])} />
         : lookup(col.key, row[col.key]);
-  const paged = usePagedRows({ table: config.table, propertyId, cols: selectCols, page, pageSize, search, searchColumns: config.searchColumns, filters });
+  const paged = usePagedRows({ table: config.table, propertyId, cols: selectCols, page, pageSize, search, searchColumns: config.searchColumns, filters, ordem: config.ordem, ordemCrescente: config.ordemCrescente });
   useEffect(() => { if (!paged.totalReady) return; const last = Math.max(1, Math.ceil(paged.total / pageSize)); if (page > last) setPage(last); }, [paged.total, paged.totalReady, pageSize, page]);
   const acoes = (row: Row): AcaoLinha[] => [
     ...(config.table === "animais" ? [{ rotulo: "Ver ficha", icone: FileText, aoClicar: () => setDetails(row) }] : []),

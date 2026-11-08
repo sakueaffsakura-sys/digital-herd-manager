@@ -16,6 +16,7 @@ import { CriadoresAdmin } from "@/components/app/CriadoresAdmin";
 import { ImagensSiteAdmin } from "@/components/app/ImagensSiteAdmin";
 import { FaixaManutencaoAdmin, ManutencaoAdmin, MonitoramentoSeguranca } from "@/components/app/ManutencaoAdmin";
 import { Hammer, Siren } from "lucide-react";
+import { ChavesAdmin } from "@/components/app/admin/ChavesAdmin";
 import marcaBranca from "@/assets/marca/marca-branca.webp";
 import { AssinaturasAdmin } from "@/components/app/admin/AssinaturasAdmin";
 import { EbooksAdmin } from "@/components/app/admin/EbooksAdmin";
@@ -197,6 +198,7 @@ function AdminPage() {
       {tab === "exclusoes" && <ExclusoesAdmin />}
       {tab === "acesso" && <AcessoAdmin />}
       {tab === "suporte" && <SuporteAdmin />}
+      {tab === "chaves" && <ChavesAdmin />}
 
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
@@ -611,7 +613,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "suporte" | "yui" | "criadores" | "imagens";
+type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "suporte" | "yui" | "criadores" | "imagens" | "chaves";
 type ItemAba = { k: Aba; label: string; icon: typeof Users };
 const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
   { rotulo: "Agora", abas: [
@@ -632,6 +634,7 @@ const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
   ] },
   { rotulo: "Site", abas: [
     { k: "suporte", label: "Suporte e aplicativo", icon: LifeBuoy },
+    { k: "chaves", label: "Chaves e integrações", icon: Lock },
     { k: "desempenho", label: "Desempenho", icon: Gauge },
     { k: "yui", label: "Yui (assistente)", icon: Bot },
     { k: "criadores", label: "Criadores", icon: Contact },

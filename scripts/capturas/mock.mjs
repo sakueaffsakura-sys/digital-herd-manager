@@ -234,7 +234,72 @@ export function pdfDeExemplo(titulo = "Ordenha limpa, leite de qualidade", pagin
   return Buffer.from(texto, "latin1");
 }
 
+// ---------------------------------------------------------------------------
+// Áreas que vieram do aplicativo. Só uma parte tem dados: basta para conferir
+// coluna de cadastro ligado, valor em reais, selo de situação e data.
+// ---------------------------------------------------------------------------
+const comum = { propriedade_id: P, created_at: iso(hoje.getTime() - 40 * DIA), updated_at: iso(hoje.getTime() - DIA) };
+const fornecedores = [
+  { ...comum, id: uuid(), nome: "Agro Patos Insumos", categoria: "Ração e sal", contato: "Seu Ailton", telefone: "(34) 3821-4400", email: null, cidade: "Patos de Minas", condicoes: "28 dias", ativo: true, obs: null },
+  { ...comum, id: uuid(), nome: "Veterinária Boi Forte", categoria: "Medicamento", contato: "Dra. Lúcia", telefone: "(34) 99812-7001", email: null, cidade: "Patos de Minas", condicoes: "À vista", ativo: true, obs: null },
+];
+const funcionarios = [
+  { ...comum, id: uuid(), nome: "José Pereira", funcao: "Vaqueiro", setor: "Ordenha", telefone: "(34) 99700-1122", admissao: dataISO(-900), situacao: "Ativo", salario: 2400, obs: null },
+  { ...comum, id: uuid(), nome: "Marcos Dias", funcao: "Tratorista", setor: "Lavoura", telefone: null, admissao: dataISO(-300), situacao: "Ativo", salario: 2800, obs: null },
+];
+const maquinas = [
+  { ...comum, id: uuid(), nome: "Trator 4x4", tipo: "Trator", marca: "Massey", modelo: "4292", serie: null, ano: 2018, aquisicao_data: dataISO(-800), aquisicao_valor: 185000, horimetro: 4120, km: null, intervalo_revisao: 250, situacao: "Ativa", operadores: "Marcos", obs: null },
+  { ...comum, id: uuid(), nome: "Ordenhadeira", tipo: "Ordenha", marca: "Delaval", modelo: null, serie: null, ano: 2021, aquisicao_data: null, aquisicao_valor: null, horimetro: null, km: null, intervalo_revisao: null, situacao: "Em manutenção", operadores: "José", obs: null },
+];
+const talhoes = [
+  { ...comum, id: uuid(), nome: "Talhão da Grota", area_ha: 18.5, solo: "Argiloso", situacao: "Em cultivo", obs: null },
+  { ...comum, id: uuid(), nome: "Talhão do Alto", area_ha: 24, solo: "Arenoso", situacao: "Livre", obs: null },
+];
+const clientes = [
+  { ...comum, id: uuid(), nome: "Cooperativa Central", telefone: "(34) 3822-1000", cidade: "Patos de Minas", ativo: true, obs: null },
+];
+const pastos = [
+  { ...comum, id: uuid(), nome: "Piquete 1", area_ha: 6.4, forrageira: "Braquiária", capacidade: 28, situacao: "Em uso", ultima_adubacao: dataISO(-120), ultima_reforma: null, obs: null },
+  { ...comum, id: uuid(), nome: "Piquete 2", area_ha: 5.1, forrageira: "Mombaça", capacidade: 22, situacao: "Descanso", ultima_adubacao: dataISO(-60), ultima_reforma: dataISO(-400), obs: "Cerca do lado do córrego pede reparo." },
+  { ...comum, id: uuid(), nome: "Pasto da Sede", area_ha: 11.8, forrageira: "Braquiária", capacidade: 40, situacao: "Disponível", ultima_adubacao: null, ultima_reforma: null, obs: null },
+];
+const estoqueItens = [
+  { ...comum, id: uuid(), nome: "Sal mineral 80", categoria: "Sal mineral", unidade: "kg", minimo: 200, preco_ref: 4.9, fornecedor_id: fornecedores[0].id, fabricante: "Nutri Minas", conservacao: "Lugar seco e coberto", controla_validade: true, ativo: true, obs: null },
+  { ...comum, id: uuid(), nome: "Ração lactação 22%", categoria: "Ração", unidade: "kg", minimo: 500, preco_ref: 2.35, fornecedor_id: fornecedores[0].id, fabricante: null, conservacao: null, controla_validade: false, ativo: true, obs: null },
+  { ...comum, id: uuid(), nome: "Vermífugo injetável", categoria: "Medicamento", unidade: "frasco", minimo: 2, preco_ref: 89.9, fornecedor_id: fornecedores[1].id, fabricante: "Boi Forte", conservacao: "Entre 2 °C e 8 °C", controla_validade: true, ativo: true, obs: null },
+];
+const plantios = [
+  { ...comum, id: uuid(), talhao_id: talhoes[0].id, cultura: "Milho silagem", variedade: "AG 1051", safra: "2026/2027", area_ha: 18.5, plantio_data: dataISO(-70), colheita_prevista: dataISO(40), status: "Plantado", producao_esperada: 42000, obs: null },
+];
+const TABELAS_APLICATIVO = {
+  pastos, fornecedores, funcionarios, maquinas, talhoes, clientes, plantios,
+  estoque_itens: estoqueItens,
+  pasto_mov: [
+    { ...comum, id: uuid(), pasto_id: pastos[0].id, lote_id: lotes[0].id, qtd_animais: 26, entrada: dataISO(-14), saida: null, obs: null },
+    { ...comum, id: uuid(), pasto_id: pastos[1].id, lote_id: lotes[1]?.id ?? lotes[0].id, qtd_animais: 19, entrada: dataISO(-48), saida: dataISO(-15), obs: null },
+  ],
+  estoque_mov: [
+    { ...comum, id: uuid(), item_id: estoqueItens[1].id, tipo: "Entrada (compra)", data: dataISO(-9), qtd: 1500, valor_total: 3525, lote_produto: "L-2210", fabricacao: null, validade: dataISO(180), fornecedor_id: fornecedores[0].id, motivo: null, animal_id: null, lote_id: null, plantio_id: null, maquina_id: null, responsavel: "José Pereira", obs: null },
+    { ...comum, id: uuid(), item_id: estoqueItens[0].id, tipo: "Saída (uso)", data: dataISO(-2), qtd: 60, valor_total: null, lote_produto: null, fabricacao: null, validade: null, fornecedor_id: null, motivo: null, animal_id: null, lote_id: lotes[0].id, plantio_id: null, maquina_id: null, responsavel: "José Pereira", obs: null },
+  ],
+  tratamentos: [
+    { ...comum, id: uuid(), tipo: "Mastite", data: dataISO(-4), animal_id: animais[2]?.id ?? null, lote_id: null, descricao: "Mastite no quarto traseiro direito", medicamento: "Antibiótico intramamário", item_id: estoqueItens[2].id, qtd_usada: 1, dose: "1 bisnaga por ordenha", via: "Intramamária", fabricante: "Boi Forte", lote_produto: "V-884", responsavel: "José Pereira", veterinario: "Dra. Lúcia", carencia_leite: 4, carencia_carne: 12, status: "Em tratamento", retorno: dataISO(2), custo: 92.4, orientacao: "Ordenhar por último e descartar o leite até o fim da carência." },
+    { ...comum, id: uuid(), tipo: "Vermifugação", data: dataISO(-30), animal_id: null, lote_id: lotes[0].id, descricao: "Vermifugação do lote todo", medicamento: "Vermífugo injetável", item_id: estoqueItens[2].id, qtd_usada: 2, dose: "1 mL / 50 kg", via: "Subcutânea", fabricante: "Boi Forte", lote_produto: "V-871", responsavel: "José Pereira", veterinario: null, carencia_leite: 0, carencia_carne: 28, status: "Resolvido", retorno: dataISO(90), custo: 179.8, orientacao: null },
+  ],
+  tarefas: [
+    { ...comum, id: uuid(), titulo: "Trocar o sal dos cochos", tipo: "Geral", data: dataISO(0), prioridade: "Normal", status: "Pendente", responsavel_id: funcionarios[0].id, setor: "Pasto", repete: "Toda semana", animal_id: null, lote_id: lotes[0].id, obs: null },
+    { ...comum, id: uuid(), titulo: "Revisar a ordenhadeira", tipo: "Manutenção", data: dataISO(3), prioridade: "Alta", status: "Pendente", responsavel_id: funcionarios[1].id, setor: "Ordenha", repete: "Não repete", animal_id: null, lote_id: null, obs: null },
+    { ...comum, id: uuid(), titulo: "Fechar a cerca do Piquete 2", tipo: "Geral", data: dataISO(-5), prioridade: "Alta", status: "Concluída", responsavel_id: funcionarios[0].id, setor: "Pasto", repete: "Não repete", animal_id: null, lote_id: null, obs: null },
+  ],
+  contas: [
+    { ...comum, id: uuid(), tipo: "A pagar", descricao: "Ração lactação — nota 4412", valor: 3525, vencimento: dataISO(6), status: "Aberta", categoria: "Alimentação", fornecedor_id: fornecedores[0].id, parte: "Agro Patos Insumos", obs: null },
+    { ...comum, id: uuid(), tipo: "A receber", descricao: "Leite da quinzena", valor: 8740.5, vencimento: dataISO(10), status: "Aberta", categoria: "Leite", fornecedor_id: null, parte: "Cooperativa Central", obs: null },
+    { ...comum, id: uuid(), tipo: "A pagar", descricao: "Energia da ordenha", valor: 612.3, vencimento: dataISO(-3), status: "Quitada", categoria: "Energia", fornecedor_id: null, parte: "Cemig", obs: null },
+  ],
+};
+
 export const TABELAS = {
+  ...TABELAS_APLICATIVO,
   propriedades: [{ id: P, nome: "Fazenda Boa Vista", cidade: "Patos de Minas", estado: "MG", proprietario_id: USUARIO.id, ativo: true, periodo_gestacao_dias: 283, created_at: iso(hoje.getTime() - 400 * DIA), updated_at: iso(hoje.getTime() - 5 * DIA) }],
   profiles: [{ id: USUARIO.id, nome_completo: USUARIO.nome, nome_exibicao: "Maria", telefone: "(34) 99999-0000", cargo: "Proprietária", biografia: null, avatar_url: null, bloqueado: false, preferencias: {}, created_at: iso(hoje.getTime() - 400 * DIA), updated_at: iso(hoje.getTime() - 5 * DIA) }],
   animais, lotes, tipos_vacinas: tiposVacinas, vacinacoes, v_vacinacoes_status: status, inseminacoes, nascimentos, pesagens,

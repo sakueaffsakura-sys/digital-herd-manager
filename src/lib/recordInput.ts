@@ -1,26 +1,32 @@
 import type { Field, FormRefs, Row } from "@/components/app/shared";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseDinamico } from "./supabaseDinamico";
 import { resolveNoteReference } from "./noteReference";
 
 const normalize = (text: string) => text.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").replace(/[_\s]+/g, " ");
 
 
+/** Campos que a pessoa escreve por nome e que o site traduz para um cadastro. */
+export const CAMPOS_DE_REFERENCIA = ["animal", "lote", "vacina", "ref"] as const;
+const ehReferencia = (field: Field) => (CAMPOS_DE_REFERENCIA as readonly string[]).includes(field.type ?? "");
+
 export function recordReferenceRows(field: Field, refs: FormRefs | undefined, currentId: unknown) {
   if (field.type === "animal") return (refs?.animals ?? []).filter((animal) =>
     (!field.sex || animal.sexo === field.sex) && (!field.activeOnly || animal.situacao === "ativo" || animal.id === currentId));
   if (field.type === "vacina") return refs?.vaccines ?? [];
+  if (field.type === "ref") return refs?.extras?.[field.refTabela ?? ""] ?? [];
   return refs?.lots ?? [];
 }
 
 export function resolveRecordInputs(fields: readonly Field[], form: Row, writtenRefs: Record<string, string>, refs: FormRefs | undefined, original: Row | null): { values: Row; error?: string } {
   const values = { ...form };
   for (const field of fields) {
-    if (["animal", "lote", "vacina"].includes(field.type ?? "") && writtenRefs[field.key] !== undefined) {
+    if (ehReferencia(field) && writtenRefs[field.key] !== undefined) {
       const result = resolveNoteReference(writtenRefs[field.key], recordReferenceRows(field, refs, original?.[field.key]));
       if (result.error) return { values, error: `${field.label}: ${result.error}` };
       values[field.key] = result.id;
     }
-    if (field.type === "select") {
+    if (field.type === "select" || field.type === "sim") {
       const text = normalize(String(values[field.key] ?? ""));
       if (!text) { values[field.key] = null; continue; }
       const matches = (field.options ?? []).filter((option) => [option.value, option.label].some((value) => normalize(value) === text));
@@ -36,17 +42,33 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type LiveReference = { id: string; nome: string | null; numero_brinco?: string; sexo?: string; situacao?: string; ativo?: boolean };
 type LookupResult = { data: LiveReference[] | null; error: { message: string } | null };
 
+/** Tabela e coluna do nome de um campo ligado. */
+const alvoDaReferencia = (field: Field) =>
+  field.type === "ref"
+    ? { tabela: field.refTabela ?? "", rotulo: field.refRotulo ?? "nome" }
+    : { tabela: field.type === "vacina" ? "tipos_vacinas" : "lotes", rotulo: "nome" };
+
+/** Busca num cadastro simples (lote, vacina, pasto, máquina…) e devolve sempre {id, nome}. */
+async function buscarPorNome(field: Field, coluna: "ilike" | "eq", valor: string, propertyId: string): Promise<LookupResult> {
+  const { tabela, rotulo } = alvoDaReferencia(field);
+  const consulta = supabaseDinamico.from(tabela).select(`id,${rotulo}`).eq("propriedade_id", propertyId);
+  const { data, error } = await (coluna === "eq" ? consulta.eq("id", valor).limit(1) : consulta.ilike(rotulo, valor).limit(2));
+  if (error) return { data: null, error };
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  return { data: rows.map((row) => ({ id: String(row["id"]), nome: row[rotulo] == null ? null : String(row[rotulo]) })), error: null };
+}
+
 /** Consulta a fonte oficial, inclusive quando a lista local está desatualizada. */
 async function findReference(field: Field, text: string, propertyId: string, currentId: unknown): Promise<{ id?: string; error?: string }> {
   const pattern = text.replace(/[\\%_]/g, "\\$&");
   const queries: PromiseLike<LookupResult>[] = field.type === "animal"
     ? [supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("numero_brinco", pattern).limit(2),
        supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("nome", pattern).limit(2)]
-    : [supabase.from(field.type === "vacina" ? "tipos_vacinas" : "lotes").select("id,nome,ativo").eq("propriedade_id", propertyId).ilike("nome", pattern).limit(2)];
+    : [buscarPorNome(field, "ilike", pattern, propertyId)];
   if (uuid.test(text)) {
     queries.unshift(field.type === "animal"
       ? supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).eq("id", text).limit(1)
-      : supabase.from(field.type === "vacina" ? "tipos_vacinas" : "lotes").select("id,nome,ativo").eq("propriedade_id", propertyId).eq("id", text).limit(1));
+      : buscarPorNome(field, "eq", text, propertyId));
   }
   const results = await Promise.all(queries);
   const failed = results.find((result) => result.error);
@@ -92,6 +114,14 @@ async function createReference(field: Field, text: string, propertyId: string, c
     if (error) return recover(error);
     return { id: data.id, created: true };
   }
+  if (field.type === "ref") {
+    // Sem refCriar o cadastro tem dados que ninguém adivinha (um plantio precisa de talhão e safra).
+    if (!field.refCriar) return { error: `não existe ainda. Cadastre ${field.refOnde ?? "o registro"} primeiro.` };
+    const { tabela, rotulo } = alvoDaReferencia(field);
+    const { data, error } = await supabaseDinamico.from(tabela).insert({ propriedade_id: propertyId, [rotulo]: text, ...field.refCriar }).select("id").single();
+    if (error) return recover(error as { code?: string; message: string });
+    return { id: String((data as { id: string }).id), created: true };
+  }
   const { data, error } = await supabase.from("lotes").insert({ propriedade_id: propertyId, nome: text, ativo: true }).select("id").single();
   if (error) return recover(error);
   return { id: data.id, created: true };
@@ -117,7 +147,7 @@ export async function ensureRecordReferences(
   const values = { ...form };
   const created: string[] = [];
   for (const field of fields) {
-    if (["animal", "lote", "vacina"].includes(field.type ?? "") && writtenRefs[field.key] !== undefined) {
+    if (ehReferencia(field) && writtenRefs[field.key] !== undefined) {
       const text = writtenRefs[field.key].trim();
       const result = resolveNoteReference(text, recordReferenceRows(field, refs, original?.[field.key]));
       if (result.error) {
@@ -131,7 +161,7 @@ export async function ensureRecordReferences(
       }
       values[field.key] = result.id;
     }
-    if (field.type === "select") {
+    if (field.type === "select" || field.type === "sim") {
       const text = normalize(String(values[field.key] ?? ""));
       if (!text) { values[field.key] = null; continue; }
       const matches = (field.options ?? []).filter((option) => [option.value, option.label].some((value) => normalize(value) === text));

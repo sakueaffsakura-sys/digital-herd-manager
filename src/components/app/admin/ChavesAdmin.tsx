@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type Linha = { nome: string; origem: "painel" | "ambiente" | "nenhuma"; final: string; alterado_em: string | null };
+type Linha = { nome: string; origem: "painel" | "ambiente" | "nenhuma"; final: string; alterado_em: string | null; legivel?: boolean };
 const INFO: Record<string, { titulo: string; ajuda: string }> = {
   MERCADOPAGO_ACCESS_TOKEN: { titulo: "Mercado Pago — Access Token", ajuda: "Suas integrações → Credenciais de produção → Access Token (começa com APP_USR-)." },
   MERCADOPAGO_WEBHOOK_SECRET: { titulo: "Mercado Pago — assinatura do aviso", ajuda: "Suas integrações → Webhooks → Assinatura secreta." },
@@ -27,7 +27,12 @@ export function ChavesAdmin() {
   if (q.error) return <p className="text-destructive">{(q.error as Error).message}</p>;
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground">As chaves ficam guardadas de forma protegida. Depois de salvas, só aparecem os 4 últimos caracteres.</p>
+      <p className="text-muted-foreground">As chaves ficam guardadas cifradas no banco e são lidas só no servidor. Depois de salvas, só aparecem os 4 últimos caracteres.</p>
+      {q.data && !q.data.mestra && (
+        <p className="rounded-lg bg-alerta-fundo p-4 font-medium text-alerta">
+          A proteção das chaves está indisponível, então nada pode ser salvo aqui agora. Avise o suporte do site.
+        </p>
+      )}
       {q.data?.chaves.map((c) => <CartaoChave key={c.nome} c={c} />)}
     </div>
   );
@@ -55,6 +60,11 @@ function CartaoChave({ c }: { c: Linha }) {
         <h3 className="titulo-secao">{info?.titulo ?? c.nome}</h3>
         <p className="text-muted-foreground">{info?.ajuda}</p>
         <p className="mt-1 font-medium">{status}</p>
+        {c.origem === "painel" && c.legivel === false && (
+          <p className="mt-2 rounded-lg bg-alerta-fundo p-3 font-medium text-alerta">
+            A chave guardada não pode mais ser lida pelo servidor. Cole a chave de novo aqui para voltar a funcionar.
+          </p>
+        )}
       </div>
       <form className="flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={(e) => { e.preventDefault(); if (valor.trim()) salvar.mutate(valor.trim()); }}>
         <div className="flex-1 space-y-1">

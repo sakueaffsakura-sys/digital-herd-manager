@@ -86,6 +86,7 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       filters,
       searchExtras,
       ordem,
+      ordemCrescente,
     }: {
       cols: string;
       page: number;
@@ -96,10 +97,12 @@ export function createPageableTable({ table, propertyId }: { table: string; prop
       searchExtras?: readonly string[];
       /** Coluna principal da ordenação (padrão: quando o registro foi criado). */
       ordem?: string;
+      /** Ordena a coluna principal de A a Z (nomes); sem isto vem a mais recente primeiro. */
+      ordemCrescente?: boolean;
     }) => {
       const { from, to } = rangeOf(page, pageSize);
       let q = baseScopedQuery(table, propertyId, search, searchColumns, filters, cols, false, searchExtras);
-      if (ordem) q = q.order(ordem, { ascending: false });
+      if (ordem) q = q.order(ordem, { ascending: !!ordemCrescente });
       q = q.order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to);
       const { data, error } = await q;
       return { data: (data ?? []) as unknown as Record<string, unknown>[], error };
@@ -124,6 +127,7 @@ export type UsePagedRowsArgs = {
   filters?: FilterBag;
   searchExtras?: readonly string[];
   ordem?: string;
+  ordemCrescente?: boolean;
 };
 
 /**
@@ -146,13 +150,14 @@ export function usePagedRows({
   filters,
   searchExtras,
   ordem,
+  ordemCrescente,
 }: UsePagedRowsArgs) {
   const finalPage = clampPage(page, Number.MAX_SAFE_INTEGER, pageSize);
   const termo = termoDeBusca(search);
   const cacheKey = serialize(filters, termo, searchExtras);
 
   const list = useQuery({
-    queryKey: [table, propertyId, "rows", cols, finalPage, pageSize, cacheKey, ordem ?? ""],
+    queryKey: [table, propertyId, "rows", cols, finalPage, pageSize, cacheKey, ordem ?? "", ordemCrescente ? "asc" : "desc"],
     queryFn: async () => {
       const res = await createPageableTable({ table, propertyId }).rows({
         cols,
@@ -163,6 +168,7 @@ export function usePagedRows({
         filters,
         searchExtras,
         ordem,
+        ordemCrescente,
       });
       if (res.error) throw res.error;
       return res.data;

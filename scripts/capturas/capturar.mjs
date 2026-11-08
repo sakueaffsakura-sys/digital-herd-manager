@@ -62,6 +62,19 @@ const CENAS = [
   { nome: "admin-acesso", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Duas etapas") },
   { nome: "admin-contas", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["dark"], acao: abaAdmin("Contas") },
   { nome: "admin-suporte", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Suporte e aplicativo") },
+  { nome: "admin-chaves", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Chaves e integrações") },
+  // Áreas que vieram do aplicativo: uma de cada tipo de tela (cadastro com nome, movimento com
+  // cadastro ligado, ficha comprida, dinheiro e lavoura).
+  { nome: "pastos", caminho: "/app/pastos", logado: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
+  { nome: "pasto-mov", caminho: "/app/pasto_mov", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "estoque", caminho: "/app/estoque_itens", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "estoque-mov", caminho: "/app/estoque_mov", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "tratamentos", caminho: "/app/tratamentos", logado: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
+  { nome: "tarefas", caminho: "/app/tarefas", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "contas", caminho: "/app/contas", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "plantios", caminho: "/app/plantios", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "cios-vazio", caminho: "/app/cios", logado: true, tamanhos: ["celular360"], temas: ["light"] },
+  { nome: "novo-produto", caminho: "/app/estoque_itens?novo=1", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
 ];
 
 const filtro = process.env.CENAS ? new Set(process.env.CENAS.split(",")) : null;

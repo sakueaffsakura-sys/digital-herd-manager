@@ -1,10 +1,12 @@
 // Assinatura paga (Mercado Pago Checkout Pro) e leitura protegida dos eBooks.
-// Segredos só no servidor: MERCADOPAGO_ACCESS_TOKEN e MERCADOPAGO_WEBHOOK_SECRET (Lovable Cloud → Secrets).
+// Segredos só no servidor: MERCADOPAGO_ACCESS_TOKEN e MERCADOPAGO_WEBHOOK_SECRET. Podem vir do
+// painel do administrador (cifrados no banco) ou dos segredos do servidor; quem decide é lerChave.
 // O navegador manda só o plano e a propriedade: preço, validade e liberação vêm do banco.
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { allowRequest } from "./rate-limit";
 import { clienteDoSite, dentroDoLimite, falha, ipDe, lerCorpo, origemSegura, resposta } from "./conta.server";
 import { decidirPagamento, validarAviso, type PagamentoBanco, type PagamentoMP } from "./mercadopago";
+import { lerChave } from "./chaves.server";
 
 const MP = "https://api.mercadopago.com";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -51,7 +53,7 @@ async function usuario(request: Request, limitePorMinuto: number) {
 export async function handleCheckout(request: Request) {
   const u = await usuario(request, 20);
   if (u instanceof Response) return u;
-  const token = process.env["MERCADOPAGO_ACCESS_TOKEN"];
+  const token = await lerChave("MERCADOPAGO_ACCESS_TOKEN");
   if (!token) return falha(503, "Os pagamentos ainda não foram configurados. Avise o administrador do site.");
   if (!(await dentroDoLimite(`checkout:${u.user.id}`, 10, 3600))) return falha(429, "Muitas tentativas de pagamento. Tente de novo daqui a uma hora.");
   const corpo = await lerCorpo<{ plano_id?: unknown; propriedade_id?: unknown }>(request, 2000);
@@ -118,8 +120,7 @@ export async function handleCheckout(request: Request) {
 // POST /api/public/mercadopago/webhook — aviso do Mercado Pago (assinado)
 // ---------------------------------------------------------------------------
 export async function handleWebhook(request: Request) {
-  const segredo = process.env["MERCADOPAGO_WEBHOOK_SECRET"];
-  const token = process.env["MERCADOPAGO_ACCESS_TOKEN"];
+  const [segredo, token] = await Promise.all([lerChave("MERCADOPAGO_WEBHOOK_SECRET"), lerChave("MERCADOPAGO_ACCESS_TOKEN")]);
   if (!segredo || !token) return falha(503, "não configurado");
   if (!allowRequest(`mp-aviso:${ipDe(request)}`, 300, 60_000, 60_000)) return falha(429, "excesso");
   const url = new URL(request.url);
@@ -176,8 +177,8 @@ export async function handleEstadoPagamentos(request: Request) {
   const { data } = await (u.supabase.rpc.bind(u.supabase) as unknown as RpcSolta)("sou_admin");
   if (data !== true) return falha(403, "Só administradores.");
   return resposta(200, {
-    token: !!process.env["MERCADOPAGO_ACCESS_TOKEN"],
-    segredo: !!process.env["MERCADOPAGO_WEBHOOK_SECRET"],
+    token: !!(await lerChave("MERCADOPAGO_ACCESS_TOKEN")),
+    segredo: !!(await lerChave("MERCADOPAGO_WEBHOOK_SECRET")),
     url_aviso: `${origemSegura(request)}/api/public/mercadopago/webhook`,
   });
 }

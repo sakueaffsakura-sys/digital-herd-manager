@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      alimentacao: {
+        Row: {
+          animal_id: string | null
+          cocho: string | null
+          created_at: string
+          data: string
+          id: string
+          item_id: string
+          lote_id: string | null
+          mudanca: boolean | null
+          obs: string | null
+          propriedade_id: string
+          qtd: number
+          updated_at: string
+        }
+        Insert: {
+          animal_id?: string | null
+          cocho?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          item_id: string
+          lote_id?: string | null
+          mudanca?: boolean | null
+          obs?: string | null
+          propriedade_id: string
+          qtd: number
+          updated_at?: string
+        }
+        Update: {
+          animal_id?: string | null
+          cocho?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          item_id?: string
+          lote_id?: string | null
+          mudanca?: boolean | null
+          obs?: string | null
+          propriedade_id?: string
+          qtd?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alimentacao_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alimentacao_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alimentacao_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alimentacao_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       animais: {
         Row: {
           created_at: string
@@ -108,13 +182,79 @@ export type Database = {
           },
         ]
       }
+      animal_extra: {
+        Row: {
+          animal_id: string
+          created_at: string
+          finalidade: string | null
+          id: string
+          identificacao: string | null
+          obs: string | null
+          origem: string | null
+          pasto_id: string | null
+          pelagem: string | null
+          procedencia: string | null
+          propriedade_id: string
+          updated_at: string
+        }
+        Insert: {
+          animal_id: string
+          created_at?: string
+          finalidade?: string | null
+          id?: string
+          identificacao?: string | null
+          obs?: string | null
+          origem?: string | null
+          pasto_id?: string | null
+          pelagem?: string | null
+          procedencia?: string | null
+          propriedade_id: string
+          updated_at?: string
+        }
+        Update: {
+          animal_id?: string
+          created_at?: string
+          finalidade?: string | null
+          id?: string
+          identificacao?: string | null
+          obs?: string | null
+          origem?: string | null
+          pasto_id?: string | null
+          pelagem?: string | null
+          procedencia?: string | null
+          propriedade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "animal_extra_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animal_extra_pasto_id_fkey"
+            columns: ["pasto_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "animal_extra_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anotacoes_producao: {
         Row: {
           alimentacao: string | null
           animal_id: string | null
           comportamento: string | null
           created_at: string
-          marcada: boolean
           data: string
           id: string
           informacoes_adicionais: string | null
@@ -130,7 +270,6 @@ export type Database = {
           animal_id?: string | null
           comportamento?: string | null
           created_at?: string
-          marcada?: boolean
           data?: string
           id?: string
           informacoes_adicionais?: string | null
@@ -146,7 +285,6 @@ export type Database = {
           animal_id?: string | null
           comportamento?: string | null
           created_at?: string
-          marcada?: boolean
           data?: string
           id?: string
           informacoes_adicionais?: string | null
@@ -248,6 +386,226 @@ export type Database = {
           },
         ]
       }
+      atividades_agro: {
+        Row: {
+          colhido_kg: number | null
+          created_at: string
+          custo: number | null
+          data: string
+          descricao: string | null
+          entrada_item_id: string | null
+          id: string
+          item_id: string | null
+          obs: string | null
+          perda_kg: number | null
+          plantio_id: string
+          praga: string | null
+          propriedade_id: string
+          qtd: number | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          colhido_kg?: number | null
+          created_at?: string
+          custo?: number | null
+          data?: string
+          descricao?: string | null
+          entrada_item_id?: string | null
+          id?: string
+          item_id?: string | null
+          obs?: string | null
+          perda_kg?: number | null
+          plantio_id: string
+          praga?: string | null
+          propriedade_id: string
+          qtd?: number | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          colhido_kg?: number | null
+          created_at?: string
+          custo?: number | null
+          data?: string
+          descricao?: string | null
+          entrada_item_id?: string | null
+          id?: string
+          item_id?: string | null
+          obs?: string | null
+          perda_kg?: number | null
+          plantio_id?: string
+          praga?: string | null
+          propriedade_id?: string
+          qtd?: number | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atividades_agro_entrada_item_id_fkey"
+            columns: ["entrada_item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atividades_agro_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atividades_agro_plantio_id_fkey"
+            columns: ["plantio_id"]
+            isOneToOne: false
+            referencedRelation: "plantios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atividades_agro_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      avaliacoes: {
+        Row: {
+          animal_id: string | null
+          created_at: string
+          data: string
+          id: string
+          lote_id: string | null
+          obs: string | null
+          pasto_id: string | null
+          propriedade_id: string
+          responsavel: string | null
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lote_id?: string | null
+          obs?: string | null
+          pasto_id?: string | null
+          propriedade_id: string
+          responsavel?: string | null
+          tipo?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lote_id?: string | null
+          obs?: string | null
+          pasto_id?: string | null
+          propriedade_id?: string
+          responsavel?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_pasto_id_fkey"
+            columns: ["pasto_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bezerros_info: {
+        Row: {
+          animal_id: string
+          colostro: string
+          created_at: string
+          desmamado_em: string | null
+          desmame_previsto: string | null
+          id: string
+          obs: string | null
+          orfao: boolean | null
+          parto: string | null
+          peso_nascer: number | null
+          propriedade_id: string
+          updated_at: string
+        }
+        Insert: {
+          animal_id: string
+          colostro?: string
+          created_at?: string
+          desmamado_em?: string | null
+          desmame_previsto?: string | null
+          id?: string
+          obs?: string | null
+          orfao?: boolean | null
+          parto?: string | null
+          peso_nascer?: number | null
+          propriedade_id: string
+          updated_at?: string
+        }
+        Update: {
+          animal_id?: string
+          colostro?: string
+          created_at?: string
+          desmamado_em?: string | null
+          desmame_previsto?: string | null
+          id?: string
+          obs?: string | null
+          orfao?: boolean | null
+          parto?: string | null
+          peso_nascer?: number | null
+          propriedade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bezerros_info_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bezerros_info_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bloqueios_acesso: {
         Row: {
           ativo: boolean
@@ -301,6 +659,59 @@ export type Database = {
           },
         ]
       }
+      campanhas: {
+        Row: {
+          created_at: string
+          fim: string | null
+          id: string
+          inicio: string
+          lotes: string | null
+          nome: string
+          obs: string | null
+          produto: string | null
+          propriedade_id: string
+          status: string
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string
+          lotes?: string | null
+          nome: string
+          obs?: string | null
+          produto?: string | null
+          propriedade_id: string
+          status?: string
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string
+          lotes?: string | null
+          nome?: string
+          obs?: string | null
+          produto?: string | null
+          propriedade_id?: string
+          status?: string
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campanhas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chaves_sistema: {
         Row: {
           alterado_em: string
@@ -324,6 +735,148 @@ export type Database = {
           valor_cifrado?: string
         }
         Relationships: []
+      }
+      cios: {
+        Row: {
+          acao: string | null
+          animal_id: string
+          created_at: string
+          data: string
+          id: string
+          obs: string | null
+          propriedade_id: string
+          sinais: string | null
+          updated_at: string
+        }
+        Insert: {
+          acao?: string | null
+          animal_id: string
+          created_at?: string
+          data?: string
+          id?: string
+          obs?: string | null
+          propriedade_id: string
+          sinais?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acao?: string | null
+          animal_id?: string
+          created_at?: string
+          data?: string
+          id?: string
+          obs?: string | null
+          propriedade_id?: string
+          sinais?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cios_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cios_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          ativo: boolean | null
+          cidade: string | null
+          created_at: string
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cidade?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cidade?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clima_obs: {
+        Row: {
+          chuva_mm: number | null
+          created_at: string
+          data: string
+          evento: string | null
+          id: string
+          obs: string | null
+          propriedade_id: string
+          temp_max: number | null
+          temp_min: number | null
+          updated_at: string
+        }
+        Insert: {
+          chuva_mm?: number | null
+          created_at?: string
+          data?: string
+          evento?: string | null
+          id?: string
+          obs?: string | null
+          propriedade_id: string
+          temp_max?: number | null
+          temp_min?: number | null
+          updated_at?: string
+        }
+        Update: {
+          chuva_mm?: number | null
+          created_at?: string
+          data?: string
+          evento?: string | null
+          id?: string
+          obs?: string | null
+          propriedade_id?: string
+          temp_max?: number | null
+          temp_min?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clima_obs_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compras: {
         Row: {
@@ -441,6 +994,179 @@ export type Database = {
         }
         Relationships: []
       }
+      contas: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          descricao: string
+          fornecedor_id: string | null
+          id: string
+          obs: string | null
+          parte: string | null
+          propriedade_id: string
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+          vencimento: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          descricao: string
+          fornecedor_id?: string | null
+          id?: string
+          obs?: string | null
+          parte?: string | null
+          propriedade_id: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor: number
+          vencimento?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string
+          fornecedor_id?: string | null
+          id?: string
+          obs?: string | null
+          parte?: string | null
+          propriedade_id?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cotacoes: {
+        Row: {
+          created_at: string
+          data: string
+          fonte: string | null
+          id: string
+          obs: string | null
+          praca: string | null
+          preco: number
+          produto: string
+          produto_outro: string | null
+          propriedade_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          fonte?: string | null
+          id?: string
+          obs?: string | null
+          praca?: string | null
+          preco: number
+          produto: string
+          produto_outro?: string | null
+          propriedade_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          fonte?: string | null
+          id?: string
+          obs?: string | null
+          praca?: string | null
+          preco?: number
+          produto?: string
+          produto_outro?: string | null
+          propriedade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotacoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos: {
+        Row: {
+          animal_id: string | null
+          categoria: string
+          created_at: string
+          emissao: string | null
+          id: string
+          nome: string
+          numero: string | null
+          obs: string | null
+          propriedade_id: string
+          updated_at: string
+          vencimento: string | null
+          vinculo: string | null
+        }
+        Insert: {
+          animal_id?: string | null
+          categoria: string
+          created_at?: string
+          emissao?: string | null
+          id?: string
+          nome: string
+          numero?: string | null
+          obs?: string | null
+          propriedade_id: string
+          updated_at?: string
+          vencimento?: string | null
+          vinculo?: string | null
+        }
+        Update: {
+          animal_id?: string | null
+          categoria?: string
+          created_at?: string
+          emissao?: string | null
+          id?: string
+          nome?: string
+          numero?: string | null
+          obs?: string | null
+          propriedade_id?: string
+          updated_at?: string
+          vencimento?: string | null
+          vinculo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ebook_acessos: {
         Row: {
           criado_em: string
@@ -527,6 +1253,254 @@ export type Database = {
         }
         Relationships: []
       }
+      engorda: {
+        Row: {
+          created_at: string
+          custo_aquisicao: number | null
+          data_entrada: string
+          id: string
+          lote_id: string
+          obs: string | null
+          peso_alvo: number | null
+          preco_arroba: number | null
+          propriedade_id: string
+          rendimento: number | null
+          saida_prevista: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custo_aquisicao?: number | null
+          data_entrada?: string
+          id?: string
+          lote_id: string
+          obs?: string | null
+          peso_alvo?: number | null
+          preco_arroba?: number | null
+          propriedade_id: string
+          rendimento?: number | null
+          saida_prevista?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custo_aquisicao?: number | null
+          data_entrada?: string
+          id?: string
+          lote_id?: string
+          obs?: string | null
+          peso_alvo?: number | null
+          preco_arroba?: number | null
+          propriedade_id?: string
+          rendimento?: number | null
+          saida_prevista?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engorda_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engorda_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_itens: {
+        Row: {
+          ativo: boolean | null
+          categoria: string
+          conservacao: string | null
+          controla_validade: boolean | null
+          created_at: string
+          fabricante: string | null
+          fornecedor_id: string | null
+          id: string
+          minimo: number | null
+          nome: string
+          obs: string | null
+          preco_ref: number | null
+          propriedade_id: string
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria: string
+          conservacao?: string | null
+          controla_validade?: boolean | null
+          created_at?: string
+          fabricante?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          minimo?: number | null
+          nome: string
+          obs?: string | null
+          preco_ref?: number | null
+          propriedade_id: string
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string
+          conservacao?: string | null
+          controla_validade?: boolean | null
+          created_at?: string
+          fabricante?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          minimo?: number | null
+          nome?: string
+          obs?: string | null
+          preco_ref?: number | null
+          propriedade_id?: string
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_itens_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_itens_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_mov: {
+        Row: {
+          animal_id: string | null
+          created_at: string
+          data: string
+          fabricacao: string | null
+          fornecedor_id: string | null
+          id: string
+          item_id: string
+          lote_id: string | null
+          lote_produto: string | null
+          maquina_id: string | null
+          motivo: string | null
+          obs: string | null
+          plantio_id: string | null
+          propriedade_id: string
+          qtd: number
+          responsavel: string | null
+          tipo: string
+          updated_at: string
+          validade: string | null
+          valor_total: number | null
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          fabricacao?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          item_id: string
+          lote_id?: string | null
+          lote_produto?: string | null
+          maquina_id?: string | null
+          motivo?: string | null
+          obs?: string | null
+          plantio_id?: string | null
+          propriedade_id: string
+          qtd: number
+          responsavel?: string | null
+          tipo?: string
+          updated_at?: string
+          validade?: string | null
+          valor_total?: number | null
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          fabricacao?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          item_id?: string
+          lote_id?: string | null
+          lote_produto?: string | null
+          maquina_id?: string | null
+          motivo?: string | null
+          obs?: string | null
+          plantio_id?: string | null
+          propriedade_id?: string
+          qtd?: number
+          responsavel?: string | null
+          tipo?: string
+          updated_at?: string
+          validade?: string | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_mov_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_mov_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_mov_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_mov_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_mov_maquina_id_fkey"
+            columns: ["maquina_id"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_mov_plantio_id_fkey"
+            columns: ["plantio_id"]
+            isOneToOne: false
+            referencedRelation: "plantios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_mov_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eventos_seguranca: {
         Row: {
           caminho: string | null
@@ -559,6 +1533,244 @@ export type Database = {
           tipo?: string
         }
         Relationships: []
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean | null
+          categoria: string
+          cidade: string | null
+          condicoes: string | null
+          contato: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria: string
+          cidade?: string | null
+          condicoes?: string | null
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string
+          cidade?: string | null
+          condicoes?: string | null
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funcionarios: {
+        Row: {
+          admissao: string | null
+          created_at: string
+          funcao: string
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          salario: number | null
+          setor: string | null
+          situacao: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          admissao?: string | null
+          created_at?: string
+          funcao: string
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          salario?: number | null
+          setor?: string | null
+          situacao?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admissao?: string | null
+          created_at?: string
+          funcao?: string
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          salario?: number | null
+          setor?: string | null
+          situacao?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gta: {
+        Row: {
+          created_at: string
+          destino: string
+          emissao: string
+          especie: string | null
+          finalidade: string
+          id: string
+          lote_id: string | null
+          numero: string
+          obs: string | null
+          origem: string | null
+          propriedade_id: string
+          qtd: number
+          situacao: string
+          updated_at: string
+          validade: string
+        }
+        Insert: {
+          created_at?: string
+          destino: string
+          emissao?: string
+          especie?: string | null
+          finalidade: string
+          id?: string
+          lote_id?: string | null
+          numero: string
+          obs?: string | null
+          origem?: string | null
+          propriedade_id: string
+          qtd: number
+          situacao?: string
+          updated_at?: string
+          validade: string
+        }
+        Update: {
+          created_at?: string
+          destino?: string
+          emissao?: string
+          especie?: string | null
+          finalidade?: string
+          id?: string
+          lote_id?: string | null
+          numero?: string
+          obs?: string | null
+          origem?: string | null
+          propriedade_id?: string
+          qtd?: number
+          situacao?: string
+          updated_at?: string
+          validade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gta_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gta_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      horas_trabalho: {
+        Row: {
+          atividade: string | null
+          created_at: string
+          data: string
+          funcionario_id: string
+          horas: number | null
+          id: string
+          obs: string | null
+          pago: boolean | null
+          propriedade_id: string
+          tipo: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          atividade?: string | null
+          created_at?: string
+          data?: string
+          funcionario_id: string
+          horas?: number | null
+          id?: string
+          obs?: string | null
+          pago?: boolean | null
+          propriedade_id: string
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          atividade?: string | null
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          horas?: number | null
+          id?: string
+          obs?: string | null
+          pago?: boolean | null
+          propriedade_id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horas_trabalho_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "horas_trabalho_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       imagens_site: {
         Row: {
@@ -742,6 +1954,50 @@ export type Database = {
           },
         ]
       }
+      instalacoes: {
+        Row: {
+          ativo: boolean | null
+          capacidade: string | null
+          created_at: string
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          capacidade?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          capacidade?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instalacoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investimentos: {
         Row: {
           categoria: string
@@ -789,6 +2045,271 @@ export type Database = {
           },
           {
             foreignKeyName: "investimentos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      irrig_manut: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          obs: string | null
+          propriedade_id: string
+          proxima_data: string | null
+          sistema_id: string
+          tipo: string | null
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          descricao: string
+          id?: string
+          obs?: string | null
+          propriedade_id: string
+          proxima_data?: string | null
+          sistema_id: string
+          tipo?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          obs?: string | null
+          propriedade_id?: string
+          proxima_data?: string | null
+          sistema_id?: string
+          tipo?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "irrig_manut_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "irrig_manut_sistema_id_fkey"
+            columns: ["sistema_id"]
+            isOneToOne: false
+            referencedRelation: "irrig_sistemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      irrig_sistemas: {
+        Row: {
+          area_ha: number | null
+          capacidade: number | null
+          created_at: string
+          fonte: string | null
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          situacao: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          area_ha?: number | null
+          capacidade?: number | null
+          created_at?: string
+          fonte?: string | null
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          situacao?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          area_ha?: number | null
+          capacidade?: number | null
+          created_at?: string
+          fonte?: string | null
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          situacao?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "irrig_sistemas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      irrigacoes: {
+        Row: {
+          created_at: string
+          data: string
+          horas: number | null
+          id: string
+          obs: string | null
+          propriedade_id: string
+          sistema_id: string
+          talhao_id: string | null
+          updated_at: string
+          volume: number | null
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          horas?: number | null
+          id?: string
+          obs?: string | null
+          propriedade_id: string
+          sistema_id: string
+          talhao_id?: string | null
+          updated_at?: string
+          volume?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          horas?: number | null
+          id?: string
+          obs?: string | null
+          propriedade_id?: string
+          sistema_id?: string
+          talhao_id?: string | null
+          updated_at?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "irrigacoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "irrigacoes_sistema_id_fkey"
+            columns: ["sistema_id"]
+            isOneToOne: false
+            referencedRelation: "irrig_sistemas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "irrigacoes_talhao_id_fkey"
+            columns: ["talhao_id"]
+            isOneToOne: false
+            referencedRelation: "talhoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lancamentos: {
+        Row: {
+          animal_id: string | null
+          categoria: string
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          lote_id: string | null
+          maquina_id: string | null
+          obs: string | null
+          pasto_id: string | null
+          plantio_id: string | null
+          propriedade_id: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          animal_id?: string | null
+          categoria: string
+          created_at?: string
+          data?: string
+          descricao: string
+          id?: string
+          lote_id?: string | null
+          maquina_id?: string | null
+          obs?: string | null
+          pasto_id?: string | null
+          plantio_id?: string | null
+          propriedade_id: string
+          tipo?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          animal_id?: string | null
+          categoria?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          lote_id?: string | null
+          maquina_id?: string | null
+          obs?: string | null
+          pasto_id?: string | null
+          plantio_id?: string | null
+          propriedade_id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_maquina_id_fkey"
+            columns: ["maquina_id"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_pasto_id_fkey"
+            columns: ["pasto_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_plantio_id_fkey"
+            columns: ["plantio_id"]
+            isOneToOne: false
+            referencedRelation: "plantios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
             referencedRelation: "propriedades"
@@ -905,6 +2426,216 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      manutencoes: {
+        Row: {
+          created_at: string
+          data: string
+          horimetro: number | null
+          id: string
+          km: number | null
+          litros: number | null
+          maquina_id: string
+          obs: string | null
+          oficina: string | null
+          pecas: string | null
+          propriedade_id: string
+          proxima_data: string | null
+          proxima_horas: number | null
+          tipo: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          horimetro?: number | null
+          id?: string
+          km?: number | null
+          litros?: number | null
+          maquina_id: string
+          obs?: string | null
+          oficina?: string | null
+          pecas?: string | null
+          propriedade_id: string
+          proxima_data?: string | null
+          proxima_horas?: number | null
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          horimetro?: number | null
+          id?: string
+          km?: number | null
+          litros?: number | null
+          maquina_id?: string
+          obs?: string | null
+          oficina?: string | null
+          pecas?: string | null
+          propriedade_id?: string
+          proxima_data?: string | null
+          proxima_horas?: number | null
+          tipo?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manutencoes_maquina_id_fkey"
+            columns: ["maquina_id"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manutencoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maquinas: {
+        Row: {
+          ano: number | null
+          aquisicao_data: string | null
+          aquisicao_valor: number | null
+          created_at: string
+          horimetro: number | null
+          id: string
+          intervalo_revisao: number | null
+          km: number | null
+          marca: string | null
+          modelo: string | null
+          nome: string
+          obs: string | null
+          operadores: string | null
+          propriedade_id: string
+          serie: string | null
+          situacao: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ano?: number | null
+          aquisicao_data?: string | null
+          aquisicao_valor?: number | null
+          created_at?: string
+          horimetro?: number | null
+          id?: string
+          intervalo_revisao?: number | null
+          km?: number | null
+          marca?: string | null
+          modelo?: string | null
+          nome: string
+          obs?: string | null
+          operadores?: string | null
+          propriedade_id: string
+          serie?: string | null
+          situacao?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number | null
+          aquisicao_data?: string | null
+          aquisicao_valor?: number | null
+          created_at?: string
+          horimetro?: number | null
+          id?: string
+          intervalo_revisao?: number | null
+          km?: number | null
+          marca?: string | null
+          modelo?: string | null
+          nome?: string
+          obs?: string | null
+          operadores?: string | null
+          propriedade_id?: string
+          serie?: string | null
+          situacao?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maquinas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mov_animais: {
+        Row: {
+          animal_id: string | null
+          created_at: string
+          data: string
+          de: string | null
+          id: string
+          lote_id: string | null
+          obs: string | null
+          para: string | null
+          propriedade_id: string
+          responsavel: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          de?: string | null
+          id?: string
+          lote_id?: string | null
+          obs?: string | null
+          para?: string | null
+          propriedade_id: string
+          responsavel?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          de?: string | null
+          id?: string
+          lote_id?: string | null
+          obs?: string | null
+          para?: string | null
+          propriedade_id?: string
+          responsavel?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mov_animais_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mov_animais_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mov_animais_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movimentacoes_financeiras: {
         Row: {
@@ -1082,6 +2813,114 @@ export type Database = {
           },
         ]
       }
+      ocorr_reprod: {
+        Row: {
+          animal_id: string
+          created_at: string
+          data: string
+          descricao: string | null
+          id: string
+          obs: string | null
+          propriedade_id: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          animal_id: string
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          obs?: string | null
+          propriedade_id: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          animal_id?: string
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          obs?: string | null
+          propriedade_id?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorr_reprod_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorr_reprod_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencias: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string | null
+          gravidade: string | null
+          id: string
+          propriedade_id: string
+          responsavel_id: string | null
+          setor: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          gravidade?: string | null
+          id?: string
+          propriedade_id: string
+          responsavel_id?: string | null
+          setor?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          gravidade?: string | null
+          id?: string
+          propriedade_id?: string
+          responsavel_id?: string | null
+          setor?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pagamentos: {
         Row: {
           aprovado_em: string | null
@@ -1150,6 +2989,272 @@ export type Database = {
           },
           {
             foreignKeyName: "pagamentos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pasto_mov: {
+        Row: {
+          created_at: string
+          entrada: string
+          id: string
+          lote_id: string
+          obs: string | null
+          pasto_id: string
+          propriedade_id: string
+          qtd_animais: number | null
+          saida: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entrada?: string
+          id?: string
+          lote_id: string
+          obs?: string | null
+          pasto_id: string
+          propriedade_id: string
+          qtd_animais?: number | null
+          saida?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entrada?: string
+          id?: string
+          lote_id?: string
+          obs?: string | null
+          pasto_id?: string
+          propriedade_id?: string
+          qtd_animais?: number | null
+          saida?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pasto_mov_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pasto_mov_pasto_id_fkey"
+            columns: ["pasto_id"]
+            isOneToOne: false
+            referencedRelation: "pastos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pasto_mov_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pastos: {
+        Row: {
+          area_ha: number
+          capacidade: number | null
+          created_at: string
+          forrageira: string | null
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          situacao: string
+          ultima_adubacao: string | null
+          ultima_reforma: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_ha: number
+          capacidade?: number | null
+          created_at?: string
+          forrageira?: string | null
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          situacao?: string
+          ultima_adubacao?: string | null
+          ultima_reforma?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_ha?: number
+          capacidade?: number | null
+          created_at?: string
+          forrageira?: string | null
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          situacao?: string
+          ultima_adubacao?: string | null
+          ultima_reforma?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pastos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_compra: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string
+          entrega_prevista: string | null
+          fornecedor_id: string
+          id: string
+          item_id: string | null
+          obs: string | null
+          pagamento: string
+          propriedade_id: string
+          qtd: number | null
+          status: string
+          updated_at: string
+          valor: number | null
+          vencimento_pgto: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          descricao: string
+          entrega_prevista?: string | null
+          fornecedor_id: string
+          id?: string
+          item_id?: string | null
+          obs?: string | null
+          pagamento?: string
+          propriedade_id: string
+          qtd?: number | null
+          status?: string
+          updated_at?: string
+          valor?: number | null
+          vencimento_pgto?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string
+          entrega_prevista?: string | null
+          fornecedor_id?: string
+          id?: string
+          item_id?: string | null
+          obs?: string | null
+          pagamento?: string
+          propriedade_id?: string
+          qtd?: number | null
+          status?: string
+          updated_at?: string
+          valor?: number | null
+          vencimento_pgto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_compra_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_compra_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_compra_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_venda: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data: string
+          entrega_prevista: string | null
+          id: string
+          item_id: string | null
+          obs: string | null
+          pagamento: string
+          preco_unit: number | null
+          produto: string
+          propriedade_id: string
+          qtd: number
+          status: string
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data?: string
+          entrega_prevista?: string | null
+          id?: string
+          item_id?: string | null
+          obs?: string | null
+          pagamento?: string
+          preco_unit?: number | null
+          produto: string
+          propriedade_id: string
+          qtd: number
+          status?: string
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data?: string
+          entrega_prevista?: string | null
+          id?: string
+          item_id?: string | null
+          obs?: string | null
+          pagamento?: string
+          preco_unit?: number | null
+          produto?: string
+          propriedade_id?: string
+          qtd?: number
+          status?: string
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_venda_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_venda_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_venda_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
             referencedRelation: "propriedades"
@@ -1299,6 +3404,142 @@ export type Database = {
           preco_centavos?: number
         }
         Relationships: []
+      }
+      planos_alim: {
+        Row: {
+          ativo: boolean | null
+          categoria_animal: string | null
+          created_at: string
+          fim: string | null
+          id: string
+          inicio: string | null
+          item_id: string
+          lote_id: string | null
+          nome: string
+          orientacao: string | null
+          propriedade_id: string
+          qtd_animal_dia: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria_animal?: string | null
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string | null
+          item_id: string
+          lote_id?: string | null
+          nome: string
+          orientacao?: string | null
+          propriedade_id: string
+          qtd_animal_dia: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria_animal?: string | null
+          created_at?: string
+          fim?: string | null
+          id?: string
+          inicio?: string | null
+          item_id?: string
+          lote_id?: string | null
+          nome?: string
+          orientacao?: string | null
+          propriedade_id?: string
+          qtd_animal_dia?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_alim_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_alim_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_alim_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plantios: {
+        Row: {
+          area_ha: number | null
+          colheita_prevista: string | null
+          created_at: string
+          cultura: string
+          id: string
+          obs: string | null
+          plantio_data: string | null
+          producao_esperada: number | null
+          propriedade_id: string
+          safra: string
+          status: string
+          talhao_id: string
+          updated_at: string
+          variedade: string | null
+        }
+        Insert: {
+          area_ha?: number | null
+          colheita_prevista?: string | null
+          created_at?: string
+          cultura: string
+          id?: string
+          obs?: string | null
+          plantio_data?: string | null
+          producao_esperada?: number | null
+          propriedade_id: string
+          safra: string
+          status?: string
+          talhao_id: string
+          updated_at?: string
+          variedade?: string | null
+        }
+        Update: {
+          area_ha?: number | null
+          colheita_prevista?: string | null
+          created_at?: string
+          cultura?: string
+          id?: string
+          obs?: string | null
+          plantio_data?: string | null
+          producao_esperada?: number | null
+          propriedade_id?: string
+          safra?: string
+          status?: string
+          talhao_id?: string
+          updated_at?: string
+          variedade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantios_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plantios_talhao_id_fkey"
+            columns: ["talhao_id"]
+            isOneToOne: false
+            referencedRelation: "talhoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       presenca_usuarios: {
         Row: {
@@ -1562,6 +3803,59 @@ export type Database = {
         }
         Relationships: []
       }
+      qualidade_leite: {
+        Row: {
+          ccs: number | null
+          cpp: number | null
+          created_at: string
+          data: string
+          gordura: number | null
+          id: string
+          laboratorio: string | null
+          obs: string | null
+          propriedade_id: string
+          proteina: number | null
+          temperatura: number | null
+          updated_at: string
+        }
+        Insert: {
+          ccs?: number | null
+          cpp?: number | null
+          created_at?: string
+          data?: string
+          gordura?: number | null
+          id?: string
+          laboratorio?: string | null
+          obs?: string | null
+          propriedade_id: string
+          proteina?: number | null
+          temperatura?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ccs?: number | null
+          cpp?: number | null
+          created_at?: string
+          data?: string
+          gordura?: number | null
+          id?: string
+          laboratorio?: string | null
+          obs?: string | null
+          propriedade_id?: string
+          proteina?: number | null
+          temperatura?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualidade_leite_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           chave: string
@@ -1720,6 +4014,133 @@ export type Database = {
         }
         Relationships: []
       }
+      talhoes: {
+        Row: {
+          area_ha: number
+          created_at: string
+          id: string
+          nome: string
+          obs: string | null
+          propriedade_id: string
+          situacao: string | null
+          solo: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_ha: number
+          created_at?: string
+          id?: string
+          nome: string
+          obs?: string | null
+          propriedade_id: string
+          situacao?: string | null
+          solo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_ha?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          obs?: string | null
+          propriedade_id?: string
+          situacao?: string | null
+          solo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talhoes_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas: {
+        Row: {
+          animal_id: string | null
+          created_at: string
+          data: string
+          id: string
+          lote_id: string | null
+          obs: string | null
+          prioridade: string
+          propriedade_id: string
+          repete: string | null
+          responsavel_id: string | null
+          setor: string | null
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lote_id?: string | null
+          obs?: string | null
+          prioridade?: string
+          propriedade_id: string
+          repete?: string | null
+          responsavel_id?: string | null
+          setor?: string | null
+          status?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          animal_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          lote_id?: string | null
+          obs?: string | null
+          prioridade?: string
+          propriedade_id?: string
+          repete?: string | null
+          responsavel_id?: string | null
+          setor?: string | null
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tipos_vacinas: {
         Row: {
           ativo: boolean
@@ -1754,6 +4175,116 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tipos_vacinas_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tratamentos: {
+        Row: {
+          animal_id: string | null
+          carencia_carne: number | null
+          carencia_leite: number | null
+          created_at: string
+          custo: number | null
+          data: string
+          descricao: string
+          dose: string | null
+          fabricante: string | null
+          id: string
+          item_id: string | null
+          lote_id: string | null
+          lote_produto: string | null
+          medicamento: string | null
+          orientacao: string | null
+          propriedade_id: string
+          qtd_usada: number | null
+          responsavel: string | null
+          retorno: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          veterinario: string | null
+          via: string | null
+        }
+        Insert: {
+          animal_id?: string | null
+          carencia_carne?: number | null
+          carencia_leite?: number | null
+          created_at?: string
+          custo?: number | null
+          data?: string
+          descricao: string
+          dose?: string | null
+          fabricante?: string | null
+          id?: string
+          item_id?: string | null
+          lote_id?: string | null
+          lote_produto?: string | null
+          medicamento?: string | null
+          orientacao?: string | null
+          propriedade_id: string
+          qtd_usada?: number | null
+          responsavel?: string | null
+          retorno?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          veterinario?: string | null
+          via?: string | null
+        }
+        Update: {
+          animal_id?: string | null
+          carencia_carne?: number | null
+          carencia_leite?: number | null
+          created_at?: string
+          custo?: number | null
+          data?: string
+          descricao?: string
+          dose?: string | null
+          fabricante?: string | null
+          id?: string
+          item_id?: string | null
+          lote_id?: string | null
+          lote_produto?: string | null
+          medicamento?: string | null
+          orientacao?: string | null
+          propriedade_id?: string
+          qtd_usada?: number | null
+          responsavel?: string | null
+          retorno?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          veterinario?: string | null
+          via?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tratamentos_animal_id_fkey"
+            columns: ["animal_id"]
+            isOneToOne: false
+            referencedRelation: "animais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tratamentos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tratamentos_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tratamentos_propriedade_id_fkey"
             columns: ["propriedade_id"]
             isOneToOne: false
             referencedRelation: "propriedades"

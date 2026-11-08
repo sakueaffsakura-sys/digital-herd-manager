@@ -8,15 +8,21 @@ import { dataLocalISO } from "@/lib/datas";
 
 export type TableName = keyof Database["public"]["Tables"];
 export type Row = Record<string, unknown>;
-export type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina"; required?: boolean; options?: { value: string; label: string }[]; sex?: "M" | "F"; activeOnly?: boolean; /** Exemplo do que escrever, dentro do campo vazio. */ dica?: string; /** Fica escondido atrás de "Mais detalhes" até alguém abrir. */ avancado?: boolean };
+export type Field = { key: string; label: string; type?: "text" | "date" | "number" | "textarea" | "select" | "animal" | "lote" | "vacina" | "ref" | "sim"; required?: boolean; options?: { value: string; label: string }[]; /** Valor já escrito no campo quando o registro é novo. */ padrao?: string; sex?: "M" | "F"; activeOnly?: boolean; /** Exemplo do que escrever, dentro do campo vazio. */ dica?: string; /** Fica escondido atrás de "Mais detalhes" até alguém abrir. */ avancado?: boolean; /** Mostra o valor em reais na lista. */ moeda?: boolean;
+  /** Tabela do cadastro ligado (só para o tipo "ref"). */ refTabela?: string;
+  /** Coluna que mostra o nome do cadastro ligado; "nome" quando não dito. */ refRotulo?: string;
+  /** Valores extras para criar o cadastro na hora. Sem isto, o cadastro precisa existir antes. */ refCriar?: Record<string, string | number>;
+  /** Onde cadastrar, quando não dá para criar na hora ("em Plantios"). */ refOnde?: string };
 export type FilterDef = { key: string; label: string; options: { value: string; label: string }[] };
 export type ImpliedFilter = { key: string; isNull?: boolean; value?: string };
 export type IconType = ComponentType<{ className?: string }>;
-export type Module = { title: string; singular: string; /** Botão principal ("Novo animal"). */ novo?: string; /** Ação do estado vazio ("Cadastrar o primeiro animal"). */ primeiro?: string; table: TableName; icon: IconType; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter };
+export type Module = { title: string; singular: string; /** Botão principal ("Novo animal"). */ novo?: string; /** Ação do estado vazio ("Cadastrar o primeiro animal"). */ primeiro?: string; table: TableName; icon: IconType; description: string; fields: Field[]; columns: { key: string; label: string }[]; filter?: (row: Row) => boolean; searchColumns?: string[]; filters?: FilterDef[]; impliedFilter?: ImpliedFilter; /** Coluna que ordena a lista. */ ordem?: string; /** Ordena de A a Z, para listas de cadastros com nome. */ ordemCrescente?: boolean };
 export type FormRefs = {
   animals: { id: string; nome: string | null; numero_brinco: string; data_nascimento: string | null; sexo: string; situacao: string }[];
   lots: { id: string; nome: string }[];
   vaccines: { id: string; nome: string }[];
+  /** Cadastros ligados de outras tabelas (pasto, máquina, item de estoque…), por tabela. */
+  extras?: Record<string, { id: string; nome: string }[]>;
 };
 
 /** Data de hoje no relógio de quem usa (não em UTC). Veja src/lib/datas.ts. */
@@ -144,6 +150,49 @@ const SELOS: Record<string, SeloInfo> = {
   aberto: { rotulo: "Aguardando resposta", cor: "aviso", icone: Clock3 },
   respondido: { rotulo: "Respondido", cor: "pasto", icone: Check },
   fechado: { rotulo: "Encerrado", cor: "cinza", icone: Check },
+  // Situações das áreas que vieram do aplicativo, escritas como o produtor fala.
+  "Em uso": { rotulo: "Em uso", cor: "pasto", icone: Check },
+  Disponível: { rotulo: "Disponível", cor: "pasto", icone: Check },
+  Livre: { rotulo: "Livre", cor: "pasto", icone: Check },
+  Funcionando: { rotulo: "Funcionando", cor: "pasto", icone: Check },
+  Ativa: { rotulo: "Ativa", cor: "pasto", icone: Check },
+  "Em cultivo": { rotulo: "Em cultivo", cor: "pasto", icone: Check },
+  Descanso: { rotulo: "Descanso", cor: "aviso", icone: Clock3 },
+  "Em descanso": { rotulo: "Em descanso", cor: "aviso", icone: Clock3 },
+  "Em reforma": { rotulo: "Em reforma", cor: "aviso", icone: Clock3 },
+  "Em manutenção": { rotulo: "Em manutenção", cor: "aviso", icone: Clock3 },
+  Afastado: { rotulo: "Afastado", cor: "aviso", icone: Clock3 },
+  "Com problema": { rotulo: "Com problema", cor: "alerta", icone: AlertTriangle },
+  Parado: { rotulo: "Parado", cor: "alerta", icone: XCircle },
+  Desligado: { rotulo: "Desligado", cor: "cinza", icone: XCircle },
+  Inativa: { rotulo: "Inativa", cor: "cinza", icone: XCircle },
+  Emitida: { rotulo: "Emitida", cor: "pasto", icone: Check },
+  Utilizada: { rotulo: "Utilizada", cor: "cinza", icone: Check },
+  // Andamento
+  Pendente: { rotulo: "Pendente", cor: "aviso", icone: Clock3 },
+  Aberta: { rotulo: "Aberta", cor: "aviso", icone: Clock3 },
+  Planejado: { rotulo: "Planejado", cor: "cinza", icone: Clock3 },
+  Planejada: { rotulo: "Planejada", cor: "cinza", icone: Clock3 },
+  Pedido: { rotulo: "Pedido", cor: "aviso", icone: Clock3 },
+  Reservado: { rotulo: "Reservado", cor: "aviso", icone: Clock3 },
+  Plantado: { rotulo: "Plantado", cor: "pasto", icone: Check },
+  "Em andamento": { rotulo: "Em andamento", cor: "aviso", icone: Clock3 },
+  "Em tratamento": { rotulo: "Em tratamento", cor: "aviso", icone: Clock3 },
+  "Em acompanhamento": { rotulo: "Em acompanhamento", cor: "aviso", icone: Clock3 },
+  "Em colheita": { rotulo: "Em colheita", cor: "aviso", icone: Clock3 },
+  Colhido: { rotulo: "Colhido", cor: "pasto", icone: Check },
+  Entregue: { rotulo: "Entregue", cor: "pasto", icone: Check },
+  Concluída: { rotulo: "Concluída", cor: "pasto", icone: Check },
+  Resolvida: { rotulo: "Resolvida", cor: "pasto", icone: Check },
+  Resolvido: { rotulo: "Resolvido", cor: "pasto", icone: Check },
+  Quitada: { rotulo: "Quitada", cor: "pasto", icone: Check },
+  Encerrado: { rotulo: "Encerrado", cor: "cinza", icone: Check },
+  Cancelado: { rotulo: "Cancelado", cor: "cinza", icone: XCircle },
+  Cancelada: { rotulo: "Cancelada", cor: "cinza", icone: XCircle },
+  Ativo: { rotulo: "Ativo", cor: "pasto", icone: Check },
+  Pago: { rotulo: "Pago", cor: "pasto", icone: Check },
+  Receita: { rotulo: "Receita", cor: "pasto", icone: ArrowDownLeft },
+  Despesa: { rotulo: "Despesa", cor: "alerta", icone: ArrowUpRight },
 };
 const COR_SELO: Record<SeloInfo["cor"], string> = {
   alerta: "bg-alerta-fundo text-alerta",
