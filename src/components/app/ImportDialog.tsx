@@ -53,7 +53,7 @@ export default function ImportDialog({
   onClose: () => void;
   config: Module;
   propertyId: string;
-  refs?: { animals: { id: string; nome: string | null; numero_brinco: string; situacao: string }[]; lots: { id: string; nome: string }[]; vaccines: { id: string; nome: string }[] };
+  refs?: { animals: { id: string; nome: string | null; numero_brinco: string; situacao: string }[]; lots: { id: string; nome: string }[]; vaccines: { id: string; nome: string }[]; extras?: Record<string, { id: string; nome: string }[]> };
   onImported: (quantidade: number) => void;
 }) {
   const [state, setState] = useState<State>({ step: "upload" });
@@ -84,13 +84,27 @@ export default function ImportDialog({
     refs?.lots.forEach((l) => lookupLots.set(l.nome.toLowerCase(), l.id));
     const lookupVaccines = new Map<string, string>();
     refs?.vaccines.forEach((v) => lookupVaccines.set(v.nome.toLowerCase(), v.id));
+    // Cadastros ligados de outras tabelas (pasto, produto, máquina…), um mapa por tabela.
+    const lookupExtras = new Map<string, Map<string, string>>();
+    Object.entries(refs?.extras ?? {}).forEach(([tabela, linhas]) => {
+      const mapa = new Map<string, string>();
+      linhas.forEach((l) => { if (l.nome) mapa.set(l.nome.toLowerCase(), l.id); });
+      lookupExtras.set(tabela, mapa);
+    });
 
     const mapped = rows.map((row) => {
       const next = { ...row };
       for (const f of config.fields) {
         const value = String(row[f.key] ?? "").trim();
         if (!value) continue;
-        if (f.type === "animal") {
+        if (f.type === "ref") {
+          const id = lookupExtras.get(f.refTabela ?? "")?.get(value.toLowerCase());
+          if (id) next[f.key] = id;
+          else reasons.push({ linha: Number(row["__linha"] ?? 0), motivo: `${f.label} "${value}" não encontrado. Cadastre antes de importar.` });
+        } else if (f.type === "sim") {
+          // "Sim"/"Não" da planilha vira "true"/"false"; vira sim/não de verdade em simDeVerdade().
+          next[f.key] = ["sim", "s", "true", "1", "x"].includes(value.toLowerCase()) ? "true" : "false";
+        } else if (f.type === "animal") {
           const id = lookupAnimals.get(value.toLowerCase());
           if (id) next[f.key] = id;
           else reasons.push({ linha: Number(row["__linha"] ?? 0), motivo: `Animal "${value}" não encontrado na propriedade.` });
@@ -107,6 +121,18 @@ export default function ImportDialog({
       return next;
     });
     return { rows: mapped, reasons };
+  };
+
+  /** A coluna sim/não do banco não aceita o texto "true": converte antes de enviar. */
+  const simDeVerdade = (linha: Row): Row => {
+    const out = { ...linha };
+    for (const f of config.fields) {
+      if (f.type !== "sim") continue;
+      const v = out[f.key];
+      if (v === undefined || v === null || v === "") continue;
+      out[f.key] = v === true || v === "true";
+    }
+    return out;
   };
 
   const start = async () => {
@@ -234,11 +260,11 @@ export default function ImportDialog({
         );
         const errors: Reason[] = [];
         const valid: Row[] = [];
-        const comVinculoRuim = new Set(reasons.map((r) => r.linha)); // animal/lote/vacina não encontrado
+        const comVinculoRuim = new Set(reasons.map((r) => r.linha)); // animal, lote, vacina ou outro cadastro não encontrado
         mapped.forEach((row) => {
           const { value, errors: errs } = normalizeAndValidate(fields, row as Record<string, string>, Number(row["__linha"]));
           if (errs.length) errs.forEach((m) => errors.push({ linha: Number(row["__linha"]), motivo: m }));
-          else if (!comVinculoRuim.has(Number(row["__linha"]))) valid.push({ ...value, __linha: row["__linha"], id: novoUuid() });
+          else if (!comVinculoRuim.has(Number(row["__linha"]))) valid.push({ ...simDeVerdade(value), __linha: row["__linha"], id: novoUuid() });
         });
         const combined = [...reasons, ...errors];
         const fieldNames = new Set(fields.map((f) => f.key));
