@@ -444,6 +444,27 @@ function aplicarFiltros(linhas, params) {
   return out;
 }
 
+/** Ordena como o PostgREST: order=coluna.asc,outra.desc (nulos por último, como o padrão). */
+function aplicarOrdem(linhas, params) {
+  const pedido = params.getAll("order").flatMap((p) => p.split(","));
+  if (!pedido.length) return linhas;
+  const regras = pedido.map((p) => {
+    const [col, ...resto] = p.split(".");
+    return { col, desc: resto.includes("desc") };
+  });
+  return [...linhas].sort((a, b) => {
+    for (const { col, desc } of regras) {
+      const x = a[col], y = b[col];
+      if (x == null && y == null) continue;
+      if (x == null) return 1;
+      if (y == null) return -1;
+      const cmp = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "pt-BR");
+      if (cmp) return desc ? -cmp : cmp;
+    }
+    return 0;
+  });
+}
+
 export function responderRest({ caminho, metodo, params, cabecalhos, admin, assinante = false }) {
   const json = (status, corpo, extra = {}) => ({ status, headers: { "content-type": "application/json; charset=utf-8", ...extra }, body: corpo === undefined ? "" : JSON.stringify(corpo) });
   if (caminho.startsWith("rpc/")) {
@@ -458,7 +479,7 @@ export function responderRest({ caminho, metodo, params, cabecalhos, admin, assi
   }
   // Quem não assina não tem pagamentos; e só o administrador vê planos desligados e eBooks em rascunho.
   const todas = tabela === "pagamentos" && !assinante ? [] : (TABELAS[tabela] ?? []).filter((l) => admin || !(tabela === "ebooks" && !l.publicado));
-  const filtradas = aplicarFiltros(todas, params);
+  const filtradas = aplicarOrdem(aplicarFiltros(todas, params), params);
   const offset = Number(params.get("offset") ?? 0);
   const limit = params.has("limit") ? Number(params.get("limit")) : filtradas.length;
   const pagina = filtradas.slice(offset, offset + limit);
