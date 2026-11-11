@@ -39,18 +39,27 @@ export default function Dashboard({
         dados.from("v_financeiro_mensal").select("mes,receitas,despesas").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
         dados.from("v_producao_mensal").select("mes,total_litros").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
         dados.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: hoje, _ate: somarDias(hoje, 7) }),
-        dados.from("inseminacoes").select("id,previsao_parto,situacao,animais(nome,numero_brinco)").eq("propriedade_id", propertyId)
+        dados.from("inseminacoes").select("id,previsao_parto,situacao,animal_id").eq("propriedade_id", propertyId)
           .in("situacao", ["em_andamento", "confirmada"]).gte("previsao_parto", hoje).order("previsao_parto").limit(5),
       ]);
       const erro = [resumo, financas, leite].map((x) => x.error).find(Boolean);
       if (erro) throw erro;
+      // A vaca de cada parto vem numa segunda leitura, e não num `select` aninhado: são
+      // cinco linhas, e uma consulta que o servidor sabe conferir vale mais do que uma
+      // junção que só o banco antigo entendia.
+      const vacas = new Map<string, { nome: string | null; numero_brinco: string }>();
+      const ids = [...new Set((partos.data ?? []).map((p) => p.animal_id).filter(Boolean))];
+      if (ids.length) {
+        const { data: animais } = await dados.from("animais").select("id,nome,numero_brinco").in("id", ids);
+        for (const a of animais ?? []) vacas.set(a.id, { nome: a.nome, numero_brinco: a.numero_brinco });
+      }
       const ag = (agenda.data ?? null) as { eventos?: EventoAgenda[] } | null;
       return {
         resumo: (resumo.data ?? {}) as Row,
         financas: financas.data ?? [],
         leite: leite.data ?? [],
         semana: agenda.error ? null : (ag?.eventos ?? []).slice(0, 6),
-        partos: partos.data ?? [],
+        partos: (partos.data ?? []).map((p) => ({ ...p, vaca: vacas.get(p.animal_id) ?? null })),
       };
     },
   });
@@ -217,7 +226,7 @@ export default function Dashboard({
             ) : (
               <ul className="mt-3 divide-y divide-border">
                 {(painel?.partos ?? []).map((p) => {
-                  const a = (p.animais ?? null) as unknown as { nome: string | null; numero_brinco: string } | null;
+                  const a = p.vaca;
                   return (
                     <li key={p.id} className="flex min-h-14 items-center gap-3 py-2">
                       {a?.numero_brinco ? <Brinco tamanho="pequeno" valor={a.numero_brinco} /> : null}

@@ -13,6 +13,9 @@ import { listar, obter, criar, atualizar, apagar } from "../../src/lib/dados/rep
 import { AcessoNegado, type Quem } from "../../src/lib/dados/acesso";
 import { rodarConsulta } from "../../src/lib/dados/consultas.server";
 import { dataNoFuso, somarDias } from "../../src/lib/datas";
+import { trocarSenhaComLink } from "../../src/lib/conta/recuperacao.server";
+import { conferirSenha } from "../../src/lib/conta/senha";
+import { createHash } from "node:crypto";
 import mysql from "mysql2/promise";
 
 const NAIR = "11111111-1111-4111-8111-111111111111";
@@ -40,6 +43,17 @@ async function recusa(nome: string, tarefa: () => Promise<unknown>) {
     const esperado = erro instanceof AcessoNegado;
     if (!esperado) falhas++;
     console.log(`  ${esperado ? "ok  " : "FALHA"} ${nome}: ${(erro as Error).name} — ${(erro as Error).message}`);
+  }
+}
+
+/** Como `recusa`, mas para o que falha por outro motivo que não acesso: link, senha. */
+async function recusaQualquer(nome: string, tarefa: () => Promise<unknown>) {
+  try {
+    await tarefa();
+    falhas++;
+    console.log(`  FALHA ${nome}: passou e não devia`);
+  } catch (erro) {
+    console.log(`  ok   ${nome}: ${(erro as Error).message}`);
   }
 }
 
@@ -417,6 +431,34 @@ conferir("o lançamento de 100 dias atrás caiu no mês dele", true,
   porMes.linhas.some((l) => String(l.mes).startsWith(somarDias(hoje, -100).slice(0, 7))));
 conferir("o vizinho não vê o resumo da fazenda alheia", 0, (await listar(vizinho, { tabela: "v_producao_mensal" })).total);
 await recusa("gravar num resumo", () => criar(dona, "v_producao_mensal", { propriedade_id: FAZENDA_NAIR, mes: hoje, total_litros: 999 }));
+
+console.log("== Esqueci minha senha: o link serve uma vez e derruba o resto ==");
+const tokenBom = "token-de-conferencia-1";
+const resumoDe = (t: string) => createHash("sha256").update(t).digest("hex");
+const pedirLink = (token: string, minutos: number) => executar(
+  "INSERT INTO recuperacoes_senha (id, user_id, token_hash, expira_em) VALUES (UUID(), ?, ?, ?)",
+  [NAIR, resumoDe(token), new Date(Date.now() + minutos * 60_000)],
+);
+await pedirLink(tokenBom, 60);
+await pedirLink("token-de-conferencia-2", 60);   // outro link pendente da mesma conta
+await pedirLink("token-vencido", -10);           // já venceu
+// Duas sessões abertas, para ver se a troca de senha derruba as duas.
+for (const t of ["sessao-a", "sessao-b"]) {
+  await executar(
+    "INSERT INTO sessoes (id, user_id, token_hash, expira_em) VALUES (UUID(), ?, ?, DATE_ADD(NOW(3), INTERVAL 30 DAY))",
+    [NAIR, resumoDe(t)],
+  );
+}
+await recusaQualquer("senha fraca não gasta o link", () => trocarSenhaComLink(tokenBom, "123"));
+await recusaQualquer("link que não existe", () => trocarSenhaComLink("token-inventado", "Capim-Alto-2026"));
+await recusaQualquer("link vencido", () => trocarSenhaComLink("token-vencido", "Capim-Alto-2026"));
+conferir("o link bom troca a senha", NAIR, (await trocarSenhaComLink(tokenBom, "Capim-Alto-2026")).userId);
+await recusaQualquer("e não serve de novo", () => trocarSenhaComLink(tokenBom, "Outra-Senha-2026"));
+await recusaQualquer("o outro link pendente também perdeu valor", () => trocarSenhaComLink("token-de-conferencia-2", "Outra-Senha-2026"));
+conferir("a senha nova confere", true, (await conferirSenha("Capim-Alto-2026",
+  String((await consultar<{ h: string }>("SELECT senha_hash AS h FROM usuarios WHERE id = ?", [NAIR]))[0]?.h))).confere);
+conferir("as sessões abertas caíram", 0,
+  Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM sessoes WHERE user_id = ?", [NAIR]))[0]?.n));
 
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências
