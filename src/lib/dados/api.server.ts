@@ -74,6 +74,7 @@ export async function handleDados(request: Request): Promise<Response> {
           tabela,
           colunas: Array.isArray(corpo["colunas"]) ? (corpo["colunas"] as string[]).slice(0, 60) : undefined,
           filtros: lerFiltros(corpo["filtros"]),
+          qualquerDe: lerFiltros(corpo["qualquerDe"]),
           ordem: lerOrdem(corpo["ordem"]),
           pagina: Number(corpo["pagina"] ?? 1),
           porPagina: Number(corpo["porPagina"] ?? 25),

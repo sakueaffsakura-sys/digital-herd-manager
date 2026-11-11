@@ -43,10 +43,11 @@ function AppAdmin() {
       const up = await armazem.from("aplicativo").upload(caminho, arquivo, { contentType: "application/vnd.android.package-archive", upsert: true, cacheControl: "0" });
       if (up.error) throw new Error("Não foi possível enviar o arquivo.");
       setEtapa("Salvando…");
-      const dados: AppAndroid = { versao: v, arquivo: caminho, tamanho: arquivo.size, publicado_em: new Date().toISOString(), novidades: novidades.trim().slice(0, 2000) };
+      // "versaoApp", e não "dados": o nome `dados` agora é o do caminho de dados importado.
+      const versaoApp: AppAndroid = { versao: v, arquivo: caminho, tamanho: arquivo.size, publicado_em: new Date().toISOString(), novidades: novidades.trim().slice(0, 2000) };
       const { data: auth } = await sessao.getUser();
       const { error } = await dados.from("configuracoes_sistema").upsert({
-        chave: CHAVE_APP, valor: JSON.stringify(dados), atualizado_em: new Date().toISOString(), atualizado_por: auth.user?.id ?? null,
+        chave: CHAVE_APP, valor: JSON.stringify(versaoApp), atualizado_em: new Date().toISOString(), atualizado_por: auth.user?.id ?? null,
       });
       if (error) throw new Error("O arquivo subiu, mas não deu para salvar os dados da versão.");
       toast.success(`Versão ${v} publicada. Já aparece em "Use no celular".`);

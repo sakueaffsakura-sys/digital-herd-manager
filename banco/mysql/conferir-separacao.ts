@@ -460,6 +460,35 @@ conferir("a senha nova confere", true, (await conferirSenha("Capim-Alto-2026",
 conferir("as sessões abertas caíram", 0,
   Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM sessoes WHERE user_id = ?", [NAIR]))[0]?.n));
 
+console.log("== \"Qualquer um destes\": as crias de um animal ==");
+// A cria tem o animal como mãe OU como pai; a condição é montada no servidor, a partir de
+// coluna e valor, nunca de um texto de consulta vindo do navegador.
+const MAE = await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "5000", sexo: "F", situacao: "ativo" });
+const PAI = await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "5001", sexo: "M", situacao: "ativo" });
+await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "5002", sexo: "F", situacao: "ativo", mae_id: MAE });
+await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "5003", sexo: "M", situacao: "ativo", pai_id: PAI });
+await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "5004", sexo: "F", situacao: "ativo", mae_id: MAE, pai_id: PAI });
+const criasDaMae = await listar<{ numero_brinco: string }>(dona, {
+  tabela: "animais",
+  qualquerDe: [{ coluna: "mae_id", op: "=", valor: MAE }, { coluna: "pai_id", op: "=", valor: MAE }],
+  ordem: [{ coluna: "numero_brinco" }],
+});
+conferir("as crias da mãe são as duas dela", ["5002", "5004"], criasDaMae.linhas.map((l) => l.numero_brinco));
+const criasDoPai = await listar<{ numero_brinco: string }>(dona, {
+  tabela: "animais",
+  qualquerDe: [{ coluna: "mae_id", op: "=", valor: PAI }, { coluna: "pai_id", op: "=", valor: PAI }],
+  ordem: [{ coluna: "numero_brinco" }],
+});
+conferir("e as do pai são as duas dele", ["5003", "5004"], criasDoPai.linhas.map((l) => l.numero_brinco));
+conferir("o vizinho não acha cria nenhuma com os mesmos identificadores", 0, (await listar(vizinho, {
+  tabela: "animais",
+  qualquerDe: [{ coluna: "mae_id", op: "=", valor: MAE }, { coluna: "pai_id", op: "=", valor: PAI }],
+})).total);
+await recusa("usar um campo inventado no \"qualquer destes\"", () => listar(dona, {
+  tabela: "animais",
+  qualquerDe: [{ coluna: "1=1 OR mae_id IS NOT NULL", op: "=", valor: 1 }],
+}));
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências
 // na hora, então um DELETE direto na fazenda esbarraria em nascimentos -> animais.

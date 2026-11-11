@@ -23,6 +23,12 @@ export type Busca = {
   /** Colunas desejadas. Sem isto, vêm todas. Nome fora da lista da tabela é recusado. */
   colunas?: readonly string[];
   filtros?: readonly Filtro[];
+  /**
+   * "Qualquer um destes": usado para perguntas como "as crias deste animal", onde a mãe
+   * OU o pai é ele. É uma lista de comparações, não um texto de consulta — o navegador
+   * nunca manda pedaço de comando, só coluna (conferida) e valor.
+   */
+  qualquerDe?: readonly Filtro[];
   /** Procura o texto em várias colunas ao mesmo tempo. */
   texto?: { termo: string; colunas: readonly string[] };
   ordem?: readonly Ordem[];
@@ -97,7 +103,13 @@ function pedacoDoFiltro(tabela: string, f: Filtro): Condicao {
   }
 }
 
-function montarOnde(tabela: string, quem: Quem, filtros: readonly Filtro[] = [], texto?: Busca["texto"]): Condicao {
+function montarOnde(
+  tabela: string,
+  quem: Quem,
+  filtros: readonly Filtro[] = [],
+  texto?: Busca["texto"],
+  qualquerDe?: readonly Filtro[],
+): Condicao {
   const partes: string[] = [];
   const valores: unknown[] = [];
   const acesso = filtroDeLeitura(tabela, quem);
@@ -107,6 +119,14 @@ function montarOnde(tabela: string, quem: Quem, filtros: readonly Filtro[] = [],
     const p = pedacoDoFiltro(tabela, f);
     partes.push(`(${p.sql})`);
     valores.push(...p.valores);
+  }
+  if (qualquerDe?.length) {
+    const pedacos = qualquerDe.map((f) => {
+      const p = pedacoDoFiltro(tabela, f);
+      valores.push(...p.valores);
+      return p.sql;
+    });
+    partes.push(`(${pedacos.join(" OR ")})`);
   }
   if (texto && texto.termo.trim() && texto.colunas.length > 0) {
     const termo = texto.termo.trim().replace(/[\\%_]/g, "\\$&");
@@ -133,7 +153,7 @@ function montarOrdem(tabela: string, ordem: readonly Ordem[] = []): string {
 export async function listar<T = Record<string, unknown>>(quem: Quem, busca: Busca): Promise<{ linhas: T[]; total: number }> {
   const { tabela } = busca;
   if (!COLUNAS_DA_TABELA[tabela]) throw new AcessoNegado("Área desconhecida.");
-  const onde = montarOnde(tabela, quem, busca.filtros, busca.texto);
+  const onde = montarOnde(tabela, quem, busca.filtros, busca.texto, busca.qualquerDe);
   const porPagina = Math.min(Math.max(1, busca.porPagina ?? POR_PAGINA_PADRAO), POR_PAGINA_MAXIMO);
   const pagina = Math.max(1, busca.pagina ?? 1);
   const pulo = (pagina - 1) * porPagina;

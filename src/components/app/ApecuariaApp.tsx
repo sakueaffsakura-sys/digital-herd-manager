@@ -110,7 +110,7 @@ export function ApecuariaApp() {
 
   const secaoPropriedade = ["perfil-propriedade", "configuracoes", "assinatura", "diagnostico"].includes(section) || !["perfil", "seguranca"].includes(section);
   let conteudo: ReactNode;
-  if (section === "perfil") conteudo = userQuery.data?.id ? <MyProfilePage userId={userQuery.data.id} email={userQuery.data.email} /> : <SectionLoading />;
+  if (section === "perfil") conteudo = userQuery.data?.id ? <MyProfilePage userId={userQuery.data.id} email={userQuery.data.email ?? undefined} /> : <SectionLoading />;
   else if (section === "seguranca") conteudo = userQuery.data ? <SegurancaPage email={userQuery.data.email ?? ""} /> : <SectionLoading />;
   else if (section === "aplicativo") conteudo = <Suspense fallback={<SectionLoading />}><Aplicativo /></Suspense>;
   else if (section === "ajuda") conteudo = <Suspense fallback={<SectionLoading />}><Ajuda propriedadeId={propertyId} /></Suspense>;
@@ -155,7 +155,7 @@ export function ApecuariaApp() {
           aoSair={() => void signOut()}
           aoSobre={() => setAboutOpen(true)}
           userId={userQuery.data?.id}
-          email={userQuery.data?.email}
+          email={userQuery.data?.email ?? undefined}
           ehAdmin={isAdminQuery.data === true}
         />
         <main id="conteudo" tabIndex={-1} data-tour="conteudo" className="mx-auto w-full max-w-[1400px] px-4 pb-28 pt-5 outline-none sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
@@ -480,7 +480,7 @@ function AnimalDetails({ open, animal, propertyId, refs, onClose }: { open: bool
         dados.from("inseminacoes").select("id,data_inseminacao,previsao_parto,situacao,reprodutor_semen").eq("animal_id", animalId).order("data_inseminacao", { ascending: false }),
         dados.from("producao_leite").select("id,data,litros,valor_total").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
         dados.from("anotacoes_producao").select("id,data,observacao,producao").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        dados.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).or(`mae_id.eq.${animalId},pai_id.eq.${animalId}`).order("data_nascimento", { ascending: false }),
+        dados.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).qualquerIgual([{ coluna: "mae_id", valor: animalId }, { coluna: "pai_id", valor: animalId }]).order("data_nascimento", { ascending: false }),
       ]);
       const error = [weights, vaccines, inseminations, milk, notes, children].find((r) => r.error)?.error;
       if (error) throw error;

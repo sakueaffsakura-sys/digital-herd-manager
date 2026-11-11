@@ -86,12 +86,29 @@ class Consulta<T> implements PromiseLike<Resposta<T[]>> {
   private porPagina: number | undefined;
   private pagina = 1;
   private texto: { termo: string; colunas: string[] } | undefined;
+  private qualquerDe: FiltroPedido[] = [];
+  private soContar = false;
 
   constructor(private readonly tabela: string) {}
 
-  select(colunas = "*"): this {
+  /**
+   * As colunas desejadas. Com `{ head: true }` traz só a contagem, sem as linhas — é o que
+   * a tela usa para o "3 pedidos abertos" do painel, onde ninguém vai ler os registros.
+   */
+  select(colunas = "*", opcoes?: { count?: "exact" | "planned" | "estimated"; head?: boolean }): this {
     const limpas = colunas.split(",").map((c) => c.trim()).filter((c) => c && c !== "*");
     this.colunas = limpas.length ? limpas : undefined;
+    if (opcoes?.head) this.soContar = true;
+    return this;
+  }
+
+  /**
+   * "Qualquer um destes": as crias de um animal são as que têm ele como mãe OU como pai.
+   * Recebe coluna e valor, nunca um texto de consulta — o que o navegador manda não vira
+   * pedaço de comando.
+   */
+  qualquerIgual(condicoes: readonly { coluna: string; valor: unknown }[]): this {
+    for (const c of condicoes) this.qualquerDe.push({ coluna: c.coluna, op: "=", valor: c.valor });
     return this;
   }
   eq(coluna: string, valor: unknown): this { return this.onde(coluna, "=", valor); }
@@ -139,8 +156,10 @@ class Consulta<T> implements PromiseLike<Resposta<T[]>> {
       filtros: this.filtros,
       ordem: this.ordem,
       pagina: this.pagina,
-      porPagina: this.porPagina,
+      // Contando, uma linha basta: a contagem vem junto da resposta de qualquer jeito.
+      porPagina: this.soContar ? 1 : this.porPagina,
       texto: this.texto,
+      qualquerDe: this.qualquerDe,
     };
   }
 
@@ -164,7 +183,11 @@ class Consulta<T> implements PromiseLike<Resposta<T[]>> {
     aoResolver?: ((v: Resposta<T[]>) => R1 | PromiseLike<R1>) | null,
     aoFalhar?: ((m: unknown) => R2 | PromiseLike<R2>) | null,
   ): PromiseLike<R1 | R2> {
-    return chamar<T[]>(this.pedido()).then(aoResolver, aoFalhar);
+    const pedido = chamar<T[]>(this.pedido()).then((r) =>
+      // Com `head`, quem pediu quer a contagem, não as linhas.
+      this.soContar && !r.error ? ({ data: null, error: null, count: r.count } as Resposta<T[]>) : r,
+    );
+    return pedido.then(aoResolver, aoFalhar);
   }
 }
 
