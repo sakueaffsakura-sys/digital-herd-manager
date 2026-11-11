@@ -32,6 +32,11 @@ jobs:
           --health-interval=5s --health-timeout=5s --health-retries=20
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
       - name: Esperar o banco
         run: |
           for i in $(seq 1 30); do
@@ -47,3 +52,15 @@ jobs:
           MYSQL_PASSWORD: senha
           MYSQL_DATABASE: pecuaria
         run: bash banco/mysql/conferir.sh
+      - name: Provar que uma fazenda não enxerga a outra
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: senha
+          MYSQL_DATABASE: pecuaria_separacao
+        run: |
+          mysql --protocol=TCP -h 127.0.0.1 -u root -psenha \
+            -e "drop database if exists pecuaria_separacao; create database pecuaria_separacao character set utf8mb4 collate utf8mb4_unicode_ci;"
+          mysql --protocol=TCP -h 127.0.0.1 -u root -psenha -D pecuaria_separacao < banco/mysql/esquema.sql
+          bun banco/mysql/conferir-separacao.ts

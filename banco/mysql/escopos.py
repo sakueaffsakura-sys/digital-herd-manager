@@ -95,6 +95,46 @@ linhas += [
     "}",
     "",
 ]
+# A lista de colunas de cada tabela vira uma peneira: nome de coluna que vem do navegador
+# só entra na consulta se estiver aqui. É o que impede comando colado pelo nome do campo.
+COLUNAS = SAIDA.parent / "colunas.ts"
+tipo_ts = {"uuid": "texto", "text": "texto", "date": "data", "boolean": "sim", "jsonb": "json",
+           "json": "json", "ARRAY": "json", "integer": "inteiro", "bigint": "inteiro",
+           "smallint": "inteiro"}
+def tipo_simples(t):
+    if t in tipo_ts: return tipo_ts[t]
+    if t.startswith("timestamp"): return "instante"
+    if t.startswith("numeric"): return "numero"
+    if t == "USER-DEFINED": return "texto"
+    raise SystemExit(f"tipo sem feitio: {t}")
+
+linhas_cols = [
+    "// Colunas de cada tabela e o feitio de cada uma.",
+    "//",
+    "// GERADO por banco/mysql/escopos.py. Não edite à mão.",
+    "//",
+    "// Serve de peneira: nome de coluna que chega do navegador só entra na consulta se",
+    "// estiver nesta lista. Assim nome de campo não vira comando colado no banco.",
+    "",
+    'export type Feitio = "texto" | "numero" | "inteiro" | "data" | "instante" | "sim" | "json";',
+    "",
+    "export const COLUNAS_DA_TABELA: Record<string, Record<string, Feitio>> = {",
+]
+for nome, colunas in sorted(tabelas.items()):
+    campos = ", ".join(f'{c[0]}: "{tipo_simples(c[1])}"' for c in colunas)
+    linhas_cols.append(f"  {nome}: {{ {campos} }},")
+linhas_cols += [
+    "};",
+    "",
+    "/** Coluna conhecida desta tabela, ou nada. Nunca devolve o que veio do navegador. */",
+    "export function colunaValida(tabela: string, coluna: string): Feitio | null {",
+    "  return COLUNAS_DA_TABELA[tabela]?.[coluna] ?? null;",
+    "}",
+    "",
+]
+COLUNAS.write_text("\n".join(linhas_cols), encoding="utf-8")
+print(f"colunas gravadas em {COLUNAS}")
+
 SAIDA.parent.mkdir(parents=True, exist_ok=True)
 SAIDA.write_text("\n".join(linhas), encoding="utf-8")
 print(f"{len(escopos)} tabelas classificadas")
