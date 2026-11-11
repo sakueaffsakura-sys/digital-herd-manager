@@ -29,6 +29,7 @@ import { Route as ApiAssinaturaCheckoutRouteImport } from './routes/api/assinatu
 import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
 import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
 import { Route as ApiArquivosRouteImport } from './routes/api/arquivos'
+import { Route as ApiContaEuRouteImport } from './routes/api/conta/eu'
 import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
 import { Route as ApiContaEntrarRouteImport } from './routes/api/conta/entrar'
 import { Route as ApiContaRecuperarRouteImport } from './routes/api/conta/recuperar'
@@ -149,6 +150,11 @@ const ApiArquivosRoute = ApiArquivosRouteImport.update({
   path: '/api/arquivos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiContaEuRoute = ApiContaEuRouteImport.update({
+  id: '/api/conta/eu',
+  path: '/api/conta/eu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
   id: '/api/conta/conferir-senha',
   path: '/api/conta/conferir-senha',
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/api/clima/agora': typeof ApiClimaAgoraRoute
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/arquivos': typeof ApiArquivosRoute
+  '/api/conta/eu': typeof ApiContaEuRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/entrar': typeof ApiContaEntrarRoute
   '/api/conta/recuperar': typeof ApiContaRecuperarRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/api/clima/agora': typeof ApiClimaAgoraRoute
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/arquivos': typeof ApiArquivosRoute
+  '/api/conta/eu': typeof ApiContaEuRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/entrar': typeof ApiContaEntrarRoute
   '/api/conta/recuperar': typeof ApiContaRecuperarRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/api/clima/agora': typeof ApiClimaAgoraRoute
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/arquivos': typeof ApiArquivosRoute
+  '/api/conta/eu': typeof ApiContaEuRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/entrar': typeof ApiContaEntrarRoute
   '/api/conta/recuperar': typeof ApiContaRecuperarRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/api/clima/agora'
     | '/api/clima/lugares'
     | '/api/arquivos'
+    | '/api/conta/eu'
     | '/api/conta/conferir-senha'
     | '/api/conta/entrar'
     | '/api/conta/recuperar'
@@ -428,6 +438,7 @@ export interface FileRouteTypes {
     | '/api/clima/agora'
     | '/api/clima/lugares'
     | '/api/arquivos'
+    | '/api/conta/eu'
     | '/api/conta/conferir-senha'
     | '/api/conta/entrar'
     | '/api/conta/recuperar'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/api/clima/agora'
     | '/api/clima/lugares'
     | '/api/arquivos'
+    | '/api/conta/eu'
     | '/api/conta/conferir-senha'
     | '/api/conta/entrar'
     | '/api/conta/recuperar'
@@ -508,6 +520,7 @@ export interface RootRouteChildren {
   ApiClimaAgoraRoute: typeof ApiClimaAgoraRoute
   ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
   ApiArquivosRoute: typeof ApiArquivosRoute
+  ApiContaEuRoute: typeof ApiContaEuRoute
   ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
   ApiContaEntrarRoute: typeof ApiContaEntrarRoute
   ApiContaRecuperarRoute: typeof ApiContaRecuperarRoute
@@ -668,6 +681,13 @@ declare module '@tanstack/react-router' {
       path: '/api/arquivos'
       fullPath: '/api/arquivos'
       preLoaderRoute: typeof ApiArquivosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/eu': {
+      id: '/api/conta/eu'
+      path: '/api/conta/eu'
+      fullPath: '/api/conta/eu'
+      preLoaderRoute: typeof ApiContaEuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/conta/conferir-senha': {
@@ -849,6 +869,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiClimaAgoraRoute: ApiClimaAgoraRoute,
   ApiClimaLugaresRoute: ApiClimaLugaresRoute,
   ApiArquivosRoute: ApiArquivosRoute,
+  ApiContaEuRoute: ApiContaEuRoute,
   ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
   ApiContaEntrarRoute: ApiContaEntrarRoute,
   ApiContaRecuperarRoute: ApiContaRecuperarRoute,
