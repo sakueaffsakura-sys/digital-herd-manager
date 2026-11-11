@@ -186,6 +186,44 @@ const depois = await rodarConsulta("central_avisos", dona, { propriedade_id: FAZ
 conferir("o aviso dispensado saiu", false, depois.some((a) => a.chave === avisos[0]!.chave));
 conferir("os outros continuam", true, depois.some((a) => a.chave.startsWith("tarefa_atrasada")));
 
+console.log("== Agenda ==");
+type AgendaLida = {
+  eventos: { data: string; tipo: string; registro_id: string; titulo: string; detalhe: string | null; brinco: string | null }[];
+  truncado: boolean;
+  atrasadas: { data: string; titulo: string }[];
+  sem_pesagem: unknown[];
+  hoje: string;
+};
+// Um parto previsto para depois de amanhã e uma vacina a vencer na semana.
+await executar(
+  `INSERT INTO inseminacoes (id, propriedade_id, animal_id, data_inseminacao, previsao_parto, situacao)
+   VALUES (UUID(), ?, ?, ?, ?, 'confirmada')`,
+  [FAZENDA_NAIR, animalDaNair, somarDias(hoje, -280), somarDias(hoje, 2)],
+);
+await executar(
+  `INSERT INTO vacinacoes (id, propriedade_id, animal_id, tipo_vacina_id, data_aplicacao, proxima_aplicacao)
+   VALUES (UUID(), ?, ?, ?, ?, ?)`,
+  [FAZENDA_NAIR, animalDaNair, VACINA_NAIR, somarDias(hoje, -20), somarDias(hoje, 3)],
+);
+const agenda = await rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: hoje, ate: somarDias(hoje, 7) }) as AgendaLida;
+conferir("o parto está na agenda", true, agenda.eventos.some((e) => e.tipo === "parto" && e.data === somarDias(hoje, 2)));
+conferir("a vacina a vencer está na agenda", true, agenda.eventos.some((e) => e.tipo === "vacina" && e.titulo === "Aftosa" && e.data === somarDias(hoje, 3)));
+conferir("o reforço mais novo é que conta, não o antigo", 1, agenda.eventos.filter((e) => e.tipo === "vacina").length);
+conferir("a agenda vem em ordem de dia", true, agenda.eventos.every((e, i) => i === 0 || agenda.eventos[i - 1]!.data <= e.data));
+conferir("a vacina já vencida vem na lista de atrasadas", 1, agenda.atrasadas.length);
+conferir("nada foi cortado", false, agenda.truncado);
+conferir("o hoje da agenda é o de Brasília", hoje, agenda.hoje);
+// A tarefa criada na conferência anterior era para cinco dias atrás: fica de fora da
+// semana que começa hoje, e aparece quando o período alcança a data dela.
+conferir("a tarefa de dias atrás não entra na semana que vem", false, agenda.eventos.some((e) => e.tipo === "tarefa"));
+const agendaLarga = await rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: somarDias(hoje, -10), ate: somarDias(hoje, 7) }) as AgendaLida;
+conferir("e aparece quando o período alcança o dia dela", true, agendaLarga.eventos.some((e) => e.tipo === "tarefa" && e.titulo === "Consertar a cerca"));
+conferir("o vizinho vê a agenda vazia da fazenda dele", 0, (await rodarConsulta("agenda_periodo", vizinho, { propriedade_id: FAZENDA_JOAO, de: hoje, ate: somarDias(hoje, 7) }) as AgendaLida).eventos.length);
+await recusa("pedir a agenda da fazenda do vizinho", () => rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_JOAO, de: hoje, ate: somarDias(hoje, 7) }));
+await recusa("pedir um período de trás para frente", () => rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: somarDias(hoje, 7), ate: hoje }));
+await recusa("pedir um período de dois anos", () => rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: hoje, ate: somarDias(hoje, 800) }));
+await recusa("pedir um período com data inventada", () => rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: "2026-02-31", ate: hoje }));
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 await executar("DELETE FROM propriedades WHERE id = ?", [FAZENDA_NAIR]);
 conferir("a Nair ficou sem animais", 0, (await listar(dona, { tabela: "animais" })).total);

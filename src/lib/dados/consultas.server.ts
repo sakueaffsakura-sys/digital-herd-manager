@@ -13,6 +13,7 @@ import { exigirAdmin, exigirPropriedade, AcessoNegado, type Quem } from "./acess
 import { resumoDoToken } from "@/lib/conta/sessao";
 import { dashboardResumo } from "./resumo.server";
 import { centralAvisos } from "./avisos.server";
+import { agendaPeriodo, semanaDeHoje } from "./agenda.server";
 
 export type Consulta = (quem: Quem, argumentos: Record<string, unknown>) => Promise<unknown>;
 
@@ -121,6 +122,15 @@ export const CONSULTAS: Record<string, Consulta> = {
   encerrar_sessao: encerrarSessao,
   dashboard_resumo: (quem, argumentos) => dashboardResumo(quem, propriedadeDe(quem, argumentos)),
   central_avisos: (quem, argumentos) => centralAvisos(quem, propriedadeDe(quem, argumentos)),
+  agenda_periodo: (quem, argumentos) => {
+    const [padraoDe, padraoAte] = semanaDeHoje();
+    return agendaPeriodo(
+      quem,
+      propriedadeDe(quem, argumentos),
+      String(argumentos["de"] ?? argumentos["_de"] ?? padraoDe),
+      String(argumentos["ate"] ?? argumentos["_ate"] ?? padraoAte),
+    );
+  },
   admin_suporte: (quem) => adminSuporte(quem),
   admin_2fa_resumo: (quem) => admin2faResumo(quem),
 };
