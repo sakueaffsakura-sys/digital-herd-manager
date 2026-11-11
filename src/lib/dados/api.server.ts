@@ -7,7 +7,7 @@
  * qualquer efeito — isso vem da sessão.
  */
 import { AcessoNegado, TabelaDesconhecida } from "./acesso";
-import { apagar, atualizar, criar, listar, type Busca, type Filtro } from "./repositorio.server";
+import { apagar, atualizar, criar, gravarOuAtualizar, listar, type Busca, type Filtro } from "./repositorio.server";
 import { rodarConsulta } from "./consultas.server";
 import { quemEsta } from "@/lib/conta/login.server";
 import { allowRequest, clientIp } from "@/lib/rate-limit";
@@ -89,6 +89,15 @@ export async function handleDados(request: Request): Promise<Response> {
           ids.push({ id: await criar(quem, tabela, linha as Record<string, unknown>) });
         }
         return resposta(200, { linhas: ids, total: ids.length });
+      }
+      case "gravarOuAtualizar": {
+        const linhas = Array.isArray(corpo["linhas"]) ? (corpo["linhas"] as Record<string, unknown>[]) : [];
+        if (linhas.length === 0) return resposta(400, { erro: "Nada para gravar." });
+        const conflito = Array.isArray(corpo["conflito"])
+          ? (corpo["conflito"] as unknown[]).map((c) => String(c))
+          : String(corpo["conflito"] ?? "").split(",").map((c) => c.trim()).filter(Boolean);
+        const { ids } = await gravarOuAtualizar(quem, tabela, linhas, conflito, corpo["soIgnorar"] === true);
+        return resposta(200, { linhas: ids.map((id) => ({ id })), total: ids.length });
       }
       case "atualizar": {
         const id = String(corpo["id"] ?? "");

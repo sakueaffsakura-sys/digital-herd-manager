@@ -124,6 +124,106 @@ export const SOMENTE_LEITURA: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * As chaves únicas de cada tabela, para o "gravar ou atualizar".
+ *
+ * No banco antigo o pedido dizia em qual chave o conflito deve bater. O MySQL não deixa
+ * escolher: dispara na primeira chave única que repetir. Então o servidor confere se as
+ * colunas que o pedido nomeou formam mesmo uma chave única — senão atualizaria a linha
+ * errada sem ninguém notar.
+ */
+export const CHAVES_UNICAS: Record<string, readonly string[][]> = {
+  alimentacao: [["id"]],
+  animais: [["id"], ["propriedade_id", "numero_brinco"]],
+  animal_extra: [["id"]],
+  anotacoes_producao: [["id"]],
+  assinaturas: [["id"]],
+  atividades_agro: [["id"]],
+  avaliacoes: [["id"]],
+  bezerros_info: [["id"]],
+  bloqueios_acesso: [["id"]],
+  campanhas: [["id"]],
+  chaves_sistema: [["nome"]],
+  cios: [["id"]],
+  clientes: [["id"]],
+  clima_obs: [["id"]],
+  compras: [["id"], ["movimentacao_id"]],
+  configuracoes: [["id"], ["propriedade_id", "chave"]],
+  configuracoes_sistema: [["chave"]],
+  contas: [["id"]],
+  cotacoes: [["id"]],
+  documentos: [["id"]],
+  ebook_acessos: [["id"]],
+  ebooks: [["id"]],
+  engorda: [["id"]],
+  estoque_itens: [["id"]],
+  estoque_mov: [["id"]],
+  eventos_seguranca: [["id"]],
+  fornecedores: [["id"]],
+  funcionarios: [["id"]],
+  gta: [["id"]],
+  horas_trabalho: [["id"]],
+  imagens_site: [["chave"]],
+  importacoes: [["id"], ["propriedade_id", "tabela", "arquivo"]],
+  incidentes_seguranca: [["id"]],
+  inseminacoes: [["id"]],
+  instalacoes: [["id"]],
+  investimentos: [["id"], ["movimentacao_id"]],
+  irrig_manut: [["id"]],
+  irrig_sistemas: [["id"]],
+  irrigacoes: [["id"]],
+  lancamentos: [["id"]],
+  lotes: [["id"], ["propriedade_id", "nome"]],
+  manutencao_config: [["id"]],
+  manutencao_historico: [["id"]],
+  manutencoes: [["id"]],
+  maquinas: [["id"]],
+  mov_animais: [["id"]],
+  movimentacoes_financeiras: [["id"]],
+  nascimentos: [["id"], ["bezerro_id"]],
+  notificacoes: [["id"], ["user_id", "chave"]],
+  ocorr_reprod: [["id"]],
+  ocorrencias: [["id"]],
+  pagamentos: [["id"], ["mp_payment_id"]],
+  pasto_mov: [["id"]],
+  pastos: [["id"]],
+  pedidos_compra: [["id"]],
+  pedidos_venda: [["id"]],
+  pesagens: [["id"], ["animal_id", "data"]],
+  plano_auditoria: [["id"]],
+  planos: [["id"]],
+  planos_alim: [["id"]],
+  plantios: [["id"]],
+  presenca_usuarios: [["user_id"]],
+  producao_leite: [["id"]],
+  profiles: [["id"]],
+  propriedade_membros: [["id"], ["propriedade_id", "user_id"]],
+  propriedade_perfil: [["id"], ["propriedade_id"]],
+  propriedades: [["id"]],
+  qualidade_leite: [["id"]],
+  rate_limits: [["chave", "janela"]],
+  registros_excluidos: [["id"]],
+  solicitacoes_exclusao: [["id"]],
+  suporte_contatos: [["id"]],
+  suporte_mensagens: [["id"], ["user_id", "mensagem_id"]],
+  talhoes: [["id"]],
+  tarefas: [["id"]],
+  tipos_vacinas: [["id"], ["propriedade_id", "nome"]],
+  tratamentos: [["id"]],
+  user_roles: [["id"], ["user_id", "role"]],
+  vacinacoes: [["id"]],
+  vendas: [["id"], ["movimentacao_id"]],
+  yui_uso: [["user_id", "dia"]],
+};
+
+/** As colunas nomeadas formam uma chave única desta tabela? A ordem não importa. */
+export function ehChaveUnica(tabela: string, colunas: readonly string[]): boolean {
+  const chaves = CHAVES_UNICAS[tabela];
+  if (!chaves) return false;
+  const pedida = [...colunas].sort().join(",");
+  return chaves.some((chave) => [...chave].sort().join(",") === pedida);
+}
+
+/**
  * A ordem de apagar o que é de uma fazenda: primeiro quem aponta, depois quem é apontado.
  *
  * No banco antigo bastava apagar a linha da fazenda. O MySQL confere as referências na

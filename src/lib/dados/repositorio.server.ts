@@ -11,7 +11,7 @@
  */
 import { conferirGravacao, filtroDeLeitura, type Condicao, type Quem, AcessoNegado } from "./acesso";
 import { colunaValida, COLUNAS_DA_TABELA, type Feitio } from "./colunas";
-import { ORDEM_DE_EXCLUSAO } from "./escopos";
+import { ORDEM_DE_EXCLUSAO, ehChaveUnica } from "./escopos";
 import { consultar, executar, executarEm, emTransacao, instanteUtc } from "./banco.server";
 
 export type Ordem = { coluna: string; crescente?: boolean };
@@ -32,6 +32,8 @@ export type Busca = {
 
 const POR_PAGINA_PADRAO = 25;
 const POR_PAGINA_MAXIMO = 200;
+/** Quantas linhas um "gravar ou atualizar" aceita de uma vez: o lote da importação. */
+const LOTE_MAXIMO = 500;
 
 function crase(nome: string): string {
   // O nome já foi conferido contra a lista; a crase é só para nome igual a palavra do SQL.
@@ -197,6 +199,61 @@ export async function atualizar(quem: Quem, tabela: string, id: string, mudancas
     [...todas.map((c) => limpa[c]), id],
   );
   return afetadas > 0;
+}
+
+/**
+ * Gravar ou atualizar, numa ida só. É o que a importação de planilha usa: reenviar um lote
+ * cuja resposta se perdeu não pode duplicar as linhas que já entraram.
+ *
+ * `conflito` diz quais colunas identificam "a mesma linha". O MySQL não deixa escolher a
+ * chave — o ON DUPLICATE KEY dispara na primeira chave única que repetir — então aqui as
+ * colunas nomeadas são conferidas contra as chaves únicas da tabela. Nomear colunas que
+ * não formam uma chave única é recusado: seria atualizar a linha errada sem ninguém notar.
+ *
+ * `soIgnorar` é o "não mexa no que já existe": serve para reenvio de lote, onde a linha
+ * que já entrou está certa e não deve ser sobrescrita.
+ */
+export async function gravarOuAtualizar(
+  quem: Quem,
+  tabela: string,
+  linhas: Record<string, unknown>[],
+  conflito: readonly string[],
+  soIgnorar = false,
+): Promise<{ ids: string[]; gravadas: number }> {
+  if (!COLUNAS_DA_TABELA[tabela]) throw new AcessoNegado("Área desconhecida.");
+  if (!linhas.length) return { ids: [], gravadas: 0 };
+  if (linhas.length > LOTE_MAXIMO) throw new AcessoNegado(`Grave no máximo ${LOTE_MAXIMO} registros de uma vez.`);
+  if (!conflito.length) throw new AcessoNegado("Diga quais colunas identificam a mesma linha.");
+  for (const c of conflito) exigirColuna(tabela, c);
+  if (!ehChaveUnica(tabela, conflito)) {
+    throw new AcessoNegado("Essas colunas não identificam um registro só nesta área.");
+  }
+
+  const limpas = linhas.map((linha) => {
+    const limpa = peneirar(tabela, linha);
+    conferirGravacao(tabela, quem, limpa);
+    if (colunaValida(tabela, "id") && !limpa["id"]) limpa["id"] = crypto.randomUUID();
+    return limpa;
+  });
+  // Todas as linhas gravam as mesmas colunas: uma linha com um campo a mais mudaria a
+  // ordem dos valores e gravaria dado de uma coluna em outra.
+  const colunas = [...new Set(limpas.flatMap((l) => Object.keys(l)))];
+  if (!colunas.length) throw new AcessoNegado("Não há nada para gravar.");
+
+  const umaLinha = `(${colunas.map(() => "?").join(",")})`;
+  const atualizar = soIgnorar
+    // Reatribuir a própria coluna é o jeito do MySQL de dizer "achei, não mexa".
+    ? `${crase(colunas[0]!)} = ${crase(tabela)}.${crase(colunas[0]!)}`
+    : colunas.filter((c) => c !== "id" && !conflito.includes(c))
+        .map((c) => `${crase(c)} = VALUES(${crase(c)})`).join(", ");
+
+  const { afetadas } = await executar(
+    `INSERT INTO ${crase(tabela)} (${colunas.map(crase).join(",")})
+     VALUES ${limpas.map(() => umaLinha).join(",")}
+     ON DUPLICATE KEY UPDATE ${atualizar || `${crase(colunas[0]!)} = VALUES(${crase(colunas[0]!)})`}`,
+    limpas.flatMap((l) => colunas.map((c) => l[c] ?? null)),
+  );
+  return { ids: limpas.map((l) => String(l["id"] ?? "")), gravadas: afetadas };
 }
 
 export async function apagar(quem: Quem, tabela: string, id: string): Promise<boolean> {

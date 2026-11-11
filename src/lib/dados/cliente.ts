@@ -3,17 +3,43 @@
  *
  * Tem de propósito a mesma forma de escrever do cliente antigo
  * (`dados.from("animais").select("*").eq("propriedade_id", x).order("data")`), para as
- * 80 telas do site mudarem só a linha do import, e não a lógica de cada consulta.
+ * telas do site mudarem só a linha do import, e não a lógica de cada consulta.
  *
  * A diferença está em quem decide: antes o navegador falava com o banco e as regras de
  * acesso ficavam no banco. Agora o navegador fala com o nosso servidor, e é lá que a
  * separação entre fazendas é aplicada. Nada aqui é confiável — tudo é conferido de novo
  * do outro lado.
+ *
+ * Os tipos de cada linha vêm de `integrations/supabase/types`, o mesmo arquivo que o
+ * cliente antigo usava. É o que mantém o TypeScript conferindo nome e feitio de coluna
+ * nas telas depois da troca: um `select("nome")` numa tabela sem `nome` continua sendo
+ * erro de compilação, e não um campo vazio em produção.
  */
+import type { Database } from "@/integrations/supabase/types";
+
 export type Resposta<T> = { data: T | null; error: { message: string } | null; count: number | null };
 
 type Operacao = "=" | "<>" | ">" | ">=" | "<" | "<=" | "contem" | "vazio" | "naoVazio" | "entre" | "em";
 type FiltroPedido = { coluna: string; op: Operacao; valor?: unknown; ate?: unknown };
+
+/** Tabelas e visões juntas: a tela lê das duas do mesmo jeito. */
+type Conjunto = Database["public"]["Tables"] & Database["public"]["Views"];
+type Conhecida = keyof Conjunto & string;
+
+/** A linha de uma tabela conhecida; para um nome montado em tempo de execução, livre. */
+type LinhaDe<N extends string> = N extends Conhecida
+  ? Conjunto[N] extends { Row: infer R } ? R : Record<string, unknown>
+  : Record<string, unknown>;
+/** O que se pode gravar. Visão não tem: gravar nela é recusado pelo servidor. */
+type EntradaDe<N extends string> = N extends Conhecida
+  ? Conjunto[N] extends { Insert: infer I } ? I : Record<string, unknown>
+  : Record<string, unknown>;
+
+/** O que cada consulta pronta devolve, pelos mesmos tipos gerados de antes. */
+type Funcoes = Database["public"]["Functions"];
+type RetornoDe<N extends string> = N extends keyof Funcoes
+  ? Funcoes[N] extends { Returns: infer R } ? R : unknown
+  : unknown;
 
 const CAMINHO = "/api/dados";
 
@@ -33,7 +59,7 @@ async function chamar<T>(corpo: unknown): Promise<Resposta<T>> {
   }
 }
 
-class Consulta<T = Record<string, unknown>> implements PromiseLike<Resposta<T[]>> {
+class Consulta<T> implements PromiseLike<Resposta<T[]>> {
   private filtros: FiltroPedido[] = [];
   private ordem: { coluna: string; crescente?: boolean }[] = [];
   private colunas: string[] | undefined;
@@ -122,16 +148,69 @@ class Consulta<T = Record<string, unknown>> implements PromiseLike<Resposta<T[]>
   }
 }
 
-class Tabela {
+/**
+ * Uma gravação. Dá para esperar direto, ou pedir `.select("id")` antes para receber de
+ * volta o que foi gravado — a mesma escrita do cliente antigo.
+ *
+ * O que volta é sempre o identificador: o servidor não devolve a linha inteira depois de
+ * gravar, porque nenhuma tela usa isso e seria uma leitura a mais em cada gravação.
+ */
+class Gravacao<T> implements PromiseLike<Resposta<T[]>> {
+  constructor(private readonly pedido: Record<string, unknown>) {}
+
+  select(_colunas = "id"): this { return this; }
+
+  async single(): Promise<Resposta<T>> {
+    const r = await chamar<T[]>(this.pedido);
+    if (r.error) return { data: null, error: r.error, count: null };
+    const linhas = r.data ?? [];
+    if (!linhas.length) return { data: null, error: { message: "Nada foi gravado." }, count: null };
+    return { data: linhas[0]!, error: null, count: 1 };
+  }
+  maybeSingle(): Promise<Resposta<T>> { return this.single(); }
+
+  then<R1 = Resposta<T[]>, R2 = never>(
+    aoResolver?: ((v: Resposta<T[]>) => R1 | PromiseLike<R1>) | null,
+    aoFalhar?: ((m: unknown) => R2 | PromiseLike<R2>) | null,
+  ): PromiseLike<R1 | R2> {
+    return chamar<T[]>(this.pedido).then(aoResolver, aoFalhar);
+  }
+}
+
+class Tabela<L, E> {
   constructor(private readonly nome: string) {}
-  select<T = Record<string, unknown>>(colunas = "*"): Consulta<T> {
-    return new Consulta<T>(this.nome).select(colunas);
+
+  select<T = L>(colunas = "*"): Consulta<T> {
+    return new Consulta<T>(this.nome).select(colunas) as unknown as Consulta<T>;
   }
-  insert(linhas: Record<string, unknown> | Record<string, unknown>[]) {
-    return chamar<{ id: string }[]>({ acao: "criar", tabela: this.nome, linhas: Array.isArray(linhas) ? linhas : [linhas] });
+
+  insert(linhas: E | E[]): Gravacao<{ id: string }> {
+    return new Gravacao({ acao: "criar", tabela: this.nome, linhas: Array.isArray(linhas) ? linhas : [linhas] });
   }
-  update(mudancas: Record<string, unknown>) {
-    return new Alteracao(this.nome, "atualizar", mudancas);
+
+  /**
+   * Gravar ou atualizar. `onConflict` diz quais colunas identificam a mesma linha, e
+   * `ignoreDuplicates` pede para não mexer no que já existe.
+   *
+   * O servidor confere que essas colunas formam mesmo uma chave única da tabela: o MySQL
+   * não deixa escolher em qual chave o conflito bate, então nomear colunas erradas
+   * atualizaria a linha errada sem ninguém notar.
+   */
+  upsert(
+    linhas: E | E[],
+    opcoes?: { onConflict?: string; ignoreDuplicates?: boolean },
+  ): Gravacao<{ id: string }> {
+    return new Gravacao({
+      acao: "gravarOuAtualizar",
+      tabela: this.nome,
+      linhas: Array.isArray(linhas) ? linhas : [linhas],
+      conflito: opcoes?.onConflict ?? "id",
+      soIgnorar: opcoes?.ignoreDuplicates === true,
+    });
+  }
+
+  update(mudancas: Partial<E> | Record<string, unknown>) {
+    return new Alteracao(this.nome, "atualizar", mudancas as Record<string, unknown>);
   }
   delete() {
     return new Alteracao(this.nome, "apagar", {});
@@ -150,6 +229,7 @@ class Alteracao implements PromiseLike<Resposta<null>> {
     if (coluna === "id") this.id = String(valor);
     return this;
   }
+  select(_colunas = "id"): this { return this; }
   then<R1 = Resposta<null>, R2 = never>(
     aoResolver?: ((v: Resposta<null>) => R1 | PromiseLike<R1>) | null,
     aoFalhar?: ((m: unknown) => R2 | PromiseLike<R2>) | null,
@@ -162,8 +242,12 @@ class Alteracao implements PromiseLike<Resposta<null>> {
 }
 
 export const dados = {
-  from: (tabela: string) => new Tabela(tabela),
-  /** As consultas prontas que antes eram funções dentro do banco. */
-  rpc: <T = unknown>(nome: string, argumentos: Record<string, unknown> = {}): Promise<Resposta<T>> =>
+  from: <N extends string>(tabela: N) => new Tabela<LinhaDe<N>, EntradaDe<N>>(tabela),
+  /**
+   * As consultas prontas que antes eram funções dentro do banco. O que cada uma devolve
+   * vem dos mesmos tipos gerados de antes, então a tela continua sabendo o feitio da
+   * resposta sem precisar de `as`.
+   */
+  rpc: <N extends string, T = RetornoDe<N>>(nome: N, argumentos: Record<string, unknown> = {}): Promise<Resposta<T>> =>
     chamar<T>({ acao: "consulta", nome, argumentos }),
 };

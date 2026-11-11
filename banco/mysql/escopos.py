@@ -121,6 +121,45 @@ linhas += [
     "]);",
     "",
 ]
+
+# As chaves únicas de cada tabela, para o "gravar ou atualizar" (upsert).
+#
+# No PostgreSQL o pedido dizia em qual chave o conflito deve bater. O MySQL não deixa
+# escolher: o ON DUPLICATE KEY dispara na primeira chave única que repetir, qualquer que
+# seja. Então o servidor confere se as colunas que o pedido nomeou formam mesmo uma chave
+# única; se não formarem, recusa, em vez de atualizar a linha errada sem ninguém notar.
+unicas = {}
+for linha in (BASE / "chaves.txt").read_text(encoding="utf-8").strip().split("\n"):
+    partes = linha.split()
+    if len(partes) == 3 and partes[1] in ("UQ", "PK"):
+        unicas.setdefault(partes[0], []).append(partes[2].split(","))
+
+linhas += [
+    "/**",
+    " * As chaves únicas de cada tabela, para o \"gravar ou atualizar\".",
+    " *",
+    " * No banco antigo o pedido dizia em qual chave o conflito deve bater. O MySQL não deixa",
+    " * escolher: dispara na primeira chave única que repetir. Então o servidor confere se as",
+    " * colunas que o pedido nomeou formam mesmo uma chave única — senão atualizaria a linha",
+    " * errada sem ninguém notar.",
+    " */",
+    "export const CHAVES_UNICAS: Record<string, readonly string[][]> = {",
+]
+for t in sorted(unicas):
+    conjuntos = ", ".join("[" + ", ".join(f'"{c}"' for c in chave) + "]" for chave in unicas[t])
+    linhas.append(f"  {t}: [{conjuntos}],")
+linhas += [
+    "};",
+    "",
+    "/** As colunas nomeadas formam uma chave única desta tabela? A ordem não importa. */",
+    "export function ehChaveUnica(tabela: string, colunas: readonly string[]): boolean {",
+    "  const chaves = CHAVES_UNICAS[tabela];",
+    "  if (!chaves) return false;",
+    "  const pedida = [...colunas].sort().join(\",\");",
+    "  return chaves.some((chave) => [...chave].sort().join(\",\") === pedida);",
+    "}",
+    "",
+]
 # A lista de colunas de cada tabela vira uma peneira: nome de coluna que vem do navegador
 # só entra na consulta se estiver aqui. É o que impede comando colado pelo nome do campo.
 COLUNAS = SAIDA.parent / "colunas.ts"
