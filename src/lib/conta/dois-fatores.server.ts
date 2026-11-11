@@ -129,25 +129,30 @@ async function conferir(userId: string, codigo: string, fatorId?: string): Promi
   return fator;
 }
 
-/** Confirma o cadastro: a partir daqui a conta pede o código para entrar. */
-export async function confirmarFator(quem: Quem, fatorId: string, codigo: string): Promise<void> {
-  const fator = await conferir(quem.userId, codigo, fatorId);
-  if (fator.confirmado_em) return;
-  await executar("UPDATE fatores_2fa SET confirmado_em = ? WHERE id = ?", [instanteUtc(new Date()), fator.id]);
-}
-
 /**
- * Usa o código: sobe esta sessão para "passou pela segunda etapa".
+ * Digita o código. Faz as duas coisas que o código serve para fazer, conforme o caso:
  *
- * É o que destrava as ações que exigem 2FA de verdade, como exigir 2FA de todos os
- * administradores.
+ *   fator ainda não confirmado  confirma o cadastro, e a conta passa a pedir o código
+ *   fator já confirmado         sobe esta sessão para "passou pela segunda etapa"
+ *
+ * É uma função só porque, para quem usa, é uma coisa só: digitar o número que o aplicativo
+ * mostra. A tela não deveria precisar saber em qual dos dois casos está.
  */
-export async function usarCodigo(quem: Quem, codigo: string): Promise<{ aal: "aal2" }> {
-  await conferir(quem.userId, codigo);
+export async function verificarCodigo(
+  quem: Quem,
+  codigo: string,
+  fatorId?: string,
+): Promise<{ confirmou: boolean; aal: "aal1" | "aal2" }> {
+  const fator = await conferir(quem.userId, codigo, fatorId);
+  const confirmou = !fator.confirmado_em;
+  if (confirmou) {
+    await executar("UPDATE fatores_2fa SET confirmado_em = ? WHERE id = ?", [instanteUtc(new Date()), fator.id]);
+  }
+  // Quem acabou de provar que tem o aplicativo passou pela segunda etapa, nos dois casos.
   if (quem.sessaoId) {
     await executar("UPDATE sessoes SET aal = 'aal2' WHERE id = ?", [quem.sessaoId]);
   }
-  return { aal: "aal2" };
+  return { confirmou, aal: "aal2" };
 }
 
 /**

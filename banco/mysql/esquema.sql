@@ -41,6 +41,9 @@ CREATE TABLE `sessoes` (
   `expira_em` DATETIME(3) NOT NULL,
   `navegador` VARCHAR(512) NULL,
   `ip` VARCHAR(64) NULL,
+  -- Quando a pessoa digitou a senha atual nesta sessão. Trocar a senha exige que isso
+  -- tenha sido há pouco: uma sessão roubada não troca a senha sem saber a antiga.
+  `senha_conferida_em` DATETIME(3) NULL,
   `aal` VARCHAR(10) NOT NULL DEFAULT 'aal1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `sessoes_token_uq` (`token_hash`),

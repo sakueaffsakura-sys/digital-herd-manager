@@ -30,6 +30,8 @@ import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
 import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
 import { Route as ApiArquivosRouteImport } from './routes/api/arquivos'
 import { Route as ApiContaEuRouteImport } from './routes/api/conta/eu'
+import { Route as ApiConta2faRouteImport } from './routes/api/conta/2fa'
+import { Route as ApiContaSenhaRouteImport } from './routes/api/conta/senha'
 import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
 import { Route as ApiContaEntrarRouteImport } from './routes/api/conta/entrar'
 import { Route as ApiContaRecuperarRouteImport } from './routes/api/conta/recuperar'
@@ -155,6 +157,16 @@ const ApiContaEuRoute = ApiContaEuRouteImport.update({
   path: '/api/conta/eu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConta2faRoute = ApiConta2faRouteImport.update({
+  id: '/api/conta/2fa',
+  path: '/api/conta/2fa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaSenhaRoute = ApiContaSenhaRouteImport.update({
+  id: '/api/conta/senha',
+  path: '/api/conta/senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
   id: '/api/conta/conferir-senha',
   path: '/api/conta/conferir-senha',
@@ -273,6 +285,8 @@ export interface FileRoutesByFullPath {
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/arquivos': typeof ApiArquivosRoute
   '/api/conta/eu': typeof ApiContaEuRoute
+  '/api/conta/2fa': typeof ApiConta2faRoute
+  '/api/conta/senha': typeof ApiContaSenhaRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/entrar': typeof ApiContaEntrarRoute
   '/api/conta/recuperar': typeof ApiContaRecuperarRoute
@@ -314,6 +328,8 @@ export interface FileRoutesByTo {
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/arquivos': typeof ApiArquivosRoute
   '/api/conta/eu': typeof ApiContaEuRoute
+  '/api/conta/2fa': typeof ApiConta2faRoute
+  '/api/conta/senha': typeof ApiContaSenhaRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/entrar': typeof ApiContaEntrarRoute
   '/api/conta/recuperar': typeof ApiContaRecuperarRoute
@@ -357,6 +373,8 @@ export interface FileRoutesById {
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/arquivos': typeof ApiArquivosRoute
   '/api/conta/eu': typeof ApiContaEuRoute
+  '/api/conta/2fa': typeof ApiConta2faRoute
+  '/api/conta/senha': typeof ApiContaSenhaRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
   '/api/conta/entrar': typeof ApiContaEntrarRoute
   '/api/conta/recuperar': typeof ApiContaRecuperarRoute
@@ -399,6 +417,8 @@ export interface FileRouteTypes {
     | '/api/clima/lugares'
     | '/api/arquivos'
     | '/api/conta/eu'
+    | '/api/conta/2fa'
+    | '/api/conta/senha'
     | '/api/conta/conferir-senha'
     | '/api/conta/entrar'
     | '/api/conta/recuperar'
@@ -439,6 +459,8 @@ export interface FileRouteTypes {
     | '/api/clima/lugares'
     | '/api/arquivos'
     | '/api/conta/eu'
+    | '/api/conta/2fa'
+    | '/api/conta/senha'
     | '/api/conta/conferir-senha'
     | '/api/conta/entrar'
     | '/api/conta/recuperar'
@@ -480,6 +502,8 @@ export interface FileRouteTypes {
     | '/api/clima/lugares'
     | '/api/arquivos'
     | '/api/conta/eu'
+    | '/api/conta/2fa'
+    | '/api/conta/senha'
     | '/api/conta/conferir-senha'
     | '/api/conta/entrar'
     | '/api/conta/recuperar'
@@ -521,6 +545,8 @@ export interface RootRouteChildren {
   ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
   ApiArquivosRoute: typeof ApiArquivosRoute
   ApiContaEuRoute: typeof ApiContaEuRoute
+  ApiConta2faRoute: typeof ApiConta2faRoute
+  ApiContaSenhaRoute: typeof ApiContaSenhaRoute
   ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
   ApiContaEntrarRoute: typeof ApiContaEntrarRoute
   ApiContaRecuperarRoute: typeof ApiContaRecuperarRoute
@@ -688,6 +714,20 @@ declare module '@tanstack/react-router' {
       path: '/api/conta/eu'
       fullPath: '/api/conta/eu'
       preLoaderRoute: typeof ApiContaEuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/2fa': {
+      id: '/api/conta/2fa'
+      path: '/api/conta/2fa'
+      fullPath: '/api/conta/2fa'
+      preLoaderRoute: typeof ApiConta2faRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/senha': {
+      id: '/api/conta/senha'
+      path: '/api/conta/senha'
+      fullPath: '/api/conta/senha'
+      preLoaderRoute: typeof ApiContaSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/conta/conferir-senha': {
@@ -870,6 +910,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiClimaLugaresRoute: ApiClimaLugaresRoute,
   ApiArquivosRoute: ApiArquivosRoute,
   ApiContaEuRoute: ApiContaEuRoute,
+  ApiConta2faRoute: ApiConta2faRoute,
+  ApiContaSenhaRoute: ApiContaSenhaRoute,
   ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
   ApiContaEntrarRoute: ApiContaEntrarRoute,
   ApiContaRecuperarRoute: ApiContaRecuperarRoute,
