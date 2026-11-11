@@ -95,6 +95,20 @@ export function inicioDoDiaNoFuso(iso: string, fuso: string = FUSO_PADRAO): Date
   return new Date(palpite - desloc * 60_000);
 }
 
+/**
+ * A mesma data, `meses` meses antes. Conta mês de calendário, como o banco: 12 meses
+ * antes de 11/11/2026 é 11/11/2025, e não 365 dias atrás. Quando o dia não existe no mês
+ * de destino (31 de março menos um mês), cai no último dia daquele mês.
+ */
+export function mesesAntes(iso: string, meses: number): string {
+  const [a, m, d] = iso.split("-").map(Number);
+  const total = a * 12 + (m - 1) - meses;
+  const ano = Math.floor(total / 12);
+  const mes = (total % 12 + 12) % 12 + 1;
+  const ultimoDia = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  return `${ano}-${pad2(mes)}-${pad2(Math.min(d, ultimoDia))}`;
+}
+
 /** Primeiro dia do mês de uma data AAAA-MM-DD. */
 export function primeiroDiaDe(iso: string): string {
   return `${iso.slice(0, 7)}-01`;

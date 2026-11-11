@@ -224,6 +224,78 @@ await recusa("pedir um período de trás para frente", () => rodarConsulta("agen
 await recusa("pedir um período de dois anos", () => rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: hoje, ate: somarDias(hoje, 800) }));
 await recusa("pedir um período com data inventada", () => rodarConsulta("agenda_periodo", dona, { propriedade_id: FAZENDA_NAIR, de: "2026-02-31", ate: hoje }));
 
+console.log("== Indicadores: número sem base é travessão, não zero ==");
+type Ind = { hoje: string; reproducao: Record<string, number | null>; peso: Record<string, number | null>;
+  leite: Record<string, number | null>; dinheiro: Record<string, number | null>; rebanho: Record<string, number | null> };
+// A fazenda do João tem um animal e mais nada: quase tudo não tem base para ser calculado.
+const vazio = await rodarConsulta("indicadores_propriedade", vizinho, { propriedade_id: FAZENDA_JOAO }) as Ind;
+conferir("sem pesagem, o ganho é nulo e não zero", null, vazio.peso["ganho_kg_dia"]);
+conferir("sem pesagem, o peso médio é nulo", null, vazio.peso["peso_medio_kg"]);
+conferir("sem inseminação, a taxa de prenhez é nula", null, vazio.reproducao["taxa_prenhez"]);
+conferir("sem parto, o intervalo entre partos é nulo", null, vazio.reproducao["intervalo_partos_dias"]);
+conferir("sem leite, os litros por dia são nulos", null, vazio.leite["litros_dia"]);
+conferir("mas o rebanho dele existe", 1, vazio.rebanho["ativos"]);
+conferir("e sem morte a mortalidade é zero de verdade", 0, vazio.rebanho["taxa_mortalidade"]);
+
+console.log("== Indicadores: as contas ==");
+const PESADO = await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "3000", nome: "Garoto", sexo: "M", situacao: "ativo", data_nascimento: somarDias(hoje, -300) });
+const CURTO = await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: "3001", nome: "Pressa", sexo: "M", situacao: "ativo", data_nascimento: somarDias(hoje, -200) });
+const pesar = (animal: string, quandoAtras: number, kg: number) =>
+  executar("INSERT INTO pesagens (id, propriedade_id, animal_id, data, peso_kg) VALUES (UUID(), ?, ?, ?, ?)", [FAZENDA_NAIR, animal, somarDias(hoje, -quandoAtras), kg]);
+await pesar(PESADO, 60, 100);
+await pesar(PESADO, 10, 130); // 30 kg em 50 dias = 0,6 kg/dia
+await pesar(CURTO, 15, 200);
+await pesar(CURTO, 5, 260);   // 10 dias de intervalo: curto demais para virar média
+const ind = await rodarConsulta("indicadores_propriedade", dona, { propriedade_id: FAZENDA_NAIR }) as Ind;
+conferir("o ganho por dia sai da primeira à última pesagem", 0.6, ind.peso["ganho_kg_dia"]);
+conferir("só o animal com 20 dias ou mais entre pesagens entra na média", 1, ind.peso["animais_pesados"]);
+conferir("o peso médio usa a pesagem mais recente de cada animal", 195, ind.peso["peso_medio_kg"]);
+
+await executar(
+  `INSERT INTO inseminacoes (id, propriedade_id, animal_id, data_inseminacao, reprodutor_semen, previsao_parto, situacao)
+   VALUES (UUID(), ?, ?, ?, 'Touro Jaguar', ?, 'falhou')`,
+  [FAZENDA_NAIR, animalDaNair, somarDias(hoje, -60), somarDias(hoje, 220)],
+);
+await executar(
+  `INSERT INTO inseminacoes (id, propriedade_id, animal_id, data_inseminacao, reprodutor_semen, previsao_parto, situacao)
+   VALUES (UUID(), ?, ?, ?, 'Touro Jaguar', ?, 'em_andamento')`,
+  [FAZENDA_NAIR, animalDaNair, somarDias(hoje, -10), somarDias(hoje, 270)],
+);
+const comIns = await rodarConsulta("indicadores_propriedade", dona, { propriedade_id: FAZENDA_NAIR }) as Ind;
+conferir("as três inseminações do ano foram contadas", 3, comIns.reproducao["inseminacoes_ano"]);
+// Uma pegou, uma falhou, uma está em andamento: a taxa é 1 de 2, não 1 de 3.
+conferir("a taxa de prenhez ignora o que ainda não teve desfecho", 50, comIns.reproducao["taxa_prenhez"]);
+
+console.log("== Indicadores: valor impossível é descartado, não corrigido ==");
+const VACA = animalDaNair;
+for (const [atras, brinco] of [[800, "4001"], [430, "4002"], [60, "4003"]] as [number, string][]) {
+  const bezerro = await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: brinco, sexo: "F", situacao: "ativo", data_nascimento: somarDias(hoje, -atras) });
+  await executar(
+    "INSERT INTO nascimentos (id, propriedade_id, vaca_id, bezerro_id, data_nascimento, sexo) VALUES (UUID(), ?, ?, ?, ?, 'F')",
+    [FAZENDA_NAIR, VACA, bezerro, somarDias(hoje, -atras)],
+  );
+}
+const comPartos = await rodarConsulta("indicadores_propriedade", dona, { propriedade_id: FAZENDA_NAIR }) as Ind;
+// A cria de 800 dias atrás está fora da janela de 24 meses, então sobra um intervalo só:
+// de 430 para 60 dias atrás, 370 dias.
+conferir("o intervalo entre partos olha dois anos e descarta o resto", 370, comPartos.reproducao["intervalo_partos_dias"]);
+// Só a cria de 60 dias atrás está dentro dos 12 meses.
+conferir("o parto do ano foi contado", 1, comPartos.reproducao["nascidos_ano"]);
+conferir("a vaca sem data de nascimento não entra na idade ao primeiro parto", null, comPartos.reproducao["idade_primeiro_parto_meses"]);
+// Duas crias da mesma vaca com 20 dias de diferença é erro de digitação: entrar na média
+// baixaria o intervalo de toda a fazenda. Fora da faixa de 250 a 900 dias, não conta.
+for (const [atras, brinco] of [[100, "4101"], [80, "4102"]] as [number, string][]) {
+  const bezerro = await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: brinco, sexo: "F", situacao: "ativo", data_nascimento: somarDias(hoje, -atras) });
+  await executar(
+    "INSERT INTO nascimentos (id, propriedade_id, vaca_id, bezerro_id, data_nascimento, sexo) VALUES (UUID(), ?, ?, ?, ?, 'F')",
+    [FAZENDA_NAIR, comLixo, bezerro, somarDias(hoje, -atras)],
+  );
+}
+const comErro = await rodarConsulta("indicadores_propriedade", dona, { propriedade_id: FAZENDA_NAIR }) as Ind;
+conferir("intervalo de 20 dias entre partos não estraga a média", 370, comErro.reproducao["intervalo_partos_dias"]);
+conferir("mas as crias continuam contadas como nascimentos", 3, comErro.reproducao["nascidos_ano"]);
+await recusa("pedir os indicadores da fazenda do vizinho", () => rodarConsulta("indicadores_propriedade", dona, { propriedade_id: FAZENDA_JOAO }));
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 await executar("DELETE FROM propriedades WHERE id = ?", [FAZENDA_NAIR]);
 conferir("a Nair ficou sem animais", 0, (await listar(dona, { tabela: "animais" })).total);

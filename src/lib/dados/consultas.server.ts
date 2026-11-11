@@ -14,6 +14,7 @@ import { resumoDoToken } from "@/lib/conta/sessao";
 import { dashboardResumo } from "./resumo.server";
 import { centralAvisos } from "./avisos.server";
 import { agendaPeriodo, semanaDeHoje } from "./agenda.server";
+import { indicadoresPropriedade } from "./indicadores.server";
 
 export type Consulta = (quem: Quem, argumentos: Record<string, unknown>) => Promise<unknown>;
 
@@ -122,6 +123,7 @@ export const CONSULTAS: Record<string, Consulta> = {
   encerrar_sessao: encerrarSessao,
   dashboard_resumo: (quem, argumentos) => dashboardResumo(quem, propriedadeDe(quem, argumentos)),
   central_avisos: (quem, argumentos) => centralAvisos(quem, propriedadeDe(quem, argumentos)),
+  indicadores_propriedade: (quem, argumentos) => indicadoresPropriedade(quem, propriedadeDe(quem, argumentos)),
   agenda_periodo: (quem, argumentos) => {
     const [padraoDe, padraoAte] = semanaDeHoje();
     return agendaPeriodo(
