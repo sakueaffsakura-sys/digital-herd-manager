@@ -1,0 +1,8 @@
+app_role=proprietario,administrador,colaborador,visualizador
+sexo_animal=M,F
+situacao_animal=ativo,vendido,perdido,falecido,transferido
+status_assinatura=ativo,trial,cancelado,expirado,pendente
+status_inseminacao=em_andamento,confirmada,falhou,parto_realizado,cancelada
+tipo_movimento=receita,despesa,investimento
+tipo_operacao=compra,venda
+tipo_plano=gratuito,premium

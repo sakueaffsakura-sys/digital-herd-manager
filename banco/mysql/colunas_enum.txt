@@ -1,0 +1,14 @@
+animais.sexo=sexo_animal
+animais.situacao=situacao_animal
+assinaturas.plano=tipo_plano
+assinaturas.status=status_assinatura
+inseminacoes.situacao=status_inseminacao
+movimentacoes_financeiras.tipo=tipo_movimento
+movimentacoes_financeiras.origem_tipo=tipo_operacao
+nascimentos.sexo=sexo_animal
+plano_auditoria.plano_anterior=tipo_plano
+plano_auditoria.plano_novo=tipo_plano
+plano_auditoria.status_anterior=status_assinatura
+plano_auditoria.status_novo=status_assinatura
+propriedade_membros.role=app_role
+user_roles.role=app_role

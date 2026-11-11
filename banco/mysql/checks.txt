@@ -1,0 +1,107 @@
+alimentacao qtd_valido qtd IS NULL OR qtd >= 0
+animais animais_mae_dif mae_id IS NULL OR mae_id <> id
+animais animais_pai_dif pai_id IS NULL OR pai_id <> id
+anotacoes_producao anotacoes_producao_producao_check producao IS NULL OR producao >= 0
+atividades_agro colhido_kg_valido colhido_kg IS NULL OR colhido_kg >= 0
+atividades_agro custo_valido custo IS NULL OR custo >= 0
+atividades_agro perda_kg_valido perda_kg IS NULL OR perda_kg >= 0
+atividades_agro qtd_valido qtd IS NULL OR qtd >= 0
+avaliacoes valor_valido valor IS NULL OR valor >= 0
+bezerros_info peso_nascer_valido peso_nascer IS NULL OR peso_nascer >= 0
+bloqueios_acesso bloqueios_acesso_tipo_check tipo IN ('ip','dispositivo','usuario')
+chaves_sistema chaves_sistema_nome_check nome IN ('MERCADOPAGO_ACCESS_TOKEN','MERCADOPAGO_WEBHOOK_SECRET','CHAVE_RESGATE')
+clima_obs chuva_mm_valido chuva_mm IS NULL OR chuva_mm >= 0
+clima_obs temp_max_valido temp_max IS NULL OR (temp_max >= -20 AND temp_max <= 60)
+clima_obs temp_min_valido temp_min IS NULL OR (temp_min >= -20 AND temp_min <= 60)
+compras compras_quantidade_check quantidade > 0
+compras compras_valor_check valor >= 0
+configuracoes_sistema valor_tamanho valor IS NULL OR CHAR_LENGTH(valor) <= 800000
+contas valor_valido valor IS NULL OR valor >= 0
+cotacoes preco_valido preco IS NULL OR preco >= 0
+ebooks ebooks_autor_check autor IS NULL OR CHAR_LENGTH(autor) <= 120
+ebooks ebooks_categoria_check categoria IS NULL OR CHAR_LENGTH(categoria) <= 60
+ebooks ebooks_descricao_check descricao IS NULL OR CHAR_LENGTH(descricao) <= 2000
+ebooks ebooks_paginas_check paginas IS NULL OR (paginas >= 1 AND paginas <= 5000)
+ebooks ebooks_sha256_check sha256 IS NULL OR sha256 REGEXP '^[0-9a-f]{64}$'
+ebooks ebooks_titulo_check CHAR_LENGTH(titulo) >= 2 AND CHAR_LENGTH(titulo) <= 160
+engorda custo_aquisicao_valido custo_aquisicao IS NULL OR custo_aquisicao >= 0
+engorda peso_alvo_valido peso_alvo IS NULL OR peso_alvo >= 0
+engorda preco_arroba_valido preco_arroba IS NULL OR preco_arroba >= 0
+engorda rendimento_valido rendimento IS NULL OR (rendimento >= 0 AND rendimento <= 100)
+estoque_itens minimo_valido minimo IS NULL OR minimo >= 0
+estoque_itens preco_ref_valido preco_ref IS NULL OR preco_ref >= 0
+estoque_mov valor_total_valido valor_total IS NULL OR valor_total >= 0
+eventos_seguranca eventos_seguranca_severidade_check severidade IN ('info','aviso','critico')
+funcionarios salario_valido salario IS NULL OR salario >= 0
+gta qtd_valido qtd IS NULL OR qtd >= 0
+horas_trabalho horas_valido horas IS NULL OR (horas >= 0 AND horas <= 24)
+horas_trabalho valor_valido valor IS NULL OR valor >= 0
+imagens_site imagens_site_chave_check chave IN ('fundo_login','banner_inicio','fundo_menu')
+imagens_site imagens_site_valor_check CHAR_LENGTH(valor) <= 1500000
+importacoes importacoes_status_check status IN ('em_andamento','concluida','erro','cancelada')
+inseminacoes inseminacoes_parto_depois previsao_parto > data_inseminacao
+investimentos investimentos_valor_check valor >= 0
+irrig_manut valor_valido valor IS NULL OR valor >= 0
+irrig_sistemas area_ha_valido area_ha IS NULL OR area_ha >= 0
+irrig_sistemas capacidade_valido capacidade IS NULL OR capacidade >= 0
+irrigacoes horas_valido horas IS NULL OR horas >= 0
+irrigacoes volume_valido volume IS NULL OR volume >= 0
+lancamentos valor_valido valor IS NULL OR valor >= 0
+manutencao_config manutencao_config_duracao_check duracao_bloqueio_min >= 0 AND duracao_bloqueio_min <= 525600
+manutencao_config manutencao_config_id_check id = 1
+manutencao_config manutencao_config_status_check status IN ('ativo','manutencao','bloqueado')
+manutencoes horimetro_valido horimetro IS NULL OR horimetro >= 0
+manutencoes km_valido km IS NULL OR km >= 0
+manutencoes litros_valido litros IS NULL OR litros >= 0
+manutencoes proxima_horas_valido proxima_horas IS NULL OR proxima_horas >= 0
+manutencoes valor_valido valor IS NULL OR valor >= 0
+maquinas ano_valido ano IS NULL OR (ano >= 1900 AND ano <= 2100)
+maquinas aquisicao_valor_valido aquisicao_valor IS NULL OR aquisicao_valor >= 0
+maquinas horimetro_valido horimetro IS NULL OR horimetro >= 0
+maquinas intervalo_revisao_valido intervalo_revisao IS NULL OR intervalo_revisao >= 0
+maquinas km_valido km IS NULL OR km >= 0
+movimentacoes_financeiras movimentacoes_financeiras_valor_check valor >= 0
+nascimentos nascimentos_vaca_dif_bezerro vaca_id <> bezerro_id
+pagamentos pagamentos_meses_check meses >= 1 AND meses <= 36
+pagamentos pagamentos_status_check status IN ('pendente','em_analise','aprovado','recusado','cancelado','estornado')
+pagamentos pagamentos_valor_centavos_check valor_centavos > 0
+pasto_mov qtd_animais_valido qtd_animais IS NULL OR qtd_animais >= 0
+pastos area_ha_valido area_ha IS NULL OR area_ha >= 0
+pastos capacidade_valido capacidade IS NULL OR capacidade >= 0
+pedidos_compra qtd_valido qtd IS NULL OR qtd >= 0
+pedidos_compra valor_valido valor IS NULL OR valor >= 0
+pedidos_venda preco_unit_valido preco_unit IS NULL OR preco_unit >= 0
+pedidos_venda qtd_valido qtd IS NULL OR qtd >= 0
+pesagens pesagens_peso_kg_check peso_kg > 0
+planos planos_descricao_check descricao IS NULL OR CHAR_LENGTH(descricao) <= 500
+planos planos_meses_check meses >= 1 AND meses <= 36
+planos planos_nome_check CHAR_LENGTH(nome) >= 2 AND CHAR_LENGTH(nome) <= 60
+planos planos_preco_centavos_check preco_centavos >= 0 AND preco_centavos <= 10000000
+planos_alim qtd_animal_dia_valido qtd_animal_dia IS NULL OR qtd_animal_dia >= 0
+plantios area_ha_valido area_ha IS NULL OR area_ha >= 0
+plantios producao_esperada_valido producao_esperada IS NULL OR producao_esperada >= 0
+producao_leite producao_leite_litros_check litros >= 0
+producao_leite producao_leite_valor_litro_check valor_litro >= 0
+propriedades propriedades_nome_check CHAR_LENGTH(nome) >= 2 AND CHAR_LENGTH(nome) <= 120
+propriedades propriedades_gestacao_check periodo_gestacao_dias >= 260 AND periodo_gestacao_dias <= 300
+qualidade_leite ccs_valido ccs IS NULL OR ccs >= 0
+qualidade_leite cpp_valido cpp IS NULL OR cpp >= 0
+qualidade_leite gordura_valido gordura IS NULL OR (gordura >= 0 AND gordura <= 100)
+qualidade_leite proteina_valido proteina IS NULL OR (proteina >= 0 AND proteina <= 100)
+qualidade_leite temperatura_valido temperatura IS NULL OR (temperatura >= -10 AND temperatura <= 60)
+solicitacoes_exclusao solicitacoes_exclusao_motivo_check motivo IS NULL OR CHAR_LENGTH(motivo) <= 1000
+solicitacoes_exclusao solicitacoes_exclusao_status_check status IN ('pendente','concluida','cancelada')
+suporte_contatos suporte_contatos_assunto_check CHAR_LENGTH(assunto) >= 2 AND CHAR_LENGTH(assunto) <= 120
+suporte_contatos suporte_contatos_mensagem_check CHAR_LENGTH(mensagem) >= 10 AND CHAR_LENGTH(mensagem) <= 4000
+suporte_contatos suporte_contatos_status_check status IN ('aberto','respondido','fechado')
+suporte_mensagens suporte_mensagens_papel_check papel IN ('user','assistant')
+talhoes area_ha_valido area_ha IS NULL OR area_ha >= 0
+tipos_vacinas tipos_vacinas_intervalo_dias_check intervalo_dias IS NULL OR intervalo_dias > 0
+tratamentos carencia_carne_valido carencia_carne IS NULL OR carencia_carne >= 0
+tratamentos carencia_leite_valido carencia_leite IS NULL OR carencia_leite >= 0
+tratamentos custo_valido custo IS NULL OR custo >= 0
+tratamentos qtd_usada_valido qtd_usada IS NULL OR qtd_usada >= 0
+vacinacoes vacinacoes_um_alvo (animal_id IS NOT NULL) + (lote_id IS NOT NULL) = 1
+vacinacoes vacinacoes_proxima_depois proxima_aplicacao IS NULL OR proxima_aplicacao >= data_aplicacao
+vendas vendas_quantidade_check quantidade > 0
+vendas vendas_valor_check valor >= 0

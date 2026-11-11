@@ -1,0 +1,49 @@
+name: Banco MySQL
+# Aplica o esquema MySQL num MariaDB de verdade e confere que ele guarda, calcula e
+# recusa o que tem de recusar. É a prova de que a migração do banco está de pé.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ["banco/**", ".github/workflows/banco-mysql.yml"]
+  push:
+    branches: ["main", "claude/**"]
+    paths: ["banco/**", ".github/workflows/banco-mysql.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: banco-mysql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: senha
+          MARIADB_DATABASE: pecuaria
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Esperar o banco
+        run: |
+          for i in $(seq 1 30); do
+            mysqladmin --protocol=TCP -h 127.0.0.1 -u root -psenha ping && break
+            sleep 2
+          done
+          mysql --protocol=TCP -h 127.0.0.1 -u root -psenha -e "select version()"
+      - name: Conferir o esquema
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: "3306"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: senha
+          MYSQL_DATABASE: pecuaria
+        run: bash banco/mysql/conferir.sh
