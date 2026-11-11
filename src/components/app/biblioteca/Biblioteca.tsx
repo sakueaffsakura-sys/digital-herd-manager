@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BookOpenText, Lock, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { armazem } from "@/lib/arquivos";
 import { Empty, PageTitle } from "../shared";
 import { Leitor } from "./Leitor";
@@ -35,11 +35,11 @@ export function Capa({ caminho, titulo, className, pequena, reservarRodape }: { 
 export default function Biblioteca({ ebookAberto, aoAbrir, aoFechar, aoIr }: { ebookAberto?: string; aoAbrir: (id: string) => void; aoFechar: () => void; aoIr: (s: string) => void }) {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<string | null>(null);
-  const assinante = useQuery({ queryKey: ["sou-assinante"], queryFn: async () => (await supabase.rpc("sou_assinante")).data === true });
+  const assinante = useQuery({ queryKey: ["sou-assinante"], queryFn: async () => (await dados.rpc("sou_assinante")).data === true });
   const livros = useQuery({
     queryKey: ["ebooks-publicados"],
     queryFn: async (): Promise<Ebook[]> => {
-      const { data, error } = await supabase.from("ebooks").select("id,titulo,autor,descricao,categoria,paginas,capa_path,publicado_em").eq("publicado", true).order("publicado_em", { ascending: false }).limit(500);
+      const { data, error } = await dados.from("ebooks").select("id,titulo,autor,descricao,categoria,paginas,capa_path,publicado_em").eq("publicado", true).order("publicado_em", { ascending: false }).limit(500);
       if (error) throw error;
       return data ?? [];
     },

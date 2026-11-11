@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { armazem } from "@/lib/arquivos";
 import { diaBR } from "@/lib/datas";
 import { plural } from "@/lib/texto";
@@ -92,7 +92,7 @@ function NovoEbook() {
         else enviados.push({ balde: "ebook-capas", caminho: capa_path });
       }
       setEtapa("Salvando…");
-      const { error } = await supabase.from("ebooks").insert({
+      const { error } = await dados.from("ebooks").insert({
         id, titulo: titulo.trim(), autor: autor.trim() || null, categoria: categoria.trim() || null, descricao: descricao.trim() || null,
         paginas: info.paginas, capa_path, arquivo_path, tamanho_bytes: pdf.size, sha256: info.sha256, publicado: false,
       });
@@ -132,7 +132,7 @@ function Lista() {
   const livros = useQuery({
     queryKey: ["admin-ebooks"],
     queryFn: async (): Promise<Linha[]> => {
-      const { data, error } = await supabase.from("ebooks").select("id,titulo,autor,categoria,descricao,paginas,capa_path,arquivo_path,tamanho_bytes,publicado,publicado_em,created_at").order("created_at", { ascending: false });
+      const { data, error } = await dados.from("ebooks").select("id,titulo,autor,categoria,descricao,paginas,capa_path,arquivo_path,tamanho_bytes,publicado,publicado_em,created_at").order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -140,20 +140,20 @@ function Lista() {
   const resumo = useQuery({
     queryKey: ["admin-ebooks-resumo"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_ebooks_resumo");
+      const { data, error } = await dados.rpc("admin_ebooks_resumo");
       if (error) throw error;
       return new Map((data ?? []).map((r) => [r.ebook_id, r]));
     },
   });
   const publicar = async (l: Linha, sim: boolean) => {
-    const { error } = await supabase.from("ebooks").update({ publicado: sim, publicado_em: sim ? new Date().toISOString() : l.publicado_em, updated_at: new Date().toISOString() }).eq("id", l.id);
+    const { error } = await dados.from("ebooks").update({ publicado: sim, publicado_em: sim ? new Date().toISOString() : l.publicado_em, updated_at: new Date().toISOString() }).eq("id", l.id);
     if (error) toast.error("Não foi possível mudar a publicação.");
     else { toast.success(sim ? "Publicado: os assinantes já veem." : "Despublicado: saiu da biblioteca."); void qc.invalidateQueries({ queryKey: ["admin-ebooks"] }); }
   };
   const excluir = async (l: Linha) => {
     if (l.arquivo_path) await armazem.from("ebooks").remove([l.arquivo_path]);
     if (l.capa_path) await armazem.from("ebook-capas").remove([l.capa_path]);
-    const { error } = await supabase.from("ebooks").delete().eq("id", l.id);
+    const { error } = await dados.from("ebooks").delete().eq("id", l.id);
     if (error) toast.error("Não foi possível excluir.");
     else { toast.success("eBook excluído."); void qc.invalidateQueries({ queryKey: ["admin-ebooks"] }); }
   };
