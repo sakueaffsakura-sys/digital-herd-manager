@@ -70,6 +70,34 @@ sql "insert into profiles (id,nome_completo) values ('11111111-1111-4111-8111-11
      delete from usuarios where id='11111111-1111-4111-8111-111111111111';"
 conferir "perfil do usuário apagado" "0" "$(sql "select count(*) from profiles")"
 
+echo "== Migração dos dados: do banco antigo para o novo =="
+sql "drop database if exists ${BANCO}_migrado; create database ${BANCO}_migrado character set utf8mb4 collate utf8mb4_unicode_ci;"
+mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" < "$AQUI/esquema.sql"
+node "$AQUI/supabase-de-mentira.mjs" 54330 >/dev/null 2>&1 &
+mentira=$!
+sleep 2
+rm -rf "$AQUI/dados-teste"
+SUPABASE_URL=http://127.0.0.1:54330 SUPABASE_SERVICE_ROLE_KEY=teste   node "$AQUI/migrar.mjs" --saida="$AQUI/dados-teste" >/dev/null
+kill $mentira 2>/dev/null || true
+# O usuário vem do outro arquivo (as contas saem do login antigo), então entra antes.
+mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado"   -e "insert into usuarios (id,email,email_confirmado_em) values ('11111111-1111-4111-8111-111111111111','dona.nair@exemplo.com',now(3));"
+for f in "$AQUI"/dados-teste/dados-*.sql; do
+  mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" < "$f"
+done
+sqlm() { mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" -N -B -e "$1"; }
+conferir "animal migrado" "1" "$(sqlm "select count(*) from animais")"
+conferir "acento e travessão" "Jóia da Ribeira — ação" "$(sqlm "select nome from animais")"
+conferir "aspas e barra no texto" "Aspas 'simples', barra \\ e quebra" "$(sqlm "select substring_index(observacoes, char(10), 1) from animais")"
+# 10/11 às 21h30 em Brasília é 11/11 às 00h30 em UTC: é onde a migração costuma errar o dia.
+conferir "hora convertida para UTC" "2026-11-11 00:30:00.000" "$(sqlm "select created_at from animais")"
+conferir "data continua a mesma" "2026-11-10" "$(sqlm "select data from producao_leite")"
+conferir "sim/não virou 1" "1" "$(sqlm "select ativo from lotes")"
+conferir "valor do leite recalculado pelo banco" "44.40" "$(sqlm "select valor_total from producao_leite")"
+conferir "preferências em JSON" "escuro" "$(sqlm "select json_unquote(json_extract(preferencias,'\$.tema')) from profiles")"
+conferir "marcas de exclusão: só as recentes" "2" "$(sqlm "select count(*) from registros_excluidos")"
+conferir "campo vazio continua vazio" "NULL" "$(sqlm "select ifnull(descricao,'NULL') from lotes")"
+rm -rf "$AQUI/dados-teste"
+
 echo
 if [ "$falhas" -gt 0 ]; then echo "$falhas conferência(s) falharam."; exit 1; fi
 echo "Todas as conferências passaram."
