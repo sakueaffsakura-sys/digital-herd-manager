@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Hammer, LogOut, RefreshCw, ShieldCheck, ShieldX } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 
 export type EstadoManutencao = {
@@ -22,7 +23,7 @@ export const MODULOS_MANUTENCAO: { k: string; label: string }[] = [
 ];
 
 export async function lerEstadoManutencao(): Promise<EstadoManutencao | null> {
-  const r = await supabase.rpc("estado_manutencao");
+  const r = await dados.rpc("estado_manutencao");
   if (r.error || !r.data) throw new Error("Não foi possível verificar a disponibilidade do sistema. Tente novamente.");
   return r.data as EstadoManutencao;
 }
@@ -53,7 +54,7 @@ export function TelaManutencao({ estado, onTentar }: { estado: EstadoManutencao;
   const titulo = estado.conta_bloqueada ? "Acesso bloqueado" : estado.titulo;
   const mensagem = estado.conta_bloqueada ? "O acesso desta conta foi bloqueado por segurança. Se acredita que é um engano, fale com o administrador." : estado.mensagem;
   const Icon = bloqueio ? ShieldX : Hammer;
-  const sair = async () => { await supabase.auth.signOut(); window.location.href = "/"; };
+  const sair = async () => { await sessao.signOut(); window.location.href = "/"; };
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-background px-4 py-10 text-foreground">
       <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 size-[640px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />

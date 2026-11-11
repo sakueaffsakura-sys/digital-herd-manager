@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ const INFO: Record<string, { titulo: string; ajuda: string }> = {
 };
 
 async function chamar(url: string, init?: RequestInit) {
-  const t = (await supabase.auth.getSession()).data.session?.access_token ?? "";
+  const t = (await sessao.getSession()).data.session?.access_token ?? "";
   const r = await fetch(url, { ...init, headers: { "content-type": "application/json", authorization: `Bearer ${t}` } });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((j as { erro?: string }).erro ?? "Não foi possível concluir.");

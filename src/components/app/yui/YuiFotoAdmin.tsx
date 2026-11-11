@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUp, Link2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,12 +33,12 @@ export function YuiFotoAdmin() {
   const salvar = useMutation({
     mutationFn: async (valor: string | null) => {
       if (valor === null) {
-        const { error } = await supabase.from("configuracoes_sistema").delete().eq("chave", YUI_FOTO_CHAVE);
+        const { error } = await dados.from("configuracoes_sistema").delete().eq("chave", YUI_FOTO_CHAVE);
         if (error) throw error;
         return;
       }
-      const { data: u } = await supabase.auth.getUser();
-      const { error } = await supabase.from("configuracoes_sistema").upsert({ chave: YUI_FOTO_CHAVE, valor, atualizado_em: new Date().toISOString(), atualizado_por: u.user?.id ?? null });
+      const { data: u } = await sessao.getUser();
+      const { error } = await dados.from("configuracoes_sistema").upsert({ chave: YUI_FOTO_CHAVE, valor, atualizado_em: new Date().toISOString(), atualizado_por: u.user?.id ?? null });
       if (error) throw error;
     },
      onSuccess: (_d, valor) => { qc.invalidateQueries({ queryKey: YUI_FOTO_QUERY }); setPrevia(null); setLink(""); toast.success(valor === null ? "Foto padrão da Yui restaurada." : "Foto da Yui atualizada para administradores."); },

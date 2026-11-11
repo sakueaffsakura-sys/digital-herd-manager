@@ -4,7 +4,7 @@ import { CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudSun, LoaderCirc
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
 
 type Lugar = { nome: string; estado: string | null; lat: number; lon: number };
 type Dia = { dia: string; codigo: number | null; max: number | null; min: number | null; chuva_mm: number | null; chance_chuva: number | null };
@@ -37,7 +37,7 @@ const diaDaSemana = (iso: string) => {
 };
 
 async function pedir<T>(caminho: string): Promise<T> {
-  const token = (await supabase.auth.getSession()).data.session?.access_token;
+  const token = (await sessao.getSession()).data.session?.access_token;
   const r = await fetch(caminho, { headers: { authorization: `Bearer ${token ?? ""}` } });
   const corpo = (await r.json().catch(() => ({}))) as { ok?: boolean; erro?: string };
   if (!r.ok || corpo.ok !== true) throw new Error(corpo.erro ?? "Não foi possível ver o tempo agora.");

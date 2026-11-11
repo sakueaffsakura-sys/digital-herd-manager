@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { diaBR } from "@/lib/datas";
 import { PageTitle, Status } from "../shared";
 
@@ -69,7 +70,7 @@ export default function Ajuda({ propriedadeId }: { propriedadeId: string | null 
   const minhas = useQuery({
     queryKey: ["minhas-mensagens-suporte"],
     queryFn: async (): Promise<Mensagem[]> => {
-      const { data, error } = await supabase.from("suporte_contatos").select("id,assunto,mensagem,status,resposta,criado_em,respondido_em").order("criado_em", { ascending: false }).limit(30);
+      const { data, error } = await dados.from("suporte_contatos").select("id,assunto,mensagem,status,resposta,criado_em,respondido_em").order("criado_em", { ascending: false }).limit(30);
       if (error) throw error;
       return data ?? [];
     },
@@ -81,8 +82,8 @@ export default function Ajuda({ propriedadeId }: { propriedadeId: string | null 
     if (a.length < 2) { toast.error("Escreva o assunto."); return; }
     if (m.length < 10) { toast.error("Conte com um pouco mais de detalhe o que aconteceu."); return; }
     setEnviando(true);
-    const { data: auth } = await supabase.auth.getUser();
-    const { error } = await supabase.from("suporte_contatos").insert({
+    const { data: auth } = await sessao.getUser();
+    const { error } = await dados.from("suporte_contatos").insert({
       assunto: a, mensagem: m, email: auth.user?.email ?? null, propriedade_id: propriedadeId,
     });
     setEnviando(false);

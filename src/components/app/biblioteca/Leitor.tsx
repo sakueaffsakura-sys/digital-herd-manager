@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { LoaderCircle, Minus, Plus, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import type { Ebook } from "./Biblioteca";
 
 type PdfDoc = { numPages: number; getPage: (n: number) => Promise<PdfPagina>; destroy: () => Promise<void> };
@@ -48,18 +49,20 @@ export function Leitor({ ebook, aoFechar }: { ebook: Ebook; aoFechar: () => void
     let aberto: PdfDoc | null = null;
     (async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        const sessao = data.session;
-        if (!sessao) { setErro("Entre na sua conta para ler."); return; }
-        const perfil = await supabase.from("profiles").select("nome_exibicao,nome_completo").eq("id", sessao.user.id).maybeSingle();
+        // "aberta", e não "sessao": o nome `sessao` agora é o do caminho de sessão
+        // importado, e um nome só para os dois deixaria a leitura dependendo de si mesma.
+        const { data } = await sessao.getSession();
+        const aberta = data.session;
+        if (!aberta) { setErro("Entre na sua conta para ler."); return; }
+        const perfil = await dados.from("profiles").select("nome_exibicao,nome_completo").eq("id", aberta.user.id).maybeSingle();
         const nome = perfil.data?.nome_exibicao || perfil.data?.nome_completo || "";
-        setMarca(`${nome ? `${nome} · ` : ""}${sessao.user.email ?? ""} · ${new Date().toLocaleDateString("pt-BR")}`);
+        setMarca(`${nome ? `${nome} · ` : ""}${aberta.user.email ?? ""} · ${new Date().toLocaleDateString("pt-BR")}`);
         const pdfjs = await import("pdfjs-dist");
         const worker = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
         pdfjs.GlobalWorkerOptions.workerSrc = worker;
         const tarefa = pdfjs.getDocument({
           url: `/api/ebooks/${ebook.id}/arquivo`,
-          httpHeaders: { Authorization: `Bearer ${sessao.access_token}` },
+          httpHeaders: { Authorization: `Bearer ${aberta.access_token}` },
           rangeChunkSize: 1 << 21,
           disableAutoFetch: true,
           isEvalSupported: false,

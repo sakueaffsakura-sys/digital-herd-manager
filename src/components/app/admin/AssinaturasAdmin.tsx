@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { diaBR } from "@/lib/datas";
 import { nomeDoMetodo } from "@/lib/mercadopago";
 import { Status, money } from "../shared";
@@ -15,7 +16,7 @@ import { Status, money } from "../shared";
 type Plano = { id: string; nome: string; descricao: string | null; meses: number; preco_centavos: number; ativo: boolean; ordem: number };
 
 async function token() {
-  return (await supabase.auth.getSession()).data.session?.access_token ?? "";
+  return (await sessao.getSession()).data.session?.access_token ?? "";
 }
 
 function EstadoMercadoPago() {
@@ -72,7 +73,7 @@ function LinhaPlano({ plano }: { plano: Plano }) {
     if (!Number.isFinite(centavos) || centavos < 0) { toast.error("Preço inválido."); return; }
     if (ativo && centavos <= 0) { toast.error("Defina um preço antes de ligar o plano."); return; }
     setSalvando(true);
-    const { error } = await supabase.from("planos").update({ nome: nome.trim(), descricao: descricao.trim() || null, meses: m, preco_centavos: centavos, ativo, atualizado_em: new Date().toISOString() }).eq("id", plano.id);
+    const { error } = await dados.from("planos").update({ nome: nome.trim(), descricao: descricao.trim() || null, meses: m, preco_centavos: centavos, ativo, atualizado_em: new Date().toISOString() }).eq("id", plano.id);
     setSalvando(false);
     if (error) toast.error("Não foi possível salvar o plano.");
     else { toast.success("Plano salvo."); void qc.invalidateQueries({ queryKey: ["admin-planos"] }); void qc.invalidateQueries({ queryKey: ["planos-ativos"] }); }
@@ -96,13 +97,13 @@ function Planos() {
   const planos = useQuery({
     queryKey: ["admin-planos"],
     queryFn: async (): Promise<Plano[]> => {
-      const { data, error } = await supabase.from("planos").select("id,nome,descricao,meses,preco_centavos,ativo,ordem").order("ordem");
+      const { data, error } = await dados.from("planos").select("id,nome,descricao,meses,preco_centavos,ativo,ordem").order("ordem");
       if (error) throw error;
       return data ?? [];
     },
   });
   const novo = async () => {
-    const { error } = await supabase.from("planos").insert({ nome: "Novo plano", meses: 6, preco_centavos: 0, ativo: false, ordem: (planos.data?.length ?? 0) + 1 });
+    const { error } = await dados.from("planos").insert({ nome: "Novo plano", meses: 6, preco_centavos: 0, ativo: false, ordem: (planos.data?.length ?? 0) + 1 });
     if (error) toast.error("Não foi possível criar o plano.");
     else void qc.invalidateQueries({ queryKey: ["admin-planos"] });
   };
@@ -126,7 +127,7 @@ function Pagamentos() {
     queryKey: ["admin-pagamentos", status],
     refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_pagamentos", status === "todos" ? { _limite: 300 } : { _status: status, _limite: 300 });
+      const { data, error } = await dados.rpc("admin_pagamentos", status === "todos" ? { _limite: 300 } : { _status: status, _limite: 300 });
       if (error) throw error;
       return data ?? [];
     },

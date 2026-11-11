@@ -10,7 +10,8 @@ import {
   ShoppingCart, Syringe, Trash2, TrendingUp, Upload, Warehouse,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { formatarDataBR } from "@/lib/datas";
 import { chaveDeReferencias, loadFormRefs, tabelasDeReferencia } from "./formRefs";
@@ -86,8 +87,8 @@ export function ApecuariaApp() {
   const [propertyDialog, setPropertyDialog] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
 
-  const userQuery = useQuery({ queryKey: ["session-user"], queryFn: async () => { const cached = await supabase.auth.getSession(); if (cached.data.session?.user) return cached.data.session.user; const { data, error } = await supabase.auth.getUser(); if (error) throw error; return data.user; } });
-  const propertiesQuery = useQuery({ queryKey: ["properties", userQuery.data?.id], enabled: !!userQuery.data, queryFn: async () => { const { data, error } = await supabase.from("propriedades").select("*").eq("ativo", true).order("created_at"); if (error) throw error; return data; } });
+  const userQuery = useQuery({ queryKey: ["session-user"], queryFn: async () => { const cached = await sessao.getSession(); if (cached.data.session?.user) return cached.data.session.user; const { data, error } = await sessao.getUser(); if (error) throw error; return data.user; } });
+  const propertiesQuery = useQuery({ queryKey: ["properties", userQuery.data?.id], enabled: !!userQuery.data, queryFn: async () => { const { data, error } = await dados.from("propriedades").select("*").eq("ativo", true).order("created_at"); if (error) throw error; return data; } });
   const setPropertyId = (id: string) => { setPropertyIdState(id); try { localStorage.setItem(CHAVE_PROPRIEDADE, id); } catch { /* só nesta visita */ } };
   useEffect(() => {
     const lista = propertiesQuery.data;
@@ -103,8 +104,8 @@ export function ApecuariaApp() {
   const abrirRegistro = (secao: string, id: string) => navigate({ to: "/app/$section", params: { section: secao }, search: { editar: id } });
   const abrirAnimal = (id: string) => navigate({ to: "/app/$section", params: { section: "rebanho" }, search: { animal: id } });
   const limparBusca = () => navigate({ to: "/app/$section", params: { section }, search: {}, replace: true });
-  const isAdminQuery = useQuery({ queryKey: ["sou-admin"], queryFn: async () => { const r = await (supabase.rpc as unknown as (f: string) => Promise<{ data: unknown }>)("sou_admin"); return r.data === true; } });
-  const signOut = async () => { await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({ to: "/", replace: true }); };
+  const isAdminQuery = useQuery({ queryKey: ["sou-admin"], queryFn: async () => { const r = await (dados.rpc as unknown as (f: string) => Promise<{ data: unknown }>)("sou_admin"); return r.data === true; } });
+  const signOut = async () => { await queryClient.cancelQueries(); queryClient.clear(); await sessao.signOut(); navigate({ to: "/", replace: true }); };
   const pedido = { novo: busca.novo, editar: busca.editar, animal: busca.animal, anotacao: busca.anotacao, limpar: limparBusca };
 
   const secaoPropriedade = ["perfil-propriedade", "configuracoes", "assinatura", "diagnostico"].includes(section) || !["perfil", "seguranca"].includes(section);
@@ -225,7 +226,7 @@ function PropertyDialog({ open, userId, onClose, onCreated }: { open: boolean; u
     e.preventDefault();
     if (!userId || salvando) return;
     setSalvando(true);
-    const { data, error } = await supabase.from("propriedades").insert({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null, proprietario_id: userId }).select("id").single();
+    const { data, error } = await dados.from("propriedades").insert({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null, proprietario_id: userId }).select("id").single();
     setSalvando(false);
     if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Propriedade cadastrada.");
@@ -474,12 +475,12 @@ function AnimalDetails({ open, animal, propertyId, refs, onClose }: { open: bool
     enabled: open && !!animalId,
     queryFn: async () => {
       const [weights, vaccines, inseminations, milk, notes, children] = await Promise.all([
-        supabase.from("pesagens").select("id,data,peso_kg,observacoes").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        supabase.from("vacinacoes").select("id,data_aplicacao,proxima_aplicacao,tipo_vacina_id,responsavel").eq("animal_id", animalId).order("data_aplicacao", { ascending: false }),
-        supabase.from("inseminacoes").select("id,data_inseminacao,previsao_parto,situacao,reprodutor_semen").eq("animal_id", animalId).order("data_inseminacao", { ascending: false }),
-        supabase.from("producao_leite").select("id,data,litros,valor_total").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        supabase.from("anotacoes_producao").select("id,data,observacao,producao").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).or(`mae_id.eq.${animalId},pai_id.eq.${animalId}`).order("data_nascimento", { ascending: false }),
+        dados.from("pesagens").select("id,data,peso_kg,observacoes").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
+        dados.from("vacinacoes").select("id,data_aplicacao,proxima_aplicacao,tipo_vacina_id,responsavel").eq("animal_id", animalId).order("data_aplicacao", { ascending: false }),
+        dados.from("inseminacoes").select("id,data_inseminacao,previsao_parto,situacao,reprodutor_semen").eq("animal_id", animalId).order("data_inseminacao", { ascending: false }),
+        dados.from("producao_leite").select("id,data,litros,valor_total").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
+        dados.from("anotacoes_producao").select("id,data,observacao,producao").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
+        dados.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).or(`mae_id.eq.${animalId},pai_id.eq.${animalId}`).order("data_nascimento", { ascending: false }),
       ]);
       const error = [weights, vaccines, inseminations, milk, notes, children].find((r) => r.error)?.error;
       if (error) throw error;
@@ -584,7 +585,7 @@ function SettingsPage({ property, onUpdated }: { property: Database["public"]["T
     e.preventDefault();
     if (!property || salvando) return;
     setSalvando(true);
-    const { error } = await supabase.from("propriedades").update({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null }).eq("id", property.id);
+    const { error } = await dados.from("propriedades").update({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null }).eq("id", property.id);
     setSalvando(false);
     if (error) toast.error(friendlyError(error));
     else { toast.success("Dados da propriedade salvos."); onUpdated(); }

@@ -1,6 +1,6 @@
 // Voz da Yui: usa a voz realista de IA (servidor, Gemini TTS) e, se falhar,
 // cai para a síntese de fala do navegador. Fala frase por frase e é cancelável.
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
 
 let geracao = 0;
 let audioAtual: HTMLAudioElement | null = null;
@@ -77,7 +77,7 @@ function gerarAudio(texto: string, mensagemId?: string): Promise<Blob | null> {
   const existente = cache.get(chave);
   if (existente) return existente;
   const p = (async () => {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await sessao.getSession();
     const token = data.session?.access_token;
     if (!token) return null;
     try {

@@ -5,7 +5,8 @@ import { ImageIcon, Bot, AlertTriangle, BellRing, BookOpenText, ShieldAlert, Act
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,11 +74,11 @@ type Saude = {
   bloqueios: number;
 };
 
-const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+const rpc = dados.rpc.bind(dados) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
 
 /** Bloquear/desbloquear e virar administrador passam pelo servidor, que também trava o login (Auth) da conta. */
 async function definirConta(user_id: string, a: { bloqueado?: boolean; admin?: boolean }) {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await sessao.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
   const resp = await fetch("/api/admin/conta", {
@@ -108,7 +109,7 @@ function AdminPage() {
   useEffect(() => {
     const LIMITE = 30 * 60_000;
     let t = setTimeout(sair, LIMITE);
-    function sair() { void supabase.auth.signOut().then(() => { window.location.replace("/?motivo=sessao-expirada"); }); }
+    function sair() { void sessao.signOut().then(() => { window.location.replace("/?motivo=sessao-expirada"); }); }
     const reset = () => { clearTimeout(t); t = setTimeout(sair, LIMITE); };
     const ev = ["pointerdown", "keydown", "scroll", "visibilitychange"] as const;
     ev.forEach((e) => window.addEventListener(e, reset, { passive: true }));
@@ -131,11 +132,11 @@ function AdminPage() {
   const contas = useQuery({ queryKey: ["admin-contas"], enabled: isAdmin.data === true, queryFn: async () => { const r = await rpc("admin_contas"); if (r.error) throw r.error; return (r.data ?? []) as Conta[]; } });
   const suporteAberto = useQuery({
     queryKey: ["admin-suporte", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
-    queryFn: async () => { const { count, error } = await supabase.from("suporte_contatos").select("id", { count: "exact", head: true }).eq("status", "aberto"); if (error) throw error; return count ?? 0; },
+    queryFn: async () => { const { count, error } = await dados.from("suporte_contatos").select("id", { count: "exact", head: true }).eq("status", "aberto"); if (error) throw error; return count ?? 0; },
   });
   const pedidosAbertos = useQuery({
     queryKey: ["admin-exclusoes", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
-    queryFn: async () => { const { count, error } = await supabase.from("solicitacoes_exclusao").select("id", { count: "exact", head: true }).eq("status", "pendente"); if (error) throw error; return count ?? 0; },
+    queryFn: async () => { const { count, error } = await dados.from("solicitacoes_exclusao").select("id", { count: "exact", head: true }).eq("status", "pendente"); if (error) throw error; return count ?? 0; },
   });
 
   const acao = useMutation({
@@ -510,7 +511,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   // Pelo servidor: além do banco, apaga as fotos da pessoa e das propriedades dela.
   const excluir = useMutation({
     mutationFn: async () => {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = (await sessao.getSession()).data.session?.access_token;
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
       const resp = await fetch("/api/admin/exclusao", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify({ user_id: id }) });
       const corpo = (await resp.json().catch(() => ({}))) as { ok?: boolean; erro?: string; arquivos?: number; resultado?: { propriedades_excluidas?: number } };

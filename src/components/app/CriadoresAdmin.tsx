@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { CRIADORES_CHAVE, CRIADORES_QUERY, useCriadores, urlSocial, type Criador } from "./criadores";
 
 export function CriadoresAdmin() {
@@ -22,13 +23,13 @@ export function CriadoresAdmin() {
       const normalizado = lista.map((c) => ({ id: c.id, nome: c.nome.trim(), redes: c.redes.map((r) => ({ nome: r.nome.trim(), url: r.url.trim() })) }));
       if (normalizado.some((c) => !c.nome)) throw new Error("Preencha o nome de cada criador.");
       if (normalizado.some((c) => c.redes.some((r) => !r.nome || !urlSocial(r.url)))) throw new Error("Preencha o nome da rede e um link válido começando com https:// em cada rede social.");
-      const { data: auth, error: authError } = await supabase.auth.getUser();
+      const { data: auth, error: authError } = await sessao.getUser();
       if (authError || !auth.user) throw new Error("Entre novamente na sua conta.");
       if (normalizado.length === 0) {
-        const { error } = await supabase.from("configuracoes_sistema").delete().eq("chave", CRIADORES_CHAVE);
+        const { error } = await dados.from("configuracoes_sistema").delete().eq("chave", CRIADORES_CHAVE);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("configuracoes_sistema").upsert({ chave: CRIADORES_CHAVE, valor: JSON.stringify(normalizado), atualizado_em: new Date().toISOString(), atualizado_por: auth.user.id });
+        const { error } = await dados.from("configuracoes_sistema").upsert({ chave: CRIADORES_CHAVE, valor: JSON.stringify(normalizado), atualizado_em: new Date().toISOString(), atualizado_por: auth.user.id });
         if (error) throw error;
       }
     },
