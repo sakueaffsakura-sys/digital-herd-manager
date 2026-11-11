@@ -30,10 +30,23 @@ jobs:
       - name: Instalar dependências
         run: bun install --frozen-lockfile
       - name: Instalar o navegador
+        # O espelho de pacotes do runner falha de vez em quando ("Unable to fetch some
+        # archives"), e isso não tem nada a ver com o site: tenta três vezes antes de
+        # dar a execução por perdida.
         run: |
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y > /dev/null
           npm i --no-audit --no-fund playwright@^1.55.0 > /dev/null
-          npx playwright install --with-deps chromium > /dev/null
+          for tentativa in 1 2 3; do
+            sudo apt-get update -qq || true
+            if npx playwright install --with-deps chromium > instalar.log 2>&1; then
+              echo "navegador instalado na tentativa $tentativa"
+              exit 0
+            fi
+            echo "tentativa $tentativa falhou:"; tail -5 instalar.log
+            sleep 15
+          done
+          tail -40 instalar.log
+          exit 1
       - name: Subir o site
         run: |
           nohup node scripts/capturas/servidor-mock.mjs > mock.log 2>&1 &

@@ -196,8 +196,8 @@ type AgendaLida = {
 };
 // Um parto previsto para depois de amanhã e uma vacina a vencer na semana.
 await executar(
-  `INSERT INTO inseminacoes (id, propriedade_id, animal_id, data_inseminacao, previsao_parto, situacao)
-   VALUES (UUID(), ?, ?, ?, ?, 'confirmada')`,
+  `INSERT INTO inseminacoes (id, propriedade_id, animal_id, data_inseminacao, reprodutor_semen, previsao_parto, situacao)
+   VALUES (UUID(), ?, ?, ?, 'Touro Jaguar', ?, 'confirmada')`,
   [FAZENDA_NAIR, animalDaNair, somarDias(hoje, -280), somarDias(hoje, 2)],
 );
 await executar(
