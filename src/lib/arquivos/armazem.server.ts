@@ -24,18 +24,37 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-/** Os baldes de antes, com quem pode gravar e quem pode ler. */
+/**
+ * Os baldes de antes, com quem pode gravar, quem pode ler e de quem é a primeira pasta.
+ *
+ * `gravar` responde "quem pode pôr arquivo aqui":
+ *   admin        só o administrador (eBook, APK, papel de parede)
+ *   proprio      a própria pessoa, e a primeira pasta é o identificador dela
+ *   propriedade  quem tem acesso à fazenda, e a primeira pasta é o identificador dela
+ *
+ * As duas últimas não são detalhe: sem amarrar a primeira pasta ao dono, qualquer pessoa
+ * que entrou gravaria em `profile-avatars/<id de outra pessoa>/avatar.webp` e trocaria a
+ * foto de quem quisesse.
+ *
+ * `ler` responde "quem pode abrir":
+ *   entrou  qualquer pessoa com sessão
+ *   rota    ninguém pela porta dos arquivos; só pela rota própria daquele conteúdo
+ */
 export const BALDES = {
-  /** O PDF pago. Ninguém lê direto: a rota dos eBooks confere a assinatura primeiro. */
+  /** O PDF pago. A rota dos eBooks confere a assinatura antes de abrir. */
   ebooks: { gravar: "admin", ler: "rota", tipos: ["application/pdf"], limiteMb: 100 },
   /** A capa do eBook aparece para quem entrou, assinante ou não. */
   "ebook-capas": { gravar: "admin", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 5 },
   /** O APK do aplicativo. */
   aplicativo: { gravar: "admin", ler: "entrou", tipos: ["application/vnd.android.package-archive"], limiteMb: 200 },
-  /** Imagens que o administrador troca no site. */
-  "imagens-site": { gravar: "admin", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png", "image/svg+xml"], limiteMb: 10 },
-  /** O papel de parede da Yui. */
-  "yui-parede": { gravar: "admin", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 10 },
+  /** O papel de parede da conversa com a Yui. */
+  "yui-chat-wallpapers": { gravar: "admin", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 10 },
+  /** A foto de quem usa. Primeira pasta: o identificador da pessoa. */
+  "profile-avatars": { gravar: "proprio", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 5 },
+  /** Logo, banner e fotos da fazenda. Primeira pasta: o identificador da fazenda. */
+  "property-logos": { gravar: "propriedade", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 5 },
+  "property-banners": { gravar: "propriedade", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 8 },
+  "property-images": { gravar: "propriedade", ler: "entrou", tipos: ["image/webp", "image/jpeg", "image/png"], limiteMb: 8 },
 } as const;
 
 export type Balde = keyof typeof BALDES;
@@ -96,8 +115,17 @@ export function linkAssinado(balde: Balde, caminho: string, segundos = 300): str
   caminhoReal(balde, caminho); // recusa caminho torto antes de assinar
   const prazo = Math.min(Math.max(Math.trunc(segundos) || 300, 5), 3600);
   const ate = Math.floor(Date.now() / 1000) + prazo;
-  const endereco = `${balde}/${String(caminho).replace(/^\/+/, "")}`;
-  return `/api/arquivos/${endereco}?ate=${ate}&a=${assinar(balde, caminho, ate)}`;
+  // Balde e caminho viajam como valor, não como pedaço do endereço. Assim chegam
+  // exatamente como saíram: uma barra escrita como %2F dentro do endereço é desfeita de
+  // um jeito por um servidor e de outro por outro, e é aí que nasce a diferença entre o
+  // caminho que a assinatura cobriu e o arquivo que acaba sendo aberto.
+  const parametros = new URLSearchParams({
+    b: balde,
+    c: String(caminho).replace(/^\/+/, ""),
+    ate: String(ate),
+    a: assinar(balde, caminho, ate),
+  });
+  return `/api/arquivos?${parametros.toString()}`;
 }
 
 /** A assinatura confere e o prazo não passou? */
@@ -147,5 +175,9 @@ export async function tamanhoDoArquivo(balde: Balde, caminho: string): Promise<n
 export async function apagarArquivo(balde: Balde, caminho: string): Promise<void> {
   await rm(caminhoReal(balde, caminho), { force: true });
 }
+
+/** A primeira pasta do caminho: nos baldes de pessoa e de fazenda, é o dono. */
+export const donoDoCaminho = (caminho: string): string =>
+  String(caminho ?? "").replace(/^\/+/, "").split("/")[0] ?? "";
 
 export const paraTeste = { assinar, pastaBase };

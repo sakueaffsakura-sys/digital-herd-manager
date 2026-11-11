@@ -7,6 +7,8 @@ import { allowRequest } from "./rate-limit";
 import { clienteDoSite, dentroDoLimite, falha, ipDe, lerCorpo, origemSegura, resposta } from "./conta.server";
 import { decidirPagamento, validarAviso, type PagamentoBanco, type PagamentoMP } from "./mercadopago";
 import { lerChave } from "./chaves.server";
+import { pedacoDoArquivo } from "./arquivos/api.server";
+import { BANCO_NOVO } from "./dados";
 
 const MP = "https://api.mercadopago.com";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -215,16 +217,7 @@ export async function handleEbookArquivo(request: Request, id: string) {
     liberados.set(chave, { caminho, ate: Date.now() + 60_000 });
   }
 
-  const assinado = await sb.storage.from("ebooks").createSignedUrl(caminho, 60);
-  if (assinado.error || !assinado.data?.signedUrl) return falha(404, "Arquivo do eBook não encontrado.");
   const range = request.headers.get("range");
-  let origem: Response;
-  try {
-    origem = await fetch(assinado.data.signedUrl, { headers: range && /^bytes=\d*-\d*$/.test(range) ? { range } : {} });
-  } catch {
-    return falha(502, "Não foi possível ler o arquivo agora.");
-  }
-  if (!origem.ok || !origem.body) return falha(502, "Não foi possível ler o arquivo agora.");
   const cab = new Headers({
     "content-type": "application/pdf",
     "content-disposition": 'inline; filename="ebook.pdf"',
@@ -234,6 +227,26 @@ export async function handleEbookArquivo(request: Request, id: string) {
     "cross-origin-resource-policy": "same-origin",
     "x-robots-tag": "noindex, nofollow",
   });
+
+  // No banco novo o arquivo é lido da pasta do servidor; no antigo, por link curto do
+  // armazenamento. Nos dois casos o PDF sai por aqui, nunca por endereço que se repassa.
+  if (BANCO_NOVO) {
+    const pedaco = await pedacoDoArquivo("ebooks", caminho, range);
+    if (!pedaco) return falha(404, "Arquivo do eBook não encontrado.");
+    cab.set("content-length", String(pedaco.corpo.byteLength));
+    if (pedaco.faixa) cab.set("content-range", pedaco.faixa);
+    return new Response(pedaco.corpo as unknown as BodyInit, { status: pedaco.status, headers: cab });
+  }
+
+  const assinado = await sb.storage.from("ebooks").createSignedUrl(caminho, 60);
+  if (assinado.error || !assinado.data?.signedUrl) return falha(404, "Arquivo do eBook não encontrado.");
+  let origem: Response;
+  try {
+    origem = await fetch(assinado.data.signedUrl, { headers: range && /^bytes=\d*-\d*$/.test(range) ? { range } : {} });
+  } catch {
+    return falha(502, "Não foi possível ler o arquivo agora.");
+  }
+  if (!origem.ok || !origem.body) return falha(502, "Não foi possível ler o arquivo agora.");
   for (const h of ["content-length", "content-range"]) {
     const v = origem.headers.get(h);
     if (v) cab.set(h, v);

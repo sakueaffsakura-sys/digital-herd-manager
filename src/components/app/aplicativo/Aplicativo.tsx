@@ -4,6 +4,7 @@ import { Check, Download, LoaderCircle, Smartphone, WifiOff } from "lucide-react
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { armazem } from "@/lib/arquivos";
 import { diaBR } from "@/lib/datas";
 import { qrParaSvg } from "@/lib/qr";
 import { PageTitle } from "../shared";
@@ -63,7 +64,7 @@ export default function Aplicativo() {
     if (!app.data) return;
     setBaixando(true);
     try {
-      const { data, error } = await supabase.storage.from("aplicativo").createSignedUrl(app.data.arquivo, 300, { download: `apecuaria-digital-${app.data.versao}.apk` });
+      const { data, error } = await armazem.from("aplicativo").createSignedUrl(app.data.arquivo, 300, { download: `apecuaria-digital-${app.data.versao}.apk` });
       if (error || !data?.signedUrl) throw new Error("O arquivo não está disponível agora. Avise o suporte.");
       window.location.href = data.signedUrl;
     } catch (e) {

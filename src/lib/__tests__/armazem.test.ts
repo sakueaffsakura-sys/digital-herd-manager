@@ -6,6 +6,9 @@ import {
   apagarArquivo, ArquivoRecusado, baldeValido, caminhoReal, gravarArquivo,
   lerArquivo, linkAssinado, linkValido, tamanhoDoArquivo,
 } from "../arquivos/armazem.server";
+import { paraTeste } from "../arquivos/api.server";
+
+const { podeGravar, tipoDe, nomeSeguro } = paraTeste;
 
 let pasta = "";
 
@@ -94,6 +97,13 @@ describe("link assinado", () => {
     expect(linkValido("ebooks", "livro.pdf", Math.floor(Date.now() / 1000) + 60, null)).toBe(false);
   });
 
+  it("balde e caminho viajam como valor, não como pedaço do endereço", () => {
+    const url = new URL(linkAssinado("ebooks", "manejo/livro.pdf", 60), "https://exemplo.com");
+    expect(url.pathname).toBe("/api/arquivos");
+    expect(url.searchParams.get("b")).toBe("ebooks");
+    expect(url.searchParams.get("c")).toBe("manejo/livro.pdf");
+  });
+
   it("o prazo é limitado: ninguém pede um link de um ano", () => {
     const url = new URL(linkAssinado("ebooks", "livro.pdf", 999_999), "https://exemplo.com");
     const prazo = Number(url.searchParams.get("ate")) - Math.floor(Date.now() / 1000);
@@ -138,5 +148,65 @@ describe("gravar, ler e apagar", () => {
     await writeFile(fora, "fica", "utf8");
     await expect(apagarArquivo("ebooks", "../outro-segredo.txt")).rejects.toThrow(ArquivoRecusado);
     expect(await readFile(fora, "utf8")).toBe("fica");
+  });
+});
+
+describe("quem pode gravar em cada balde", () => {
+  const NAIR = "11111111-1111-4111-8111-111111111111";
+  const FAZENDA = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const dona = { userId: NAIR, admin: false, propriedades: [FAZENDA] };
+  const chefe = { userId: "99", admin: true, propriedades: [] };
+
+  it("no balde do administrador, só o administrador", () => {
+    expect(podeGravar("ebooks", "livro.pdf", chefe)).toBe(null);
+    expect(podeGravar("ebooks", "livro.pdf", dona)).not.toBe(null);
+    expect(podeGravar("aplicativo", "app.apk", dona)).not.toBe(null);
+  });
+
+  it("a foto é da própria pessoa: a primeira pasta tem de ser ela", () => {
+    expect(podeGravar("profile-avatars", `${NAIR}/avatar.webp`, dona)).toBe(null);
+    // O caso que a conferência existe para impedir: gravar na pasta de outra pessoa.
+    expect(podeGravar("profile-avatars", "22222222-2222-4222-8222-222222222222/avatar.webp", dona)).not.toBe(null);
+  });
+
+  it("a imagem da fazenda é de quem tem acesso à fazenda", () => {
+    expect(podeGravar("property-logos", `${FAZENDA}/logo.webp`, dona)).toBe(null);
+    expect(podeGravar("property-logos", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/logo.webp", dona)).not.toBe(null);
+  });
+
+  it("sem pasta nenhuma, recusa: não há dono para conferir", () => {
+    expect(podeGravar("profile-avatars", "avatar.webp", dona)).not.toBe(null);
+  });
+
+  it("administrador não herda a pasta dos outros nos baldes de pessoa", () => {
+    // O administrador tem telas próprias para isso; aqui ele não é dono da pasta.
+    expect(podeGravar("profile-avatars", `${NAIR}/avatar.webp`, chefe)).not.toBe(null);
+  });
+});
+
+describe("o tipo entregue vem da extensão e tem de combinar com o balde", () => {
+  it("o que combina passa", () => {
+    expect(tipoDe("livro.pdf", "ebooks")).toBe("application/pdf");
+    expect(tipoDe("capa.webp", "ebook-capas")).toBe("image/webp");
+  });
+  it("o que não combina com o balde não é entregue", () => {
+    // Um PDF que de algum jeito tenha entrado no balde das capas não sai como PDF.
+    expect(tipoDe("coisa.pdf", "ebook-capas")).toBe(null);
+    expect(tipoDe("coisa.webp", "ebooks")).toBe(null);
+  });
+  it("extensão desconhecida não é entregue", () => {
+    expect(tipoDe("script.php", "ebook-capas")).toBe(null);
+    expect(tipoDe("semextensao", "ebooks")).toBe(null);
+  });
+});
+
+describe("nome de arquivo para baixar", () => {
+  it("não leva caminho, aspas nem quebra de linha", () => {
+    expect(nomeSeguro('../../etc/passwd')).toBe("....etcpasswd");
+    expect(nomeSeguro('a"; b')).toBe("a; b");
+    expect(nomeSeguro("linha\r\nOutro-Cabecalho: x")).toBe("linhaOutro-Cabecalho: x");
+  });
+  it("vazio vira um nome qualquer, não vira nada", () => {
+    expect(nomeSeguro("   ")).toBe("arquivo");
   });
 });

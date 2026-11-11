@@ -4,6 +4,7 @@ import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { armazem } from "@/lib/arquivos";
 import { useYuiWallpaper, YUI_WALLPAPER_BUCKET, YUI_WALLPAPER_KEY, YUI_WALLPAPER_QUERY } from "./useYuiWallpaper";
 
 const TIPOS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "video/mp4": "mp4" };
@@ -29,7 +30,7 @@ export function YuiWallpaperAdmin() {
       const { data: user, error: authError } = await supabase.auth.getUser();
       if (authError || !user.user) throw new Error("Entre novamente na sua conta.");
       const path = `${crypto.randomUUID()}.${ext}`;
-      const bucket = supabase.storage.from(YUI_WALLPAPER_BUCKET);
+      const bucket = armazem.from(YUI_WALLPAPER_BUCKET);
       const { error: uploadError } = await bucket.upload(path, file, { contentType: file.type, upsert: false });
       if (uploadError) throw uploadError;
       const { error: saveError } = await supabase.from("configuracoes_sistema").upsert({ chave: YUI_WALLPAPER_KEY, valor: path, atualizado_em: new Date().toISOString(), atualizado_por: user.user.id });
@@ -47,7 +48,7 @@ export function YuiWallpaperAdmin() {
     mutationFn: async () => {
       const { error } = await supabase.from("configuracoes_sistema").delete().eq("chave", YUI_WALLPAPER_KEY);
       if (error) throw error;
-      if (atual?.path) await supabase.storage.from(YUI_WALLPAPER_BUCKET).remove([atual.path]);
+      if (atual?.path) await armazem.from(YUI_WALLPAPER_BUCKET).remove([atual.path]);
     },
     onSuccess: async () => { setSelecionado(null); await qc.invalidateQueries({ queryKey: YUI_WALLPAPER_QUERY }); toast.success("Fundo original do chat restaurado."); },
     onError: (error: Error) => toast.error(error.message),

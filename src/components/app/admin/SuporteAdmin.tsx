@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { armazem } from "@/lib/arquivos";
 import { diaBR } from "@/lib/datas";
 import { CampoArquivo, Status } from "../shared";
 import { CHAVE_APP, useAppAndroid, type AppAndroid } from "../aplicativo/Aplicativo";
@@ -38,7 +39,7 @@ function AppAdmin() {
       if (inicio[0] !== 0x50 || inicio[1] !== 0x4b) throw new Error("Este arquivo não parece um APK.");
       setEtapa("Enviando…");
       const caminho = `apecuaria-digital-${v}.apk`;
-      const up = await supabase.storage.from("aplicativo").upload(caminho, arquivo, { contentType: "application/vnd.android.package-archive", upsert: true, cacheControl: "0" });
+      const up = await armazem.from("aplicativo").upload(caminho, arquivo, { contentType: "application/vnd.android.package-archive", upsert: true, cacheControl: "0" });
       if (up.error) throw new Error("Não foi possível enviar o arquivo.");
       setEtapa("Salvando…");
       const dados: AppAndroid = { versao: v, arquivo: caminho, tamanho: arquivo.size, publicado_em: new Date().toISOString(), novidades: novidades.trim().slice(0, 2000) };

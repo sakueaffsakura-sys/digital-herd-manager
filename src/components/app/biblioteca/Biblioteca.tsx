@@ -4,6 +4,7 @@ import { BookOpenText, Lock, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { armazem } from "@/lib/arquivos";
 import { Empty, PageTitle } from "../shared";
 import { Leitor } from "./Leitor";
 
@@ -16,7 +17,7 @@ export function Capa({ caminho, titulo, className, pequena, reservarRodape }: { 
     enabled: !!caminho,
     staleTime: 50 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.storage.from("ebook-capas").createSignedUrl(caminho!, 3600);
+      const { data, error } = await armazem.from("ebook-capas").createSignedUrl(caminho!, 3600);
       if (error) throw error;
       return data.signedUrl;
     },

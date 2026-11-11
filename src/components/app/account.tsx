@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { armazem } from "@/lib/arquivos";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,7 +119,7 @@ export async function getSignedUrl(
   const key = `${bucket}/${path}`;
   const hit = urlCache.get(key);
   if (hit && hit.expires > Date.now() + ttl * 1000 * 0.15) return hit.url;
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, ttl);
+  const { data, error } = await armazem.from(bucket).createSignedUrl(path, ttl);
   if (error || !data?.signedUrl) throw error ?? new Error("URL da imagem indisponível.");
   urlCache.set(key, { url: data.signedUrl, expires: Date.now() + ttl * 1000 });
   return data.signedUrl;
@@ -167,7 +168,7 @@ export async function uploadWithProgress(opts: {
   onProgress?: (percent: number) => void;
 }): Promise<void> {
   opts.onProgress?.(10);
-  const { error } = await supabase.storage
+  const { error } = await armazem
     .from(opts.bucket)
     .upload(opts.path, opts.blob, {
       upsert: true,
@@ -178,7 +179,7 @@ export async function uploadWithProgress(opts: {
 }
 
 async function removeStorageObject(bucket: ImageBucket, path: string): Promise<void> {
-  const { error } = await supabase.storage.from(bucket).remove([path]);
+  const { error } = await armazem.from(bucket).remove([path]);
   if (error) throw error;
 }
 
