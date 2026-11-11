@@ -127,9 +127,38 @@ export async function handleDados(request: Request): Promise<Response> {
       console.error(erro);
       return resposta(500, { erro: "Esta área ainda não está liberada." });
     }
+    const codigo = codigoDoErro(erro);
+    if (codigo) {
+      // Erro do dado que chegou, não do servidor: a tela precisa saber disso para isolar a
+      // linha ruim de um lote e deixar as boas entrarem.
+      return resposta(400, { erro: mensagemDoDado(codigo), codigo });
+    }
     console.error(erro);
     return resposta(500, { erro: "Não deu para concluir. Tente de novo." });
   }
+}
+
+/**
+ * Traduz o erro do MySQL para o código que as telas já conhecem.
+ *
+ * As telas foram escritas contra o PostgreSQL e olham o código, não a mensagem: a
+ * importação de planilha usa a classe (21, 22, 23 = problema no dado) para decidir se
+ * isola a linha ou interrompe o lote, e trata 23505 como "já existe", que não é falha.
+ * Traduzir aqui é o que mantém esse comportamento sem reescrever as telas.
+ */
+function codigoDoErro(erro: unknown): string | null {
+  const e = erro as { errno?: number; sqlState?: string } | null;
+  if (!e || typeof e !== "object") return null;
+  // Chave repetida é o caso que as telas tratam por código próprio.
+  if (e.errno === 1062) return "23505";
+  const estado = typeof e.sqlState === "string" ? e.sqlState : "";
+  return /^(21|22|23)/.test(estado) ? estado : null;
+}
+
+function mensagemDoDado(codigo: string): string {
+  if (codigo === "23505") return "Este registro já existe.";
+  if (codigo.startsWith("23")) return "Falta uma informação ligada a este registro, ou ela não existe mais.";
+  return "Algum valor não serve para o campo em que foi posto.";
 }
 
 function lerTexto(bruto: unknown): Busca["texto"] {

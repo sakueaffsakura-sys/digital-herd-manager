@@ -55,14 +55,16 @@ export default function Dashboard({
     },
   });
 
-  const dados = query.data;
+  // Chama-se painel, e não dados, para não cobrir o `dados` importado: o queryFn acima
+  // usa o import, e um nome só para os dois deixaria a consulta dependendo de si mesma.
+  const painel = query.data;
   const meses = useMemo(() => {
     const lista = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(new Date().getFullYear(), new Date().getMonth() - 11 + i, 1);
       return { chave: mesLocalISO(d), mes: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""), atual: i === 11, receitas: 0, despesas: 0, resultado: 0, leite: 0 };
     });
-    const fin = new Map((dados?.financas ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
-    const lt = new Map((dados?.leite ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
+    const fin = new Map((painel?.financas ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
+    const lt = new Map((painel?.leite ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
     for (const m of lista) {
       const f = fin.get(m.chave);
       m.receitas = Number(f?.receitas ?? 0);
@@ -71,9 +73,9 @@ export default function Dashboard({
       m.leite = Number(lt.get(m.chave)?.total_litros ?? 0);
     }
     return lista;
-  }, [dados]);
+  }, [painel]);
 
-  const s = dados?.resumo ?? {};
+  const s = painel?.resumo ?? {};
   const n = (k: string) => Number(s[k] ?? 0);
   const carregando = query.isLoading;
   const v = (x: number, fmt = inteiro) => (carregando ? "…" : fmt(x));
@@ -186,13 +188,13 @@ export default function Dashboard({
               <h2 className="titulo-secao">Esta semana</h2>
               <Button variant="ghost" className="h-10" onClick={() => go("agenda")}>Ver agenda</Button>
             </div>
-            {dados?.semana == null ? (
+            {painel?.semana == null ? (
               <p className="mt-3 text-muted-foreground">{carregando ? "Carregando…" : "A agenda não abriu agora."}</p>
-            ) : dados.semana.length === 0 ? (
+            ) : painel.semana.length === 0 ? (
               <p className="mt-3 text-muted-foreground">Nada marcado para os próximos 7 dias.</p>
             ) : (
               <ul className="mt-3 divide-y divide-border">
-                {dados.semana.map((e, i) => (
+                {painel.semana.map((e, i) => (
                   <li key={`${e.tipo}-${e.data}-${i}`} className="flex min-h-14 items-center gap-3 py-2">
                     <span className="w-14 shrink-0 text-center">
                       <span className="block font-display text-2xl font-extrabold leading-none">{formatarDataBR(e.data).slice(0, 5)}</span>
@@ -210,11 +212,11 @@ export default function Dashboard({
 
           <section className="painel p-4 sm:p-5">
             <h2 className="titulo-secao">Partos previstos</h2>
-            {(dados?.partos ?? []).length === 0 ? (
+            {(painel?.partos ?? []).length === 0 ? (
               <p className="mt-3 text-muted-foreground">{carregando ? "Carregando…" : "Nenhuma vaca com parto previsto."}</p>
             ) : (
               <ul className="mt-3 divide-y divide-border">
-                {(dados?.partos ?? []).map((p) => {
+                {(painel?.partos ?? []).map((p) => {
                   const a = (p.animais ?? null) as unknown as { nome: string | null; numero_brinco: string } | null;
                   return (
                     <li key={p.id} className="flex min-h-14 items-center gap-3 py-2">

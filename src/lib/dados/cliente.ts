@@ -17,7 +17,21 @@
  */
 import type { Database } from "@/integrations/supabase/types";
 
-export type Resposta<T> = { data: T | null; error: { message: string } | null; count: number | null };
+/**
+ * O que deu errado. `code` existe para a tela distinguir um erro de outro sem ler o texto
+ * da mensagem: a importação de planilha, por exemplo, precisa saber se a linha já estava
+ * lá (que não é problema) ou se o banco recusou de verdade.
+ */
+export type ErroDados = { message: string; code?: string; details?: string };
+
+/**
+ * A resposta é uma união de dois casos, e não um objeto com tudo podendo ser nulo. É o que
+ * faz `if (error) return;` já garantir que `data` existe dali para frente — sem isso, cada
+ * tela precisaria de um `!` ou de uma conferência a mais depois de já ter conferido o erro.
+ */
+export type Resposta<T> =
+  | { data: T; error: null; count: number | null }
+  | { data: null; error: ErroDados; count: null };
 
 type Operacao = "=" | "<>" | ">" | ">=" | "<" | "<=" | "contem" | "vazio" | "naoVazio" | "entre" | "em";
 type FiltroPedido = { coluna: string; op: Operacao; valor?: unknown; ate?: unknown };
@@ -51,8 +65,14 @@ async function chamar<T>(corpo: unknown): Promise<Resposta<T>> {
       body: JSON.stringify(corpo),
       credentials: "same-origin",
     });
-    const json = (await r.json().catch(() => ({}))) as { linhas?: T; total?: number; erro?: string };
-    if (!r.ok) return { data: null, error: { message: json.erro ?? "Não deu para falar com o servidor." }, count: null };
+    const json = (await r.json().catch(() => ({}))) as { linhas?: T; total?: number; erro?: string; codigo?: string };
+    if (!r.ok) {
+      return {
+        data: null,
+        error: { message: json.erro ?? "Não deu para falar com o servidor.", ...(json.codigo ? { code: json.codigo } : {}) },
+        count: null,
+      };
+    }
     return { data: (json.linhas ?? null) as T, error: null, count: json.total ?? null };
   } catch {
     return { data: null, error: { message: "Sem conexão com o servidor." }, count: null };
@@ -133,8 +153,8 @@ class Consulta<T> implements PromiseLike<Resposta<T[]>> {
     return { data: linhas[0]!, error: null, count: 1 };
   }
 
-  /** Espera uma linha ou nenhuma. */
-  async maybeSingle(): Promise<Resposta<T>> {
+  /** Espera uma linha ou nenhuma. Não achar não é erro: volta `data: null`. */
+  async maybeSingle(): Promise<Resposta<T | null>> {
     const r = await chamar<T[]>({ ...this.pedido(), porPagina: 1 });
     if (r.error) return { data: null, error: r.error, count: null };
     return { data: (r.data ?? [])[0] ?? null, error: null, count: r.count };
@@ -167,7 +187,7 @@ class Gravacao<T> implements PromiseLike<Resposta<T[]>> {
     if (!linhas.length) return { data: null, error: { message: "Nada foi gravado." }, count: null };
     return { data: linhas[0]!, error: null, count: 1 };
   }
-  maybeSingle(): Promise<Resposta<T>> { return this.single(); }
+  maybeSingle(): Promise<Resposta<T | null>> { return this.single(); }
 
   then<R1 = Resposta<T[]>, R2 = never>(
     aoResolver?: ((v: Resposta<T[]>) => R1 | PromiseLike<R1>) | null,
