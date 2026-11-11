@@ -48,11 +48,16 @@ echo "== O banco recusa dado inválido =="
 recusa "sexo fora da lista" "insert into animais (id,propriedade_id,numero_brinco,sexo,situacao) values (uuid(),'22222222-2222-4222-8222-222222222222','9001','X','ativo')"
 recusa "brinco repetido na mesma propriedade" "insert into animais (id,propriedade_id,numero_brinco,sexo,situacao) values (uuid(),'22222222-2222-4222-8222-222222222222','1124','M','ativo')"
 recusa "peso de pesagem zero" "insert into pesagens (id,propriedade_id,animal_id,data,peso_kg) values (uuid(),'22222222-2222-4222-8222-222222222222','44444444-4444-4444-8444-444444444444','2026-11-10',0)"
-recusa "animal filho de si mesmo" "update animais set mae_id=id where numero_brinco='1124'"
 recusa "propriedade que não existe" "insert into lotes (id,propriedade_id,nome) values (uuid(),'99999999-9999-4999-8999-999999999999','Fantasma')"
 recusa "vacinação sem animal e sem lote" "insert into vacinacoes (id,propriedade_id,tipo_vacina_id,data_aplicacao) values (uuid(),'22222222-2222-4222-8222-222222222222','44444444-4444-4444-8444-444444444444','2026-11-10')"
 recusa "temperatura impossível no clima" "insert into clima_obs (id,propriedade_id,data,temp_max) values (uuid(),'22222222-2222-4222-8222-222222222222','2026-11-10',900)"
 recusa "parto previsto antes da inseminação" "insert into inseminacoes (id,propriedade_id,animal_id,data_inseminacao,reprodutor_semen,previsao_parto,situacao) values (uuid(),'22222222-2222-4222-8222-222222222222','44444444-4444-4444-8444-444444444444','2026-11-10','Touro','2026-11-01','em_andamento')"
+
+echo "== Regras que o MySQL não guarda e o servidor precisa conferir =="
+# O MySQL proíbe verificação em coluna que perde a referência ao apagar o apontado.
+# Aqui só se confere que a lista dessas regras existe; quem as aplica é o servidor.
+pendentes=$(grep -vc '^#' "$AQUI/regras-no-servidor.txt" || true)
+conferir "regras anotadas para o servidor" "2" "$pendentes"
 
 echo "== Apagar a propriedade leva junto o que é dela =="
 sql "delete from propriedades where id='22222222-2222-4222-8222-222222222222';"

@@ -155,8 +155,17 @@ for linha in ler("fks.txt"):
     fks.append((t_o, c_o, t_d, c_d, acao))
 
 checks = {}
+# O MySQL proíbe verificação numa coluna que, ao apagar o registro apontado, "perde a
+# referência" (ON DELETE SET NULL). Essas poucas regras passam a ser conferidas pelo
+# servidor, e ficam anotadas em regras-no-servidor.txt para não se perderem.
+colunas_que_perdem_referencia = {(t_o, c_o) for t_o, c_o, _, _, acao in fks if acao == "SETNULL"}
+movidas = []
 for linha in ler("checks.txt"):
     tabela, nome, expr = linha.split(" ", 2)
+    citadas = set(re.findall(r"\b[a-z_]+\b", expr))
+    if any((tabela, c) in colunas_que_perdem_referencia for c in citadas):
+        movidas.append(f"{tabela} {nome} {expr}")
+        continue
     checks.setdefault(tabela, []).append((nome, expr))
 
 tabelas = {}
@@ -319,5 +328,11 @@ for t_o, c_o, t_d, c_d, acao in fks:
 partes += ["", "SET FOREIGN_KEY_CHECKS = 1;", ""]
 
 SAIDA.write_text("\n".join(partes), encoding="utf-8")
-print(f"{len(ordem)} tabelas, {len(fks)} ligações, {sum(len(v) for v in checks.values())} verificações")
+# A ordem de dependência serve também para a migração dos dados.
+(BASE / "ordem.txt").write_text("\n".join(ordem) + "\n", encoding="utf-8")
+(BASE / "regras-no-servidor.txt").write_text(
+    "# Regras que o MySQL não aceita guardar e que o servidor precisa conferir ao gravar.\n"
+    + "\n".join(movidas) + "\n", encoding="utf-8")
+print(f"{len(ordem)} tabelas, {len(fks)} ligações, {sum(len(v) for v in checks.values())} verificações no banco, "
+      f"{len(movidas)} regra(s) que passam para o servidor")
 print(f"gravado em {SAIDA}")

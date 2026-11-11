@@ -849,9 +849,7 @@ CREATE TABLE `animais` (
   UNIQUE KEY `animais_propriedade_id_numero_brinco_uq` (`propriedade_id`,`numero_brinco`),
   KEY `animais_lote_id_idx` (`lote_id`),
   KEY `animais_mae_id_idx` (`mae_id`),
-  KEY `animais_pai_id_idx` (`pai_id`),
-  CONSTRAINT `animais_mae_dif` CHECK (mae_id IS NULL OR mae_id <> id),
-  CONSTRAINT `animais_pai_dif` CHECK (pai_id IS NULL OR pai_id <> id)
+  KEY `animais_pai_id_idx` (`pai_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `animal_extra` (
