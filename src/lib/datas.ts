@@ -63,6 +63,66 @@ export function somarDias(iso: string, dias: number): string {
   return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`;
 }
 
+/**
+ * Quanto o relógio de Brasília está atrasado em relação ao UTC, em minutos, naquele
+ * instante. Vem do fuso, e não de um "-3" escrito à mão, porque horário de verão já
+ * existiu no Brasil e pode voltar.
+ */
+function deslocamentoDoFuso(d: Date, fuso: string): number {
+  try {
+    const texto = new Intl.DateTimeFormat("en-US", { timeZone: fuso, timeZoneName: "longOffset" })
+      .formatToParts(d)
+      .find((p) => p.type === "timeZoneName")?.value ?? "GMT+00:00";
+    const m = /GMT([+-])(\d{2}):(\d{2})/.exec(texto);
+    if (!m) return 0;
+    return (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * O instante em que começa um dia do calendário brasileiro.
+ *
+ * Serve para comparar com coluna de data E hora, que o banco guarda em UTC: o dia 1º de
+ * novembro no Brasil começa às 03:00 UTC, então quem comparar com "2026-11-01 00:00" pega
+ * três horas do mês anterior.
+ */
+export function inicioDoDiaNoFuso(iso: string, fuso: string = FUSO_PADRAO): Date {
+  const [a, m, d] = iso.split("-").map(Number);
+  const palpite = Date.UTC(a, m - 1, d);
+  const desloc = deslocamentoDoFuso(new Date(palpite), fuso);
+  return new Date(palpite - desloc * 60_000);
+}
+
+/** Primeiro dia do mês de uma data AAAA-MM-DD. */
+export function primeiroDiaDe(iso: string): string {
+  return `${iso.slice(0, 7)}-01`;
+}
+
+/** Primeiro dia do mês seguinte ao de uma data AAAA-MM-DD. */
+export function primeiroDiaDoMesSeguinte(iso: string): string {
+  const [a, m] = iso.split("-").map(Number);
+  return m === 12 ? `${a + 1}-01-01` : `${a}-${pad2(m + 1)}-01`;
+}
+
+/**
+ * Semana do ano no padrão ISO 8601 ("2026-46"), igual ao `to_char(data, 'IYYY-IW')` do
+ * PostgreSQL: a semana começa na segunda e pertence ao ano que tem a quinta-feira dela.
+ */
+export function semanaISO(iso: string): string {
+  const [a, m, d] = iso.split("-").map(Number);
+  const dia = new Date(Date.UTC(a, m - 1, d));
+  const diaDaSemana = (dia.getUTCDay() + 6) % 7; // 0 = segunda
+  const quinta = new Date(dia.getTime() + (3 - diaDaSemana) * 86_400_000);
+  const ano = quinta.getUTCFullYear();
+  const primeiraQuinta = new Date(Date.UTC(ano, 0, 4));
+  const deslocPrimeira = (primeiraQuinta.getUTCDay() + 6) % 7;
+  const segundaDaSemana1 = new Date(primeiraQuinta.getTime() - deslocPrimeira * 86_400_000);
+  const semana = Math.round((quinta.getTime() - segundaDaSemana1.getTime()) / (7 * 86_400_000)) + 1;
+  return `${ano}-${pad2(semana)}`;
+}
+
 /** Primeiro dia do mês `deslocamento` meses antes/depois de `base` (local). */
 export function primeiroDiaDoMes(deslocamento = 0, base: Date = new Date()): string {
   const d = new Date(base.getFullYear(), base.getMonth() + deslocamento, 1);

@@ -696,6 +696,7 @@ CREATE TABLE `notificacoes` (
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `chave` VARCHAR(255) NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `notificacoes_user_id_chave_uq` (`user_id`,`chave`),
   KEY `notificacoes_propriedade_id_idx` (`propriedade_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

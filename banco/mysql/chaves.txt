@@ -54,6 +54,7 @@ movimentacoes_financeiras PK id
 nascimentos PK id
 nascimentos UQ bezerro_id
 notificacoes PK id
+notificacoes UQ user_id,chave
 ocorr_reprod PK id
 ocorrencias PK id
 pagamentos PK id

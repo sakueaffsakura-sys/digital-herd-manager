@@ -11,6 +11,8 @@
 import { consultar, consultarUm, executar, instanteUtc } from "./banco.server";
 import { exigirAdmin, exigirPropriedade, AcessoNegado, type Quem } from "./acesso";
 import { resumoDoToken } from "@/lib/conta/sessao";
+import { dashboardResumo } from "./resumo.server";
+import { centralAvisos } from "./avisos.server";
 
 export type Consulta = (quem: Quem, argumentos: Record<string, unknown>) => Promise<unknown>;
 
@@ -83,31 +85,10 @@ async function encerrarSessao(quem: Quem, argumentos: Record<string, unknown>): 
   return afetadas > 0;
 }
 
-/** Números da tela inicial de uma fazenda. */
-async function dashboardResumo(quem: Quem, argumentos: Record<string, unknown>): Promise<unknown> {
-  const p = [propriedadeDe(quem, argumentos)];
-  const [animais, lotes, leite, pendentes] = await Promise.all([
-    consultarUm<{ total: number; femeas: number; machos: number }>(
-      `SELECT COUNT(*) AS total,
-              SUM(sexo = 'F') AS femeas,
-              SUM(sexo = 'M') AS machos
-       FROM animais WHERE propriedade_id = ? AND situacao = 'ativo'`, p),
-    consultarUm<{ total: number }>("SELECT COUNT(*) AS total FROM lotes WHERE propriedade_id = ? AND ativo = 1", p),
-    consultarUm<{ litros: number }>(
-      `SELECT COALESCE(SUM(litros), 0) AS litros FROM producao_leite
-       WHERE propriedade_id = ? AND data >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`, p),
-    consultarUm<{ total: number }>(
-      "SELECT COUNT(*) AS total FROM tarefas WHERE propriedade_id = ? AND status <> 'Concluída'", p),
-  ]);
-  return {
-    animais_ativos: Number(animais?.total ?? 0),
-    femeas: Number(animais?.femeas ?? 0),
-    machos: Number(animais?.machos ?? 0),
-    lotes_ativos: Number(lotes?.total ?? 0),
-    litros_7dias: Number(leite?.litros ?? 0),
-    tarefas_pendentes: Number(pendentes?.total ?? 0),
-  };
-}
+/*
+ * Os números do Início e a central de avisos moram em arquivo próprio: são as duas
+ * consultas mais compridas, e as que mais aparecem na tela.
+ */
 
 /** Quantas mensagens de suporte esperam resposta, para o administrador. */
 async function adminSuporte(quem: Quem): Promise<unknown> {
@@ -138,7 +119,8 @@ export const CONSULTAS: Record<string, Consulta> = {
   sou_assinante: souAssinante,
   minhas_sessoes: (quem) => minhasSessoes(quem),
   encerrar_sessao: encerrarSessao,
-  dashboard_resumo: dashboardResumo,
+  dashboard_resumo: (quem, argumentos) => dashboardResumo(quem, propriedadeDe(quem, argumentos)),
+  central_avisos: (quem, argumentos) => centralAvisos(quem, propriedadeDe(quem, argumentos)),
   admin_suporte: (quem) => adminSuporte(quem),
   admin_2fa_resumo: (quem) => admin2faResumo(quem),
 };

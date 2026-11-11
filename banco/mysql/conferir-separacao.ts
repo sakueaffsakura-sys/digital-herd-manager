@@ -12,6 +12,7 @@ import { usarPool, consultar, executar } from "../../src/lib/dados/banco.server"
 import { listar, obter, criar, atualizar, apagar } from "../../src/lib/dados/repositorio.server";
 import { AcessoNegado, type Quem } from "../../src/lib/dados/acesso";
 import { rodarConsulta } from "../../src/lib/dados/consultas.server";
+import { dataNoFuso, somarDias } from "../../src/lib/datas";
 import mysql from "mysql2/promise";
 
 const NAIR = "11111111-1111-4111-8111-111111111111";
@@ -120,6 +121,70 @@ await recusa("pedir o resumo sem dizer a fazenda", () => rodarConsulta("dashboar
 await recusa("chamar consulta de administrador sem ser", () => rodarConsulta("admin_suporte", dona, {}));
 await recusa("chamar consulta que não existe", () => rodarConsulta("apagar_tudo", chefe, {}));
 conferir("quem é administrador sai do banco, não do pedido", false, await rodarConsulta("sou_admin", dona, { admin: true }));
+
+console.log("== Vacina: só a última dose cobra algo ==");
+const hoje = dataNoFuso();
+const VACINA_NAIR = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+await executar("INSERT INTO tipos_vacinas (id, propriedade_id, nome, intervalo_dias) VALUES (?, ?, 'Aftosa', 180)", [VACINA_NAIR, FAZENDA_NAIR]);
+// A Jóia tomou a dose antiga (venceu) e depois o reforço (vence ano que vem): não deve cobrar nada.
+await executar(
+  `INSERT INTO vacinacoes (id, propriedade_id, animal_id, tipo_vacina_id, data_aplicacao, proxima_aplicacao)
+   VALUES (UUID(), ?, ?, ?, ?, ?)`,
+  [FAZENDA_NAIR, animalDaNair, VACINA_NAIR, somarDias(hoje, -400), somarDias(hoje, -200)],
+);
+await executar(
+  `INSERT INTO vacinacoes (id, propriedade_id, animal_id, tipo_vacina_id, data_aplicacao, proxima_aplicacao)
+   VALUES (UUID(), ?, ?, ?, ?, ?)`,
+  [FAZENDA_NAIR, animalDaNair, VACINA_NAIR, somarDias(hoje, -30), somarDias(hoje, 150)],
+);
+const resumoVacina = await rodarConsulta("dashboard_resumo", dona, { propriedade_id: FAZENDA_NAIR }) as Record<string, number>;
+conferir("dose antiga com reforço depois não conta como atrasada", 0, resumoVacina["vacinas_vencidas"]);
+// O outro animal tomou uma dose só, e ela venceu.
+await executar(
+  `INSERT INTO vacinacoes (id, propriedade_id, animal_id, tipo_vacina_id, data_aplicacao, proxima_aplicacao)
+   VALUES (UUID(), ?, ?, ?, ?, ?)`,
+  [FAZENDA_NAIR, comLixo, VACINA_NAIR, somarDias(hoje, -300), somarDias(hoje, -10)],
+);
+const resumoVacina2 = await rodarConsulta("dashboard_resumo", dona, { propriedade_id: FAZENDA_NAIR }) as Record<string, number>;
+conferir("dose única vencida conta uma vez", 1, resumoVacina2["vacinas_vencidas"]);
+
+console.log("== Os números do Início têm as chaves que as telas leem ==");
+// O leite é medido pela diferença: já existe um lançamento de outra conferência, e a data
+// dele cai perto de hoje quando esta conferência roda em novembro de 2026.
+const antes = await rodarConsulta("dashboard_resumo", dona, { propriedade_id: FAZENDA_NAIR }) as Record<string, number>;
+await executar("INSERT INTO producao_leite (id, propriedade_id, animal_id, data, litros) VALUES (UUID(), ?, ?, ?, 30)", [FAZENDA_NAIR, animalDaNair, hoje]);
+await executar("INSERT INTO producao_leite (id, propriedade_id, animal_id, data, litros) VALUES (UUID(), ?, ?, ?, 25)", [FAZENDA_NAIR, animalDaNair, somarDias(hoje, -1)]);
+const inicio = await rodarConsulta("dashboard_resumo", dona, { propriedade_id: FAZENDA_NAIR }) as Record<string, number>;
+const faltando = ["total_animais", "animais_ativos", "bezerros", "vacinacoes_em_dia", "inseminacoes", "nascidos_mes",
+  "perdas_mes", "vendas_mes", "compras_mes", "receitas_mes", "despesas_mes", "investimentos_mes", "leite_mes",
+  "total_lotes", "leite_hoje", "leite_ontem", "vacinas_vencidas", "partos_30d"].filter((k) => !(k in inicio));
+conferir("não falta nenhuma das 18 chaves do Início", [], faltando);
+conferir("o leite de hoje entrou em leite_hoje", 30, inicio["leite_hoje"]! - antes["leite_hoje"]!);
+conferir("e o de ontem em leite_ontem", 25, inicio["leite_ontem"]! - antes["leite_ontem"]!);
+// No dia 1º, "ontem" é do mês passado e não entra na soma do mês.
+conferir("o mês soma o que é do mês", hoje.endsWith("-01") ? 30 : 55, inicio["leite_mes"]! - antes["leite_mes"]!);
+
+console.log("== Central de avisos ==");
+type AvisoLido = { chave: string; nivel: string; secao: string; titulo: string; texto: string };
+await criar(dona, "tarefas", { propriedade_id: FAZENDA_NAIR, titulo: "Consertar a cerca", tipo: "Geral", data: somarDias(hoje, -5), prioridade: "Normal", status: "Pendente" });
+const avisos = await rodarConsulta("central_avisos", dona, { propriedade_id: FAZENDA_NAIR }) as AvisoLido[];
+const chaves = avisos.map((a) => a.chave.split(":")[0]);
+conferir("a vacina atrasada vem antes da tarefa atrasada", true, chaves.indexOf("vacinas_atrasadas") === 0 && chaves.includes("tarefa_atrasada"));
+conferir("a chave da vacina leva a quantidade e a data", true, /^vacinas_atrasadas:1:\d{4}-\d{2}-\d{2}$/.test(avisos[0]?.chave ?? ""));
+conferir("o aviso da vacina é alerta e aponta a seção", "alerta/vacinacao", `${avisos[0]?.nivel}/${avisos[0]?.secao}`);
+const tarefaAtrasada = avisos.find((a) => a.chave.startsWith("tarefa_atrasada"))!;
+conferir("o texto da tarefa diz o dia em DD/MM", true, tarefaAtrasada.texto.includes(`${somarDias(hoje, -5).slice(8, 10)}/${somarDias(hoje, -5).slice(5, 7)}`));
+conferir("o vizinho não recebe os avisos da fazenda alheia", 0, (await rodarConsulta("central_avisos", vizinho, { propriedade_id: FAZENDA_JOAO }) as AvisoLido[]).length);
+await recusa("pedir os avisos da fazenda do vizinho", () => rodarConsulta("central_avisos", dona, { propriedade_id: FAZENDA_JOAO }));
+
+console.log("== Dispensar um aviso esconde aquela situação, e só ela ==");
+await executar(
+  "INSERT INTO notificacoes (id, user_id, propriedade_id, titulo, mensagem, lida, chave) VALUES (UUID(), ?, ?, ?, ?, 1, ?)",
+  [NAIR, FAZENDA_NAIR, avisos[0]!.titulo, avisos[0]!.texto, avisos[0]!.chave],
+);
+const depois = await rodarConsulta("central_avisos", dona, { propriedade_id: FAZENDA_NAIR }) as AvisoLido[];
+conferir("o aviso dispensado saiu", false, depois.some((a) => a.chave === avisos[0]!.chave));
+conferir("os outros continuam", true, depois.some((a) => a.chave.startsWith("tarefa_atrasada")));
 
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 await executar("DELETE FROM propriedades WHERE id = ?", [FAZENDA_NAIR]);
