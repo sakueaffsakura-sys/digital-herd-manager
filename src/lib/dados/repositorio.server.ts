@@ -19,6 +19,8 @@ export type Filtro = { coluna: string; op: Comparacao; valor?: unknown; ate?: un
 
 export type Busca = {
   tabela: string;
+  /** Colunas desejadas. Sem isto, vêm todas. Nome fora da lista da tabela é recusado. */
+  colunas?: readonly string[];
   filtros?: readonly Filtro[];
   /** Procura o texto em várias colunas ao mesmo tempo. */
   texto?: { termo: string; colunas: readonly string[] };
@@ -132,9 +134,12 @@ export async function listar<T = Record<string, unknown>>(quem: Quem, busca: Bus
   const porPagina = Math.min(Math.max(1, busca.porPagina ?? POR_PAGINA_PADRAO), POR_PAGINA_MAXIMO);
   const pagina = Math.max(1, busca.pagina ?? 1);
   const pulo = (pagina - 1) * porPagina;
+  const escolhidas = busca.colunas?.length
+    ? busca.colunas.map((c) => { exigirColuna(tabela, c); return crase(c); }).join(",")
+    : "*";
   const [linhas, contagem] = await Promise.all([
     // Limite e pulo entram já conferidos como número, nunca como texto do navegador.
-    consultar<T>(`SELECT * FROM ${crase(tabela)} WHERE ${onde.sql}${montarOrdem(tabela, busca.ordem)} LIMIT ${porPagina} OFFSET ${pulo}`, onde.valores),
+    consultar<T>(`SELECT ${escolhidas} FROM ${crase(tabela)} WHERE ${onde.sql}${montarOrdem(tabela, busca.ordem)} LIMIT ${porPagina} OFFSET ${pulo}`, onde.valores),
     consultar<{ total: number }>(`SELECT COUNT(*) AS total FROM ${crase(tabela)} WHERE ${onde.sql}`, onde.valores),
   ]);
   return { linhas, total: Number(contagem[0]?.total ?? 0) };

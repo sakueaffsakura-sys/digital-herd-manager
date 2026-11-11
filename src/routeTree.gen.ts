@@ -17,6 +17,7 @@ import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as ResgateRouteImport } from './routes/resgate'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiDadosRouteImport } from './routes/api/dados'
 import { Route as ApiYuiRouteImport } from './routes/api/yui'
 import { Route as AuthenticatedAppSectionRouteImport } from './routes/_authenticated/app/$section'
 import { Route as ApiAdminChavesRouteImport } from './routes/api/admin/chaves'
@@ -79,6 +80,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiDadosRoute = ApiDadosRouteImport.update({
+  id: '/api/dados',
+  path: '/api/dados',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiYuiRoute = ApiYuiRouteImport.update({
   id: '/api/yui',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/resgate': typeof ResgateRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/dados': typeof ApiDadosRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/api/admin/chaves': typeof ApiAdminChavesRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/resgate': typeof ResgateRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/api/dados': typeof ApiDadosRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/app/$section': typeof AuthenticatedAppSectionRoute
   '/api/admin/chaves': typeof ApiAdminChavesRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/resgate': typeof ResgateRoute
   '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/api/dados': typeof ApiDadosRoute
   '/api/yui': typeof ApiYuiRouteWithChildren
   '/_authenticated/app/$section': typeof AuthenticatedAppSectionRoute
   '/api/admin/chaves': typeof ApiAdminChavesRoute
@@ -404,6 +413,7 @@ export interface RootRouteChildren {
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   ResgateRoute: typeof ResgateRoute
   TermosRoute: typeof TermosRoute
+  ApiDadosRoute: typeof ApiDadosRoute
   ApiYuiRoute: typeof ApiYuiRouteWithChildren
   ApiAdminChavesRoute: typeof ApiAdminChavesRoute
   ApiAdminChavesTestarRoute: typeof ApiAdminChavesTestarRoute
@@ -484,6 +494,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/dados': {
+      id: '/api/dados'
+      path: '/api/dados'
+      fullPath: '/api/dados'
+      preLoaderRoute: typeof ApiDadosRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/yui': {
       id: '/api/yui'
@@ -681,6 +698,7 @@ const rootRouteChildren: RootRouteChildren = {
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   ResgateRoute: ResgateRoute,
   TermosRoute: TermosRoute,
+  ApiDadosRoute: ApiDadosRoute,
   ApiYuiRoute: ApiYuiRouteWithChildren,
   ApiAdminChavesRoute: ApiAdminChavesRoute,
   ApiAdminChavesTestarRoute: ApiAdminChavesTestarRoute,
