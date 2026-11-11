@@ -8,6 +8,7 @@
  */
 import { AcessoNegado, TabelaDesconhecida } from "./acesso";
 import { apagar, atualizar, criar, listar, type Busca, type Filtro } from "./repositorio.server";
+import { rodarConsulta } from "./consultas.server";
 import { quemEsta } from "@/lib/conta/login.server";
 import { allowRequest, clientIp } from "@/lib/rate-limit";
 
@@ -100,6 +101,12 @@ export async function handleDados(request: Request): Promise<Response> {
         if (!id) return resposta(400, { erro: "Diga qual registro apagar." });
         await apagar(quem, tabela, id);
         return resposta(200, { linhas: null, total: 1 });
+      }
+      case "consulta": {
+        // As consultas prontas que antes eram funções dentro do banco.
+        const nome = String(corpo["nome"] ?? "");
+        const argumentos = (corpo["argumentos"] ?? {}) as Record<string, unknown>;
+        return resposta(200, { linhas: await rodarConsulta(nome, quem, argumentos), total: null });
       }
       default:
         return resposta(400, { erro: "Pedido desconhecido." });

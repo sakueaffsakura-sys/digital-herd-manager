@@ -163,4 +163,7 @@ class Alteracao implements PromiseLike<Resposta<null>> {
 
 export const dados = {
   from: (tabela: string) => new Tabela(tabela),
+  /** As consultas prontas que antes eram funções dentro do banco. */
+  rpc: <T = unknown>(nome: string, argumentos: Record<string, unknown> = {}): Promise<Resposta<T>> =>
+    chamar<T>({ acao: "consulta", nome, argumentos }),
 };

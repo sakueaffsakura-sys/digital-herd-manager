@@ -11,6 +11,7 @@
 import { usarPool, consultar, executar } from "../../src/lib/dados/banco.server";
 import { listar, obter, criar, atualizar, apagar } from "../../src/lib/dados/repositorio.server";
 import { AcessoNegado, type Quem } from "../../src/lib/dados/acesso";
+import { rodarConsulta } from "../../src/lib/dados/consultas.server";
 import mysql from "mysql2/promise";
 
 const NAIR = "11111111-1111-4111-8111-111111111111";
@@ -110,6 +111,15 @@ const leite = (await listar<{ data: string; valor_total: string; created_at: Dat
 conferir("a data continua 10/11, sem andar um dia", "2026-11-10", String(leite.data).slice(0, 10));
 conferir("o banco calculou o valor", "44.40", String(leite.valor_total));
 conferir("o instante volta em UTC", true, leite.created_at instanceof Date && Math.abs(Date.now() - leite.created_at.getTime()) < 120_000);
+
+console.log("== Consultas prontas respeitam a mesma separação ==");
+const resumo = await rodarConsulta("dashboard_resumo", dona, { propriedade_id: FAZENDA_NAIR }) as { animais_ativos: number };
+conferir("o resumo da Nair conta só os animais dela", 2, resumo.animais_ativos);
+await recusa("pedir o resumo da fazenda do vizinho", () => rodarConsulta("dashboard_resumo", dona, { propriedade_id: FAZENDA_JOAO }));
+await recusa("pedir o resumo sem dizer a fazenda", () => rodarConsulta("dashboard_resumo", dona, {}));
+await recusa("chamar consulta de administrador sem ser", () => rodarConsulta("admin_suporte", dona, {}));
+await recusa("chamar consulta que não existe", () => rodarConsulta("apagar_tudo", chefe, {}));
+conferir("quem é administrador sai do banco, não do pedido", false, await rodarConsulta("sou_admin", dona, { admin: true }));
 
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 await executar("DELETE FROM propriedades WHERE id = ?", [FAZENDA_NAIR]);
