@@ -50,8 +50,12 @@ export function usarPool(p: mysql.Pool | null): void {
   poolAtual = p;
 }
 
+/** O que o driver aceita como valor. Converter aqui evita espalhar conversão pelo código. */
+type ValoresDoDriver = Parameters<mysql.Pool["execute"]>[1];
+const valoresPara = (valores: readonly unknown[]) => valores as unknown as ValoresDoDriver;
+
 export async function consultar<T = Record<string, unknown>>(sql: string, valores: readonly unknown[] = []): Promise<T[]> {
-  const [linhas] = await pool().execute(sql, valores as unknown[]);
+  const [linhas] = await pool().execute(sql, valoresPara(valores));
   return linhas as T[];
 }
 
@@ -61,7 +65,7 @@ export async function consultarUm<T = Record<string, unknown>>(sql: string, valo
 }
 
 export async function executar(sql: string, valores: readonly unknown[] = []): Promise<{ afetadas: number }> {
-  const [r] = await pool().execute(sql, valores as unknown[]);
+  const [r] = await pool().execute(sql, valoresPara(valores));
   return { afetadas: (r as mysql.ResultSetHeader).affectedRows ?? 0 };
 }
 
