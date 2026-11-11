@@ -73,9 +73,19 @@ conferir "perfil do usuário apagado" "0" "$(sql "select count(*) from profiles"
 echo "== Migração dos dados: do banco antigo para o novo =="
 sql "drop database if exists ${BANCO}_migrado; create database ${BANCO}_migrado character set utf8mb4 collate utf8mb4_unicode_ci;"
 mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" < "$AQUI/esquema.sql"
-node "$AQUI/supabase-de-mentira.mjs" 54330 >/dev/null 2>&1 &
+node "$AQUI/supabase-de-mentira.mjs" 54330 > "$AQUI/mentira.log" 2>&1 &
 mentira=$!
-sleep 2
+# Espera o servidor de mentira atender, em vez de contar com um tempo fixo.
+pronto=nao
+for _ in $(seq 1 40); do
+  if curl -fsS "http://127.0.0.1:54330/rest/v1/propriedades" >/dev/null 2>&1; then pronto=sim; break; fi
+  sleep 0.5
+done
+if [ "$pronto" != "sim" ]; then
+  echo "  FALHA o Supabase de mentira não subiu. Saída dele:"
+  cat "$AQUI/mentira.log" || true
+  exit 1
+fi
 rm -rf "$AQUI/dados-teste"
 SUPABASE_URL=http://127.0.0.1:54330 SUPABASE_SERVICE_ROLE_KEY=teste   node "$AQUI/migrar.mjs" --saida="$AQUI/dados-teste" >/dev/null
 kill $mentira 2>/dev/null || true
