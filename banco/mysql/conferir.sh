@@ -97,7 +97,9 @@ done
 sqlm() { mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" -N -B -e "$1"; }
 conferir "animal migrado" "1" "$(sqlm "select count(*) from animais")"
 conferir "acento e travessão" "Jóia da Ribeira — ação" "$(sqlm "select nome from animais")"
-conferir "aspas e barra no texto" "Aspas 'simples', barra \\ e quebra" "$(sqlm "select substring_index(observacoes, char(10), 1) from animais")"
+# A comparação é feita DENTRO do banco: a saída em modo texto do mysql escapa a barra
+# e a quebra de linha, e isso faria um texto certo parecer errado.
+conferir "aspas, barra e quebra de linha" "certo" "$(sqlm "select if(observacoes = concat('Aspas ', char(39), 'simples', char(39), ', barra ', char(92), ' e quebra', char(10), 'de linha'), 'certo', 'errado') from animais")"
 # 10/11 às 21h30 em Brasília é 11/11 às 00h30 em UTC: é onde a migração costuma errar o dia.
 conferir "hora convertida para UTC" "2026-11-11 00:30:00.000" "$(sqlm "select created_at from animais")"
 conferir "data continua a mesma" "2026-11-10" "$(sqlm "select data from producao_leite")"
