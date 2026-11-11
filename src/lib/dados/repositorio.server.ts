@@ -11,7 +11,8 @@
  */
 import { conferirGravacao, filtroDeLeitura, type Condicao, type Quem, AcessoNegado } from "./acesso";
 import { colunaValida, COLUNAS_DA_TABELA, type Feitio } from "./colunas";
-import { consultar, executar, instanteUtc } from "./banco.server";
+import { ORDEM_DE_EXCLUSAO } from "./escopos";
+import { consultar, executar, executarEm, emTransacao, instanteUtc } from "./banco.server";
 
 export type Ordem = { coluna: string; crescente?: boolean };
 export type Comparacao = "=" | "<>" | ">" | ">=" | "<" | "<=" | "contem" | "vazio" | "naoVazio" | "entre" | "em";
@@ -203,6 +204,29 @@ export async function apagar(quem: Quem, tabela: string, id: string): Promise<bo
   const atual = await obter<Record<string, unknown>>(quem, tabela, id);
   if (!atual) throw new AcessoNegado("Registro não encontrado.");
   conferirGravacao(tabela, quem, atual);
+  if (tabela === "propriedades") return apagarPropriedade(id);
   const { afetadas } = await executar(`DELETE FROM ${crase(tabela)} WHERE \`id\` = ?`, [id]);
   return afetadas > 0;
+}
+
+/**
+ * Apagar uma fazenda leva junto tudo o que é dela, na ordem: primeiro quem aponta, depois
+ * quem é apontado.
+ *
+ * No banco antigo bastava apagar a linha da fazenda, porque o PostgreSQL só conferia as
+ * referências no fim da operação, quando já não sobrava ninguém apontando. O MySQL confere
+ * na hora: apagar direto esbarra em `nascimentos`, que aponta para `animais`. A ordem é
+ * gerada de `banco/mysql/ordem.txt`, para não poder divergir do banco.
+ *
+ * Tudo numa transação: se qualquer passo falhar, a fazenda continua inteira, e não pela
+ * metade. Quem pode fazer isso já foi conferido por quem chamou.
+ */
+async function apagarPropriedade(id: string): Promise<boolean> {
+  return emTransacao(async (conexao) => {
+    for (const tabela of ORDEM_DE_EXCLUSAO) {
+      await executarEm(conexao, `DELETE FROM ${crase(tabela)} WHERE \`propriedade_id\` = ?`, [id]);
+    }
+    const { afetadas } = await executarEm(conexao, "DELETE FROM `propriedades` WHERE `id` = ?", [id]);
+    return afetadas > 0;
+  });
 }

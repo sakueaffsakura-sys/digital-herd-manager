@@ -69,6 +69,16 @@ export async function executar(sql: string, valores: readonly unknown[] = []): P
   return { afetadas: (r as mysql.ResultSetHeader).affectedRows ?? 0 };
 }
 
+/** O mesmo `executar`, mas dentro de uma transação já aberta por `emTransacao`. */
+export async function executarEm(
+  conexao: mysql.PoolConnection,
+  sql: string,
+  valores: readonly unknown[] = [],
+): Promise<{ afetadas: number }> {
+  const [r] = await conexao.execute(sql, valoresPara(valores));
+  return { afetadas: (r as mysql.ResultSetHeader).affectedRows ?? 0 };
+}
+
 /** Várias gravações que só valem juntas (gravar a venda e o lançamento financeiro, por exemplo). */
 export async function emTransacao<T>(tarefa: (conexao: mysql.PoolConnection) => Promise<T>): Promise<T> {
   const conexao = await pool().getConnection();

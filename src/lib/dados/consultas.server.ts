@@ -15,6 +15,7 @@ import { dashboardResumo } from "./resumo.server";
 import { centralAvisos } from "./avisos.server";
 import { agendaPeriodo, semanaDeHoje } from "./agenda.server";
 import { indicadoresPropriedade } from "./indicadores.server";
+import { minhaAreaAssinante, souAssinante, registrosInconsistentes } from "./assinante.server";
 
 export type Consulta = (quem: Quem, argumentos: Record<string, unknown>) => Promise<unknown>;
 
@@ -59,16 +60,10 @@ async function minhaAssinatura(quem: Quem, argumentos: Record<string, unknown>):
 }
 
 /** Se a fazenda tem Premium valendo agora. */
-async function souAssinante(quem: Quem, argumentos: Record<string, unknown>): Promise<boolean> {
-  const propriedade = propriedadeDe(quem, argumentos);
-  const linha = await consultarUm<{ quantas: number }>(
-    `SELECT COUNT(*) AS quantas FROM assinaturas
-     WHERE propriedade_id = ? AND plano = 'premium' AND status IN ('ativo','trial')
-       AND (data_expiracao IS NULL OR data_expiracao > ?)`,
-    [propriedade, instanteUtc()],
-  );
-  return Number(linha?.quantas ?? 0) > 0;
-}
+/*
+ * `sou_assinante` não recebe propriedade: a pergunta da biblioteca é "esta pessoa é
+ * assinante em algum lugar", e quem responde é `assinante.server.ts`.
+ */
 
 /** As sessões abertas da pessoa, para ela poder encerrar as que não reconhece. */
 async function minhasSessoes(quem: Quem): Promise<unknown> {
@@ -118,7 +113,9 @@ export const CONSULTAS: Record<string, Consulta> = {
   sou_admin: async (quem) => quem.admin,
   pode_gerenciar_planos: async (quem) => quem.admin,
   minha_assinatura: minhaAssinatura,
-  sou_assinante: souAssinante,
+  sou_assinante: (quem) => souAssinante(quem),
+  minha_area_assinante: (quem) => minhaAreaAssinante(quem),
+  registros_inconsistentes: (quem, argumentos) => registrosInconsistentes(quem, propriedadeDe(quem, argumentos)),
   minhas_sessoes: (quem) => minhasSessoes(quem),
   encerrar_sessao: encerrarSessao,
   dashboard_resumo: (quem, argumentos) => dashboardResumo(quem, propriedadeDe(quem, argumentos)),

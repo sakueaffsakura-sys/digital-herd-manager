@@ -296,8 +296,53 @@ conferir("intervalo de 20 dias entre partos não estraga a média", 370, comErro
 conferir("mas as crias continuam contadas como nascimentos", 3, comErro.reproducao["nascidos_ano"]);
 await recusa("pedir os indicadores da fazenda do vizinho", () => rodarConsulta("indicadores_propriedade", dona, { propriedade_id: FAZENDA_JOAO }));
 
+console.log("== Área do assinante: vale a última assinatura, não a primeira ==");
+conferir("sem assinatura, não é assinante", false, await rodarConsulta("sou_assinante", dona, {}));
+const vence = new Date(Date.now() + 40 * 3600_000); // 40 horas: um dia e pouco
+await executar(
+  "INSERT INTO assinaturas (id, user_id, propriedade_id, plano, status, origem, data_expiracao, created_at) VALUES (UUID(), ?, ?, 'premium', 'ativo', 'mercadopago', ?, NOW(3))",
+  [NAIR, FAZENDA_NAIR, vence],
+);
+// Depois veio um cancelamento: é esta a que vale.
+await executar(
+  "INSERT INTO assinaturas (id, user_id, propriedade_id, plano, status, origem, created_at) VALUES (UUID(), ?, ?, 'gratuito', 'cancelado', 'painel', DATE_ADD(NOW(3), INTERVAL 1 SECOND))",
+  [NAIR, FAZENDA_NAIR],
+);
+conferir("a assinatura cancelada depois é a que vale", false, await rodarConsulta("sou_assinante", dona, {}));
+type Area = { assinante: boolean; assinaturas: { propriedade: string; plano: string; ativa: boolean; dias_restantes: number | null }[] };
+const areaCancelada = await rodarConsulta("minha_area_assinante", dona, {}) as Area;
+conferir("a área mostra uma assinatura só por fazenda", 1, areaCancelada.assinaturas.length);
+conferir("e é a última", "gratuito", areaCancelada.assinaturas[0]?.plano);
+// Renovou: agora a última é premium outra vez.
+await executar(
+  "INSERT INTO assinaturas (id, user_id, propriedade_id, plano, status, origem, data_expiracao, created_at) VALUES (UUID(), ?, ?, 'premium', 'ativo', 'mercadopago', ?, DATE_ADD(NOW(3), INTERVAL 2 SECOND))",
+  [NAIR, FAZENDA_NAIR, vence],
+);
+const area = await rodarConsulta("minha_area_assinante", dona, {}) as Area;
+conferir("depois de renovar, é assinante de novo", true, area.assinante);
+conferir("a assinatura está marcada como ativa", true, area.assinaturas[0]?.ativa);
+conferir("40 horas restantes viram 2 dias, arredondando para cima", 2, area.assinaturas[0]?.dias_restantes);
+conferir("o vizinho não vê a assinatura da fazenda alheia", 0, (await rodarConsulta("minha_area_assinante", vizinho, {}) as Area).assinaturas.length);
+
+console.log("== Diagnóstico: aponta o registro impossível, sem corrigir ==");
+conferir("sem nada estranho, a lista é vazia", 0, (await rodarConsulta("registros_inconsistentes", dona, { propriedade_id: FAZENDA_NAIR }) as unknown[]).length);
+await executar("INSERT INTO pesagens (id, propriedade_id, animal_id, data, peso_kg) VALUES (UUID(), ?, ?, ?, 300)", [FAZENDA_NAIR, animalDaNair, somarDias(hoje, 5)]);
+type Achado = { tabela: string; checagem: string; qtd: number };
+const achados = await rodarConsulta("registros_inconsistentes", dona, { propriedade_id: FAZENDA_NAIR }) as Achado[];
+conferir("a pesagem com data no futuro foi apontada", "datas/1", `${achados[0]?.tabela}/${achados[0]?.qtd}`);
+conferir("mas continua no banco: quem lançou é que decide", 1,
+  Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM pesagens WHERE propriedade_id = ? AND data > ?", [FAZENDA_NAIR, hoje]))[0]?.n));
+await recusa("pedir o diagnóstico da fazenda do vizinho", () => rodarConsulta("registros_inconsistentes", dona, { propriedade_id: FAZENDA_JOAO }));
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
-await executar("DELETE FROM propriedades WHERE id = ?", [FAZENDA_NAIR]);
+// Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências
+// na hora, então um DELETE direto na fazenda esbarraria em nascimentos -> animais.
+await recusa("o vizinho não apaga a fazenda alheia", () => apagar(vizinho, "propriedades", FAZENDA_NAIR));
+conferir("a dona apaga a fazenda dela", true, await apagar(dona, "propriedades", FAZENDA_NAIR));
+conferir("não sobrou nascimento da fazenda apagada", 0,
+  Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM nascimentos WHERE propriedade_id = ?", [FAZENDA_NAIR]))[0]?.n));
+conferir("nem pesagem", 0,
+  Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM pesagens WHERE propriedade_id = ?", [FAZENDA_NAIR]))[0]?.n));
 conferir("a Nair ficou sem animais", 0, (await listar(dona, { tabela: "animais" })).total);
 conferir("o João continua com o dele", 1, (await listar(vizinho, { tabela: "animais" })).total);
 

@@ -135,8 +135,39 @@ linhas_cols += [
 COLUNAS.write_text("\n".join(linhas_cols), encoding="utf-8")
 print(f"colunas gravadas em {COLUNAS}")
 
+# A ordem de apagar uma fazenda.
+#
+# No PostgreSQL bastava apagar a linha da fazenda: as regras de "apagar junto" resolviam
+# o resto, e as que dizem "não apague se alguém aponta para cá" eram conferidas só no fim
+# da operação, quando já não sobrava ninguém apontando. O MySQL confere na hora, então
+# apagar a fazenda direto esbarra em `nascimentos`, que aponta para `animais`.
+#
+# A saída é o servidor apagar na ordem, de baixo para cima: primeiro quem aponta, depois
+# quem é apontado. A ordem vem de ordem.txt (a mesma da importação, de cima para baixo)
+# invertida, então não dá para divergir do que o banco tem.
+ordem_importacao = [l.strip() for l in (BASE / "ordem.txt").read_text(encoding="utf-8").split("\n") if l.strip()]
+faltando = [t for t in escopos if t not in ordem_importacao]
+if faltando:
+    raise SystemExit(f"tabelas fora de ordem.txt: {', '.join(sorted(faltando))}. Rode gerar.py de novo.")
+ordem_exclusao = [t for t in reversed(ordem_importacao) if escopos.get(t) == "propriedade"]
+
+linhas += [
+    "/**",
+    " * A ordem de apagar o que é de uma fazenda: primeiro quem aponta, depois quem é apontado.",
+    " *",
+    " * No banco antigo bastava apagar a linha da fazenda. O MySQL confere as referências na",
+    " * hora, e não no fim da operação, então apagar direto esbarra em `nascimentos`, que",
+    " * aponta para `animais`. Por isso o servidor apaga na ordem.",
+    " */",
+    "export const ORDEM_DE_EXCLUSAO = [",
+]
+for t in ordem_exclusao:
+    linhas.append(f'  "{t}",')
+linhas += ["] as const;", ""]
+
 SAIDA.parent.mkdir(parents=True, exist_ok=True)
 SAIDA.write_text("\n".join(linhas), encoding="utf-8")
+print(f"{len(ordem_exclusao)} tabelas na ordem de exclusão")
 print(f"{len(escopos)} tabelas classificadas")
 for e, ts in sorted(por_escopo.items()):
     print(f"  {e}: {len(ts)}")

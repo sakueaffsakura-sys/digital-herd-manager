@@ -105,3 +105,72 @@ export type TabelaDeDados = keyof typeof ESCOPO_DA_TABELA;
 export function escopoDa(tabela: string): Escopo | null {
   return (ESCOPO_DA_TABELA as Record<string, Escopo>)[tabela] ?? null;
 }
+
+/**
+ * A ordem de apagar o que é de uma fazenda: primeiro quem aponta, depois quem é apontado.
+ *
+ * No banco antigo bastava apagar a linha da fazenda. O MySQL confere as referências na
+ * hora, e não no fim da operação, então apagar direto esbarra em `nascimentos`, que
+ * aponta para `animais`. Por isso o servidor apaga na ordem.
+ */
+export const ORDEM_DE_EXCLUSAO = [
+  "atividades_agro",
+  "alimentacao",
+  "vendas",
+  "vacinacoes",
+  "tratamentos",
+  "tarefas",
+  "producao_leite",
+  "planos_alim",
+  "pesagens",
+  "pedidos_venda",
+  "pedidos_compra",
+  "pasto_mov",
+  "ocorr_reprod",
+  "nascimentos",
+  "mov_animais",
+  "manutencoes",
+  "lancamentos",
+  "irrig_manut",
+  "investimentos",
+  "inseminacoes",
+  "gta",
+  "estoque_mov",
+  "estoque_itens",
+  "engorda",
+  "documentos",
+  "contas",
+  "compras",
+  "cios",
+  "bezerros_info",
+  "avaliacoes",
+  "anotacoes_producao",
+  "animal_extra",
+  "animais",
+  "propriedade_perfil",
+  "propriedade_membros",
+  "plantios",
+  "pastos",
+  "pagamentos",
+  "ocorrencias",
+  "movimentacoes_financeiras",
+  "maquinas",
+  "lotes",
+  "irrigacoes",
+  "irrig_sistemas",
+  "instalacoes",
+  "importacoes",
+  "horas_trabalho",
+  "funcionarios",
+  "fornecedores",
+  "cotacoes",
+  "configuracoes",
+  "clima_obs",
+  "clientes",
+  "campanhas",
+  "assinaturas",
+  "tipos_vacinas",
+  "talhoes",
+  "registros_excluidos",
+  "qualidade_leite",
+] as const;
