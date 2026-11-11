@@ -1,0 +1,42 @@
+PECUÁRIA DIGITAL — pacote para a hospedagem
+===========================================
+
+O que tem aqui dentro
+---------------------
+app.js      o arquivo que a hospedagem chama para ligar o site
+server/     o site em si (páginas e serviços)
+public/     imagens, estilos e o restante que o navegador baixa
+package.json  identificação do aplicativo para a hospedagem
+
+Como subir (cPanel)
+-------------------
+1. No cPanel, abra "Gerenciador de Arquivos" e crie uma pasta fora de public_html,
+   por exemplo:  pecuaria
+2. Envie este arquivo .zip para dentro dela e use "Extrair".
+3. No cPanel, abra "Setup Node.js App" (ou "Aplicativo Node.js") e clique em "Create Application":
+      Node.js version .......  22 (ou a mais nova que aparecer)
+      Application mode ......  Production
+      Application root ......  pecuaria
+      Application URL .......  o seu domínio
+      Application startup ...  app.js
+4. Em "Environment variables", acrescente (os valores você já tem):
+      SUPABASE_URL
+      SUPABASE_PUBLISHABLE_KEY
+      SUPABASE_SERVICE_ROLE_KEY     <- segredo, só aqui
+      CHAVES_MESTRA                 <- segredo, só aqui
+      PROXIES_CONFIAVEIS = 1
+   Se usar a Yui (o atendimento por inteligência artificial), acrescente também LOVABLE_API_KEY.
+5. Clique em "Create" e depois em "Restart".
+
+Confira
+-------
+Abra o seu domínio. Se aparecer a tela de entrar, está no ar.
+
+Atenção
+-------
+- Nunca coloque SUPABASE_SERVICE_ROLE_KEY nem CHAVES_MESTRA dentro de um arquivo do site.
+  Elas ficam só nas variáveis do aplicativo, nesta tela do cPanel.
+- Não coloque esta pasta dentro de public_html. Se ficar lá, qualquer pessoa pode baixar
+  os arquivos do servidor pelo navegador.
+- PROXIES_CONFIAVEIS = 1 é o que faz o site enxergar o endereço de quem acessa. Sem isso,
+  o controle de abuso trata todo mundo como a mesma pessoa e trava o site sozinho.
