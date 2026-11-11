@@ -385,6 +385,11 @@ export function rpc(nome, { admin, assinante = false }) {
         ...status.filter((v) => v.dias_restantes >= 0 && v.dias_restantes <= 40).map((v) => ({ data: v.proxima_aplicacao, tipo: "vacina", registro_id: v.id, animal_id: v.animal_id, titulo: v.tipos_vacinas.nome, detalhe: v.animais.nome ?? v.animais.numero_brinco, brinco: v.animais.numero_brinco, situacao: v.status_atual })),
         ...inseminacoes.filter((i) => i.previsao_parto <= dataISO(40)).map((i) => ({ data: i.previsao_parto, tipo: "parto", registro_id: i.id, animal_id: i.animal_id, titulo: "Parto previsto", detalhe: i.animais.nome ?? i.animais.numero_brinco, brinco: i.animais.numero_brinco, situacao: i.situacao })),
         { data: dataISO(3), tipo: "cio", registro_id: inseminacoes[3].id, animal_id: inseminacoes[3].animal_id, titulo: "Observar retorno de cio", detalhe: inseminacoes[3].animais.nome, brinco: inseminacoes[3].animais.numero_brinco, situacao: "em_andamento" },
+        // Compromissos das áreas que vieram do aplicativo.
+        ...TABELAS_APLICATIVO.tarefas.filter((t) => t.status !== "Concluída").map((t) => ({ data: t.data, tipo: "tarefa", registro_id: t.id, animal_id: null, titulo: t.titulo, detalhe: TABELAS_APLICATIVO.funcionarios.find((f) => f.id === t.responsavel_id)?.nome ?? t.setor, brinco: null, situacao: t.status })),
+        { data: dataISO(2), tipo: "retorno", registro_id: TABELAS_APLICATIVO.tratamentos[0].id, animal_id: TABELAS_APLICATIVO.tratamentos[0].animal_id, titulo: "Reavaliar: mastite no quarto traseiro direito", detalhe: "Pintada", brinco: "1054", situacao: "Em tratamento" },
+        ...TABELAS_APLICATIVO.contas.filter((c) => c.status === "Aberta").map((c) => ({ data: c.vencimento, tipo: "conta", registro_id: c.id, animal_id: null, titulo: c.descricao, detalhe: c.parte, brinco: null, situacao: c.status })),
+        { data: dataISO(5), tipo: "manutencao", registro_id: TABELAS_APLICATIVO.maquinas[1].id, animal_id: null, titulo: "Revisão: Ordenhadeira", detalhe: "Preventiva", brinco: null, situacao: null },
       ].sort((a, b) => a.data.localeCompare(b.data));
       return {
         eventos, truncado: false, hoje: dataISO(0),

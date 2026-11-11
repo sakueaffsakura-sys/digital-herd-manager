@@ -124,3 +124,25 @@ as $function$
   where private.tem_acesso_propriedade(_propriedade_id)
     and not exists (select 1 from public.notificacoes n where n.user_id = auth.uid() and n.chave = l.chave)
 $function$;
+
+-- ---------------------------------------------------------------------------
+-- Agenda: os compromissos das áreas novas entram no mesmo calendário.
+-- Quatro tipos novos: tarefa, retorno de tratamento, conta a pagar/receber e
+-- revisão de máquina. O resto da função continua igual.
+-- ---------------------------------------------------------------------------
+-- (o corpo completo de agenda_periodo está aplicado no banco; a parte nova é:)
+--
+--   union all
+--   select t.data, 'tarefa', t.id, t.animal_id, t.titulo,
+--          coalesce(f.nome, t.setor, case when l.nome is not null then 'Lote ' || l.nome end), a.numero_brinco, t.status
+--   from public.tarefas t
+--   left join public.funcionarios f on f.id = t.responsavel_id
+--   left join public.animais a on a.id = t.animal_id
+--   left join public.lotes l on l.id = t.lote_id
+--   where t.propriedade_id = _propriedade_id and t.status <> 'Concluída' and t.data between _de and _ate
+--   union all
+--   select tr.retorno, 'retorno', tr.id, tr.animal_id, 'Reavaliar: ' || tr.descricao, …
+--   union all
+--   select c.vencimento, 'conta', c.id, null::uuid, c.descricao, coalesce(c.parte, c.tipo), null::text, c.status …
+--   union all
+--   select mn.proxima_data, 'manutencao', mn.id, null::uuid, 'Revisão: ' || mq.nome, mn.tipo, null::text, null::text …

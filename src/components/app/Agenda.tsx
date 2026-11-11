@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarPlus, ChevronLeft, ChevronRight, HeartPulse, RefreshCw, Scale, Syringe } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, ClipboardCheck, HeartPulse, Receipt, RefreshCw, Scale, Stethoscope, Syringe, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { dataLocalISO, formatarDataBR, somarDias } from "@/lib/datas";
 import { Brinco } from "./Brinco";
 import { Empty, PageTitle } from "./shared";
 
-type Tipo = "vacina" | "parto" | "cio";
+type Tipo = "vacina" | "parto" | "cio" | "tarefa" | "retorno" | "conta" | "manutencao";
 type Evento = { data: string; tipo: Tipo; registro_id: string; animal_id: string | null; titulo: string; detalhe: string | null; brinco: string | null; situacao: string | null };
 type Atrasada = { data: string; registro_id: string; animal_id: string | null; titulo: string; detalhe: string | null; brinco: string | null };
 type SemPesagem = { animal_id: string; nome: string | null; brinco: string; data_nascimento: string | null; ultima_pesagem: string | null };
@@ -18,9 +18,13 @@ const TIPOS: { tipo: Tipo; rotulo: string; icone: typeof Syringe; secao: string 
   { tipo: "vacina", rotulo: "Vacinas", icone: Syringe, secao: "vacinacao" },
   { tipo: "parto", rotulo: "Partos", icone: HeartPulse, secao: "inseminacao" },
   { tipo: "cio", rotulo: "Retorno de cio", icone: RefreshCw, secao: "inseminacao" },
+  { tipo: "tarefa", rotulo: "Tarefas", icone: ClipboardCheck, secao: "tarefas" },
+  { tipo: "retorno", rotulo: "Reavaliar tratamento", icone: Stethoscope, secao: "tratamentos" },
+  { tipo: "conta", rotulo: "Contas", icone: Receipt, secao: "contas" },
+  { tipo: "manutencao", rotulo: "Revisão de máquina", icone: Wrench, secao: "manutencoes" },
 ];
-const SECAO: Record<Tipo, string> = { vacina: "vacinacao", parto: "inseminacao", cio: "inseminacao" };
-const NOME_TIPO: Record<Tipo, string> = { vacina: "Vacina", parto: "Parto", cio: "Cio" };
+const SECAO: Record<Tipo, string> = { vacina: "vacinacao", parto: "inseminacao", cio: "inseminacao", tarefa: "tarefas", retorno: "tratamentos", conta: "contas", manutencao: "manutencoes" };
+const NOME_TIPO: Record<Tipo, string> = { vacina: "Vacina", parto: "Parto", cio: "Cio", tarefa: "Tarefa", retorno: "Tratamento", conta: "Conta", manutencao: "Revisão" };
 
 /** Início da semana (segunda-feira) de uma data AAAA-MM-DD. */
 function inicioDaSemana(iso: string) {
