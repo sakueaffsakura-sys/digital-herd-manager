@@ -56,3 +56,6 @@
 - Bloqueio de acesso: o `on conflict (tipo, valor) where ativo` do PostgreSQL virou ler-e-decidir dentro de uma transação (`seguranca-banco.server.ts`) — why: o MySQL não tem índice único com condição.
 - `Quem` carrega `aal` (passou por 2FA nesta sessão) e `sessaoId`; ausente vale como "aal1" — why: ligar a exigência de 2FA para todos os administradores só pode ser feito por quem já usa 2FA, senão a pessoa se tranca do lado de fora.
 - Toda mudança de plano pelo painel grava em `plano_auditoria` na mesma transação (`admin.server.ts`) — why: um Premium aparecendo do nada sem saber de quem partiu é problema de segurança, não de registro.
+- As visões do banco antigo estão em `banco/mysql/visoes.sql`, escritas à mão (visão é regra, não estrutura), e são SÓ LEITURA: `SOMENTE_LEITURA` em `escopos.ts` recusa gravação com mensagem clara — why: resumo não se grava, altera-se o lançamento que o alimenta.
+- `v_vacinacoes_status` NÃO foi refeita como visão: ela depende de "hoje em Brasília" e visão não recebe parâmetro. Quem calcula é `vacinas.server.ts` — why: duas versões da mesma regra divergem com o tempo.
+- As telas que só leem e gravam tabela já importam `dados` de `@/lib/dados` (13 arquivos); as que usam login, arquivos ou tempo real continuam no cliente antigo até as etapas 3 e 5 — why: trocar tudo de uma vez derrubaria o login antes de existir o novo.

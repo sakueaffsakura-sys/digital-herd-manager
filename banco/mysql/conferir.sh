@@ -23,6 +23,7 @@ recusa() { # recusa "nome" "sql que tem de falhar"
 
 echo "== Criando o esquema =="
 mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "$BANCO" < "$AQUI/esquema.sql"
+mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "$BANCO" < "$AQUI/visoes.sql"
 echo "   esquema aplicado sem erro"
 
 echo "== Estrutura =="
@@ -31,6 +32,8 @@ conferir "tabelas criadas" "$esperadas" "$(sql "select count(*) from information
 # as tabelas de conta já nascem com as ligações dentro do CREATE TABLE
 conferir "tabelas fora do InnoDB ou do utf8mb4" "0" "$(sql "select count(*) from information_schema.tables where table_schema='$BANCO' and table_type='BASE TABLE' and (engine<>'InnoDB' or table_collation not like 'utf8mb4%')")"
 conferir "tabelas sem chave primária" "0" "$(sql "select count(*) from information_schema.tables t where t.table_schema='$BANCO' and t.table_type='BASE TABLE' and not exists (select 1 from information_schema.table_constraints c where c.table_schema=t.table_schema and c.table_name=t.table_name and c.constraint_type='PRIMARY KEY')")"
+visoes=$(grep -c '^CREATE VIEW' "$AQUI/visoes.sql")
+conferir "visões criadas" "$visoes" "$(sql "select count(*) from information_schema.views where table_schema='$BANCO'")"
 
 echo "== Gravando e lendo =="
 sql "insert into usuarios (id,email,senha_hash,email_confirmado_em) values ('11111111-1111-4111-8111-111111111111','teste@exemplo.com','\$2b\$10\$abcdefghijklmnopqrstuv',now(3));
@@ -73,6 +76,7 @@ conferir "perfil do usuário apagado" "0" "$(sql "select count(*) from profiles"
 echo "== Migração dos dados: do banco antigo para o novo =="
 sql "drop database if exists ${BANCO}_migrado; create database ${BANCO}_migrado character set utf8mb4 collate utf8mb4_unicode_ci;"
 mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" < "$AQUI/esquema.sql"
+mysql --protocol=TCP -h "$HOST" -P "$PORTA" -u "$USUARIO" -p"$SENHA" -D "${BANCO}_migrado" < "$AQUI/visoes.sql"
 node "$AQUI/supabase-de-mentira.mjs" 54330 > "$AQUI/mentira.log" 2>&1 &
 mentira=$!
 # Espera o servidor de mentira atender, em vez de contar com um tempo fixo.

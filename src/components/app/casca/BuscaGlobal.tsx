@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { escapeILikeValue, quoteOrValue, termoDeBusca } from "@/lib/busca";
 import { useDebouncedValue } from "../usePagedRows";
 import { Brinco } from "../Brinco";
@@ -46,7 +46,7 @@ export function BuscaGlobal({
     staleTime: 30_000,
     queryFn: async (): Promise<Achado[]> => {
       const t = escapeILikeValue(termoDeBusca(termo));
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("animais")
         .select("id,nome,numero_brinco,situacao")
         .eq("propriedade_id", propriedadeId!)

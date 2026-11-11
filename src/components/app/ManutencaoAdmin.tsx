@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, Eye, Fingerprint, Globe, Hammer, History, Power, ShieldAlert, ShieldCheck, Unlock, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +20,9 @@ type Historico = { id: string; criado_em: string; email: string | null; status_a
 type Painel = { config: Config; totais: { suspeitas: number; negados: number; ips: number; dispositivos: number; contas: number }; tipos: string[]; incidentes: Incidente[]; bloqueios: Bloqueio[]; historico: Historico[] };
 type Filtros = { desde: string; ate: string; ip: string; dispositivo: string; tipo: string; status: string };
 
-const rpc = supabase.rpc.bind(supabase);
+const rpc = dados.rpc.bind(dados);
 /** Para funções novas do banco que ainda não estão nos tipos gerados. */
-const rpcSolta = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+const rpcSolta = dados.rpc.bind(dados) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 /** Opções de duração da manutenção (ela volta sozinha ao normal no fim). */
 const HORAS_MANUTENCAO = [1, 2, 4, 8, 12, 24, 48, 72];
 const MAX_BLOQUEIO_MIN = 1440;

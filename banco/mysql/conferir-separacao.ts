@@ -403,6 +403,21 @@ conferir("ficou no nome de quem pediu, não de quem o pedido disse", NAIR,
 conferir("o pedido não consegue mandar bloquear", 0,
   Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM bloqueios_acesso"))[0]?.n));
 
+console.log("== Visões: resumo por mês, e só de leitura ==");
+const porMes = await listar<{ mes: string; total_litros: string }>(dona, { tabela: "v_producao_mensal", ordem: [{ coluna: "mes" }] });
+conferir("o resumo mensal de leite aparece", true, porMes.total > 0);
+conferir("o mês vem como data, não como texto", true, /^\d{4}-\d{2}-01/.test(String(porMes.linhas[0]?.mes)));
+const somaDoMes = Number((await consultar<{ s: number }>(
+  "SELECT COALESCE(SUM(litros), 0) AS s FROM producao_leite WHERE propriedade_id = ? AND data >= ? AND data < DATE_ADD(?, INTERVAL 1 MONTH)",
+  [FAZENDA_NAIR, `${hoje.slice(0, 7)}-01`, `${hoje.slice(0, 7)}-01`],
+))[0]?.s);
+const mesAtual = porMes.linhas.find((l) => String(l.mes).startsWith(hoje.slice(0, 7)));
+conferir("e soma o leite do mês", somaDoMes, Number(mesAtual?.total_litros));
+conferir("o lançamento de 100 dias atrás caiu no mês dele", true,
+  porMes.linhas.some((l) => String(l.mes).startsWith(somarDias(hoje, -100).slice(0, 7))));
+conferir("o vizinho não vê o resumo da fazenda alheia", 0, (await listar(vizinho, { tabela: "v_producao_mensal" })).total);
+await recusa("gravar num resumo", () => criar(dona, "v_producao_mensal", { propriedade_id: FAZENDA_NAIR, mes: hoje, total_litros: 999 }));
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências
 // na hora, então um DELETE direto na fazenda esbarraria em nascimentos -> animais.

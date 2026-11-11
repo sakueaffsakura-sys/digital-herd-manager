@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { fetchAllRows } from "@/lib/fetchAll";
 import type { Field, FormRefs } from "./shared";
@@ -22,9 +22,9 @@ export const chaveDeReferencias = (extras: readonly RefExtra[]) => extras.map((e
 /** One cache contract for every record form, with complete selection lists. */
 export async function loadFormRefs(propertyId: string, extras: readonly RefExtra[] = []): Promise<FormRefs> {
   const [animals, lots, vaccines, ...listas] = await Promise.all([
-    fetchAllRows((a, b) => supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).order("numero_brinco").order("id").range(a, b)),
-    fetchAllRows((a, b) => supabase.from("lotes").select("id,nome").eq("propriedade_id", propertyId).eq("ativo", true).order("id").range(a, b)),
-    fetchAllRows((a, b) => supabase.from("tipos_vacinas").select("id,nome").eq("propriedade_id", propertyId).eq("ativo", true).order("id").range(a, b)),
+    fetchAllRows((a, b) => dados.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).order("numero_brinco").order("id").range(a, b)),
+    fetchAllRows((a, b) => dados.from("lotes").select("id,nome").eq("propriedade_id", propertyId).eq("ativo", true).order("id").range(a, b)),
+    fetchAllRows((a, b) => dados.from("tipos_vacinas").select("id,nome").eq("propriedade_id", propertyId).eq("ativo", true).order("id").range(a, b)),
     // A coluna do nome muda por tabela, então a lista de colunas é montada em tempo de
     // execução; o `as "*"` só avisa o TypeScript disso (o cliente aqui já é sem tipos).
     ...extras.map((e) =>

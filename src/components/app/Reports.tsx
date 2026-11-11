@@ -4,7 +4,7 @@ import { TrendingUp, TrendingDown, Wallet, Scale, Hash, BarChart3, CalendarRange
 import { CalfIcon } from "./CalfIcon";
 import { toast } from "sonner";
 import { Legend, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import type { TableName } from "./shared";
 import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
       };
       const out: Record<string, unknown> = {};
       if (f.type === "geral") {
-        const r = await supabase.rpc("relatorio_indicadores", { _propriedade_id: propertyId, _de: de, _ate: ate });
+        const r = await dados.rpc("relatorio_indicadores", { _propriedade_id: propertyId, _de: de, _ate: ate });
         if (r.error) throw r.error;
         out.ind = r.data ?? {};
         out.fin = await inRange<Row>("movimentacoes_financeiras", "tipo,valor,data");
@@ -110,7 +110,7 @@ export default function Reports({ propertyId }: { propertyId: string }) {
     enabled: f.type === "geral" || f.type === "financeiro",
     staleTime: 60_000,
     queryFn: async () => {
-      const list = await fetchAllRows<Row>((a, b) => supabase.from("movimentacoes_financeiras").select("tipo,valor").eq("propriedade_id", propertyId).gte("data", prevRange.de).lte("data", prevRange.ate).order("data").order("id").range(a, b));
+      const list = await fetchAllRows<Row>((a, b) => dados.from("movimentacoes_financeiras").select("tipo,valor").eq("propriedade_id", propertyId).gte("data", prevRange.de).lte("data", prevRange.ate).order("data").order("id").range(a, b));
       const t: Record<string, number> = {}; list.forEach((r) => { t[String(r.tipo)] = (t[String(r.tipo)] ?? 0) + Number(r.valor); }); return t;
     },
   });

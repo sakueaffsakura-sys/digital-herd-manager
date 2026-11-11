@@ -63,4 +63,5 @@ jobs:
           mysql --protocol=TCP -h 127.0.0.1 -u root -psenha \
             -e "drop database if exists pecuaria_separacao; create database pecuaria_separacao character set utf8mb4 collate utf8mb4_unicode_ci;"
           mysql --protocol=TCP -h 127.0.0.1 -u root -psenha -D pecuaria_separacao < banco/mysql/esquema.sql
+          mysql --protocol=TCP -h 127.0.0.1 -u root -psenha -D pecuaria_separacao < banco/mysql/visoes.sql
           bun banco/mysql/conferir-separacao.ts

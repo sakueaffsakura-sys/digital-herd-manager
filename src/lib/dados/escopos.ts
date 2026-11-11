@@ -94,6 +94,11 @@ export const ESCOPO_DA_TABELA = {
   tipos_vacinas: "propriedade",
   tratamentos: "propriedade",
   user_roles: "usuario",
+  v_animais_por_lote: "propriedade",
+  v_financeiro_mensal: "propriedade",
+  v_financeiro_por_categoria: "propriedade",
+  v_producao_mensal: "propriedade",
+  v_producao_por_lote: "propriedade",
   vacinacoes: "propriedade",
   vendas: "propriedade",
   yui_uso: "usuario",
@@ -105,6 +110,18 @@ export type TabelaDeDados = keyof typeof ESCOPO_DA_TABELA;
 export function escopoDa(tabela: string): Escopo | null {
   return (ESCOPO_DA_TABELA as Record<string, Escopo>)[tabela] ?? null;
 }
+
+/**
+ * As visões: resumos por mês e por lote. Só leitura — ninguém grava num resumo, e uma
+ * tentativa é recusada em vez de virar erro do banco.
+ */
+export const SOMENTE_LEITURA: ReadonlySet<string> = new Set([
+  "v_animais_por_lote",
+  "v_financeiro_mensal",
+  "v_financeiro_por_categoria",
+  "v_producao_mensal",
+  "v_producao_por_lote",
+]);
 
 /**
  * A ordem de apagar o que é de uma fazenda: primeiro quem aponta, depois quem é apontado.

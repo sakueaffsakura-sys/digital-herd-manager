@@ -1,5 +1,5 @@
 import type { Field, FormRefs, Row } from "@/components/app/shared";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { supabaseDinamico } from "./supabaseDinamico";
 import { resolveNoteReference } from "./noteReference";
 
@@ -62,12 +62,12 @@ async function buscarPorNome(field: Field, coluna: "ilike" | "eq", valor: string
 async function findReference(field: Field, text: string, propertyId: string, currentId: unknown): Promise<{ id?: string; error?: string }> {
   const pattern = text.replace(/[\\%_]/g, "\\$&");
   const queries: PromiseLike<LookupResult>[] = field.type === "animal"
-    ? [supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("numero_brinco", pattern).limit(2),
-       supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("nome", pattern).limit(2)]
+    ? [dados.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("numero_brinco", pattern).limit(2),
+       dados.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).ilike("nome", pattern).limit(2)]
     : [buscarPorNome(field, "ilike", pattern, propertyId)];
   if (uuid.test(text)) {
     queries.unshift(field.type === "animal"
-      ? supabase.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).eq("id", text).limit(1)
+      ? dados.from("animais").select(referenceColumns).eq("propriedade_id", propertyId).eq("id", text).limit(1)
       : buscarPorNome(field, "eq", text, propertyId));
   }
   const results = await Promise.all(queries);
@@ -99,7 +99,7 @@ async function createReference(field: Field, text: string, propertyId: string, c
     return { error: "Não foi possível criar o cadastro. Confira os dados e tente novamente." };
   };
   if (field.type === "animal") {
-    const { data, error } = await supabase.from("animais").insert({
+    const { data, error } = await dados.from("animais").insert({
       propriedade_id: propertyId,
       numero_brinco: text,
       nome: text,
@@ -110,7 +110,7 @@ async function createReference(field: Field, text: string, propertyId: string, c
     return { id: data.id, created: true };
   }
   if (field.type === "vacina") {
-    const { data, error } = await supabase.from("tipos_vacinas").insert({ propriedade_id: propertyId, nome: text, ativo: true }).select("id").single();
+    const { data, error } = await dados.from("tipos_vacinas").insert({ propriedade_id: propertyId, nome: text, ativo: true }).select("id").single();
     if (error) return recover(error);
     return { id: data.id, created: true };
   }
@@ -122,7 +122,7 @@ async function createReference(field: Field, text: string, propertyId: string, c
     if (error) return recover(error as { code?: string; message: string });
     return { id: String((data as { id: string }).id), created: true };
   }
-  const { data, error } = await supabase.from("lotes").insert({ propriedade_id: propertyId, nome: text, ativo: true }).select("id").single();
+  const { data, error } = await dados.from("lotes").insert({ propriedade_id: propertyId, nome: text, ativo: true }).select("id").single();
   if (error) return recover(error);
   return { id: data.id, created: true };
 }

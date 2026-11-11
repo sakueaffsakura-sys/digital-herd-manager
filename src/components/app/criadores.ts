@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 
 export type RedeCriador = { nome: string; url: string };
 export type Criador = { id: string; nome: string; redes: RedeCriador[] };
@@ -35,7 +35,7 @@ export function useCriadores(enabled = false) {
     queryKey: CRIADORES_QUERY,
     enabled,
     queryFn: async () => {
-      const { data, error } = await supabase.from("configuracoes_sistema").select("valor").eq("chave", CRIADORES_CHAVE).maybeSingle();
+      const { data, error } = await dados.from("configuracoes_sistema").select("valor").eq("chave", CRIADORES_CHAVE).maybeSingle();
       if (error) throw error;
       return lerCriadores(data?.valor);
     },

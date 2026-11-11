@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import fundoLogin from "@/assets/pecuaria-fundo.png.asset.json";
 import fundoMenu from "@/assets/menu-fundo-vertical.jpg";
 
@@ -24,7 +24,7 @@ export function useImagensSite() {
     queryKey: IMAGENS_QUERY,
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("imagens_site" as never).select("chave,valor");
+      const { data, error } = await dados.from("imagens_site" as never).select("chave,valor");
       if (error) throw error;
       const m: Partial<Record<ChaveImagem, string>> = {};
       for (const r of (data ?? []) as { chave: ChaveImagem; valor: string }[]) m[r.chave] = r.valor;

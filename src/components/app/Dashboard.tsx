@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardCheck, Info, Milk, NotebookPen, Plus, Scale, Stethoscope, Syringe } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Brinco } from "./Brinco";
 import { useAvisos, type Aviso } from "./casca/Avisos";
@@ -35,11 +35,11 @@ export default function Dashboard({
       const hoje = dataLocalISO();
       const desde = primeiroDiaDoMes(-11);
       const [resumo, financas, leite, agenda, partos] = await Promise.all([
-        supabase.rpc("dashboard_resumo", { _propriedade_id: propertyId }),
-        supabase.from("v_financeiro_mensal").select("mes,receitas,despesas").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
-        supabase.from("v_producao_mensal").select("mes,total_litros").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
-        supabase.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: hoje, _ate: somarDias(hoje, 7) }),
-        supabase.from("inseminacoes").select("id,previsao_parto,situacao,animais(nome,numero_brinco)").eq("propriedade_id", propertyId)
+        dados.rpc("dashboard_resumo", { _propriedade_id: propertyId }),
+        dados.from("v_financeiro_mensal").select("mes,receitas,despesas").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
+        dados.from("v_producao_mensal").select("mes,total_litros").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
+        dados.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: hoje, _ate: somarDias(hoje, 7) }),
+        dados.from("inseminacoes").select("id,previsao_parto,situacao,animais(nome,numero_brinco)").eq("propriedade_id", propertyId)
           .in("situacao", ["em_andamento", "confirmada"]).gte("previsao_parto", hoje).order("previsao_parto").limit(5),
       ]);
       const erro = [resumo, financas, leite].map((x) => x.error).find(Boolean);

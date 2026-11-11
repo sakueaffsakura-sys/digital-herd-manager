@@ -9,7 +9,7 @@
  * este módulo, a partir do escopo da tabela. Tabela que não está na lista de escopos é
  * recusada — na dúvida, ninguém entra.
  */
-import { escopoDa, type Escopo } from "./escopos";
+import { escopoDa, SOMENTE_LEITURA, type Escopo } from "./escopos";
 
 /** Quem está pedindo. Sai da sessão; nunca de algo que o navegador mandou. */
 export type Quem = {
@@ -97,6 +97,11 @@ export function filtroDeLeitura(tabela: string, quem: Quem): Condicao {
 export function conferirGravacao(tabela: string, quem: Quem, linha: Record<string, unknown>): void {
   const escopo = escopoDa(tabela);
   if (!escopo) throw new TabelaDesconhecida(tabela);
+  // Resumo não se grava: altera-se o lançamento que o alimenta. Recusar aqui dá uma
+  // mensagem que se entende, em vez do erro do banco sobre visão não atualizável.
+  if (SOMENTE_LEITURA.has(tabela)) {
+    throw new AcessoNegado("Isto é um resumo: altere os lançamentos que entram nele.");
+  }
   switch (escopo) {
     case "propriedade": {
       const prop = linha["propriedade_id"];

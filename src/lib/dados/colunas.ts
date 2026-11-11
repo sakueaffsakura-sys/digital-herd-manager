@@ -89,6 +89,12 @@ export const COLUNAS_DA_TABELA: Record<string, Record<string, Feitio>> = {
   vacinacoes: { id: "texto", propriedade_id: "texto", animal_id: "texto", lote_id: "texto", tipo_vacina_id: "texto", data_aplicacao: "data", proxima_aplicacao: "data", responsavel: "texto", observacao: "texto", created_at: "instante", updated_at: "instante" },
   vendas: { id: "texto", propriedade_id: "texto", data: "data", animal_id: "texto", item: "texto", quantidade: "numero", valor: "numero", comprador: "texto", categoria: "texto", observacao: "texto", movimentacao_id: "texto", created_at: "instante", updated_at: "instante" },
   yui_uso: { user_id: "texto", dia: "data", mensagens: "inteiro", falas: "inteiro" },
+  // As visões (banco/mysql/visoes.sql). Só leitura: ver SOMENTE_LEITURA em escopos.ts.
+  v_animais_por_lote: { propriedade_id: "texto", lote_id: "texto", nome: "texto", quantidade: "inteiro" },
+  v_financeiro_mensal: { propriedade_id: "texto", mes: "data", receitas: "numero", despesas: "numero", investimentos: "numero", lucro: "numero" },
+  v_financeiro_por_categoria: { propriedade_id: "texto", mes: "data", tipo: "texto", categoria: "texto", total: "numero" },
+  v_producao_mensal: { propriedade_id: "texto", mes: "data", total_litros: "numero", media_registro: "numero", valor_total: "numero" },
+  v_producao_por_lote: { propriedade_id: "texto", lote_id: "texto", lote_nome: "texto", mes: "data", total_litros: "numero", valor_total: "numero", vacas: "inteiro" },
 };
 
 /** Coluna conhecida desta tabela, ou nada. Nunca devolve o que veio do navegador. */

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarPlus, ChevronLeft, ChevronRight, ClipboardCheck, HeartPulse, Receipt, RefreshCw, Scale, Stethoscope, Syringe, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { dataLocalISO, formatarDataBR, somarDias } from "@/lib/datas";
 import { Brinco } from "./Brinco";
 import { Empty, PageTitle } from "./shared";
@@ -99,7 +99,7 @@ export default function Agenda({
     queryKey: ["agenda", propertyId, de, ate],
     staleTime: 60_000,
     queryFn: async (): Promise<Resposta> => {
-      const { data, error } = await supabase.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: de, _ate: ate });
+      const { data, error } = await dados.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: de, _ate: ate });
       if (error) throw error;
       return (data ?? { eventos: [], truncado: false, atrasadas: [], sem_pesagem: [], hoje: dataLocalISO() }) as unknown as Resposta;
     },

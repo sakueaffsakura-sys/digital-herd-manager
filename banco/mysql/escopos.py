@@ -37,6 +37,21 @@ ESCOPOS_ESPECIAIS = {
     "rate_limits": "servidor",
 }
 
+# As visões (banco/mysql/visoes.sql): resumos por mês e por lote que as telas leem direto.
+# Pertencem a uma fazenda, como as tabelas, mas são SÓ LEITURA: ninguém grava num resumo.
+# As colunas estão aqui porque visão não aparece em colunas.txt, que vem das tabelas.
+VISOES = {
+    "v_financeiro_mensal": {"propriedade_id": "texto", "mes": "data", "receitas": "numero",
+                            "despesas": "numero", "investimentos": "numero", "lucro": "numero"},
+    "v_financeiro_por_categoria": {"propriedade_id": "texto", "mes": "data", "tipo": "texto",
+                                   "categoria": "texto", "total": "numero"},
+    "v_producao_mensal": {"propriedade_id": "texto", "mes": "data", "total_litros": "numero",
+                          "media_registro": "numero", "valor_total": "numero"},
+    "v_producao_por_lote": {"propriedade_id": "texto", "lote_id": "texto", "lote_nome": "texto",
+                            "mes": "data", "total_litros": "numero", "valor_total": "numero", "vacas": "inteiro"},
+    "v_animais_por_lote": {"propriedade_id": "texto", "lote_id": "texto", "nome": "texto", "quantidade": "inteiro"},
+}
+
 tabelas = {}
 for linha in (BASE / "colunas.txt").read_text(encoding="utf-8").strip().split("\n"):
     partes = linha.split("|")
@@ -57,6 +72,9 @@ for nome, colunas in tabelas.items():
             f"A tabela '{nome}' não tem propriedade_id nem user_id e não está na lista de escopos "
             f"especiais. Diga em escopos.py quem pode ver e mexer nela."
         )
+
+for visao in VISOES:
+    escopos[visao] = "propriedade"
 
 por_escopo = {}
 for t, e in sorted(escopos.items()):
@@ -94,6 +112,14 @@ linhas += [
     "  return (ESCOPO_DA_TABELA as Record<string, Escopo>)[tabela] ?? null;",
     "}",
     "",
+    "/**",
+    " * As visões: resumos por mês e por lote. Só leitura — ninguém grava num resumo, e uma",
+    " * tentativa é recusada em vez de virar erro do banco.",
+    " */",
+    "export const SOMENTE_LEITURA: ReadonlySet<string> = new Set([",
+] + [f'  "{v}",' for v in sorted(VISOES)] + [
+    "]);",
+    "",
 ]
 # A lista de colunas de cada tabela vira uma peneira: nome de coluna que vem do navegador
 # só entra na consulta se estiver aqui. É o que impede comando colado pelo nome do campo.
@@ -123,6 +149,10 @@ linhas_cols = [
 for nome, colunas in sorted(tabelas.items()):
     campos = ", ".join(f'{c[0]}: "{tipo_simples(c[1])}"' for c in colunas)
     linhas_cols.append(f"  {nome}: {{ {campos} }},")
+linhas_cols.append("  // As visões (banco/mysql/visoes.sql). Só leitura: ver SOMENTE_LEITURA em escopos.ts.")
+for nome, campos_visao in sorted(VISOES.items()):
+    campos = ", ".join(f'{c}: "{f}"' for c, f in campos_visao.items())
+    linhas_cols.append(f"  {nome}: {{ {campos} }},")
 linhas_cols += [
     "};",
     "",
@@ -146,7 +176,8 @@ print(f"colunas gravadas em {COLUNAS}")
 # quem é apontado. A ordem vem de ordem.txt (a mesma da importação, de cima para baixo)
 # invertida, então não dá para divergir do que o banco tem.
 ordem_importacao = [l.strip() for l in (BASE / "ordem.txt").read_text(encoding="utf-8").split("\n") if l.strip()]
-faltando = [t for t in escopos if t not in ordem_importacao]
+# Visão não tem linha para apagar: o que ela mostra vem das tabelas.
+faltando = [t for t in escopos if t not in ordem_importacao and t not in VISOES]
 if faltando:
     raise SystemExit(f"tabelas fora de ordem.txt: {', '.join(sorted(faltando))}. Rode gerar.py de novo.")
 ordem_exclusao = [t for t in reversed(ordem_importacao) if escopos.get(t) == "propriedade"]

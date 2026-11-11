@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { CheckCircle2, FileSpreadsheet, Loader2, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -171,7 +171,7 @@ export default function ImportDialog({
         status,
         erro: erro ?? null,
       };
-      const { error } = await supabase.from("importacoes").upsert(payload, { onConflict: "propriedade_id,tabela,arquivo" });
+      const { error } = await dados.from("importacoes").upsert(payload, { onConflict: "propriedade_id,tabela,arquivo" });
       if (error) throw error;
     };
 
@@ -182,7 +182,7 @@ export default function ImportDialog({
       });
       // upsert com ignoreDuplicates = INSERT ... ON CONFLICT (id) DO NOTHING: reenviar um lote cuja
       // resposta se perdeu não duplica as linhas que já entraram (cada linha tem id próprio).
-      const { data: inserted, error } = await supabase.from(config.table)
+      const { data: inserted, error } = await dados.from(config.table)
         .upsert(payload as Database["public"]["Tables"][typeof config.table]["Insert"][], { onConflict: "id", ignoreDuplicates: true })
         .select("id");
       if (!error) {
@@ -282,7 +282,7 @@ export default function ImportDialog({
     const selected = fileRef.current?.files?.[0];
     if (!selected) return;
     void (async () => {
-      const { data } = await supabase
+      const { data } = await dados
         .from("importacoes")
         .select("processadas,aceitas,rejeitadas_detalhe,status")
         .eq("propriedade_id", propertyId)

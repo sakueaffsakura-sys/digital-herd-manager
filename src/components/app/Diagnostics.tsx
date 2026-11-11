@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, RefreshCw, ShieldAlert, Timer } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Empty, PageTitle, Panel, pretty, type Row } from "./shared";
 import { plural } from "@/lib/texto";
@@ -13,8 +13,8 @@ export default function Diagnostics({ propertyId }: { propertyId: string }) {
     queryKey: ["diagnostico", propertyId],
     queryFn: async () => {
       const [{ data, error }, inconsistent] = await Promise.all([
-        supabase.rpc("diagnostico_propriedade", { _propriedade_id: propertyId }),
-        supabase.rpc("registros_inconsistentes", { _propriedade_id: propertyId }),
+        dados.rpc("diagnostico_propriedade", { _propriedade_id: propertyId }),
+        dados.rpc("registros_inconsistentes", { _propriedade_id: propertyId }),
       ]);
       if (error) throw error;
       const rows = ((data ?? []) as unknown as DiagnosticoItem[]).sort((a, b) => b.tempo_ms - a.tempo_ms);

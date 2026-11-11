@@ -20,7 +20,7 @@ import {
   Tractor,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import type { Database } from "@/integrations/supabase/types";
 import { loadFormRefs } from "./formRefs";
 import { Button } from "@/components/ui/button";
@@ -140,7 +140,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
     if (!anotacaoId) return;
     let vivo = true;
     void (async () => {
-      const { data, error } = await supabase.from("anotacoes_producao").select(NOTE_COLS).eq("id", anotacaoId).eq("propriedade_id", propertyId).maybeSingle();
+      const { data, error } = await dados.from("anotacoes_producao").select(NOTE_COLS).eq("id", anotacaoId).eq("propriedade_id", propertyId).maybeSingle();
       if (!vivo) return;
       aoAbrirAnotacao?.();
       if (error || !data) { toast.error("Não encontramos essa anotação."); return; }
@@ -207,8 +207,8 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
     mutationFn: async (payload: Row) => {
       const body: Row = { ...payload, propriedade_id: propertyId };
       const response = editing
-        ? await supabase.from("anotacoes_producao").update(body as Database["public"]["Tables"]["anotacoes_producao"]["Update"]).eq("id", String(editing["id"])).eq("propriedade_id", propertyId)
-        : await supabase.from("anotacoes_producao").insert(body as Database["public"]["Tables"]["anotacoes_producao"]["Insert"]);
+        ? await dados.from("anotacoes_producao").update(body as Database["public"]["Tables"]["anotacoes_producao"]["Update"]).eq("id", String(editing["id"])).eq("propriedade_id", propertyId)
+        : await dados.from("anotacoes_producao").insert(body as Database["public"]["Tables"]["anotacoes_producao"]["Insert"]);
       if (response.error) throw response.error;
     },
     onSuccess: () => {
@@ -222,7 +222,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
 
   const remove = async (row: Row) => {
     if (!confirm("Excluir esta anotação?")) return;
-    const { error } = await supabase.from("anotacoes_producao").delete().eq("id", String(row["id"]));
+    const { error } = await dados.from("anotacoes_producao").delete().eq("id", String(row["id"]));
     if (error) toast.error(friendlyError(error));
     else {
       toast.success("Anotação excluída.");
@@ -232,7 +232,7 @@ export function NotesMural({ propertyId, globalSearch, abrirNova, aoAbrirNova, a
 
   const marcar = async (row: Row) => {
     const nova = !row["marcada"];
-    const { error } = await supabase.from("anotacoes_producao").update({ marcada: nova }).eq("id", String(row["id"])).eq("propriedade_id", propertyId);
+    const { error } = await dados.from("anotacoes_producao").update({ marcada: nova }).eq("id", String(row["id"])).eq("propriedade_id", propertyId);
     if (error) { toast.error(friendlyError(error)); return; }
     toast.success(nova ? "Anotação marcada como importante." : "Marca retirada.");
     invalidate();
