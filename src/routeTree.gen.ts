@@ -29,6 +29,12 @@ import { Route as ApiAssinaturaCheckoutRouteImport } from './routes/api/assinatu
 import { Route as ApiClimaAgoraRouteImport } from './routes/api/clima/agora'
 import { Route as ApiClimaLugaresRouteImport } from './routes/api/clima/lugares'
 import { Route as ApiContaConferirSenhaRouteImport } from './routes/api/conta/conferir-senha'
+import { Route as ApiContaEntrarRouteImport } from './routes/api/conta/entrar'
+import { Route as ApiContaRecuperarRouteImport } from './routes/api/conta/recuperar'
+import { Route as ApiContaRedefinirRouteImport } from './routes/api/conta/redefinir'
+import { Route as ApiContaSairRouteImport } from './routes/api/conta/sair'
+import { Route as ApiContaGoogleRouteImport } from './routes/api/conta/google'
+import { Route as ApiContaGoogleRetornoRouteImport } from './routes/api/conta/google/retorno'
 import { Route as ApiContaMeusDadosRouteImport } from './routes/api/conta/meus-dados'
 import { Route as ApiPublicResgateRouteImport } from './routes/api/public/resgate'
 import { Route as ApiYuiVozRouteImport } from './routes/api/yui/voz'
@@ -142,6 +148,36 @@ const ApiContaConferirSenhaRoute = ApiContaConferirSenhaRouteImport.update({
   path: '/api/conta/conferir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiContaEntrarRoute = ApiContaEntrarRouteImport.update({
+  id: '/api/conta/entrar',
+  path: '/api/conta/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaRecuperarRoute = ApiContaRecuperarRouteImport.update({
+  id: '/api/conta/recuperar',
+  path: '/api/conta/recuperar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaRedefinirRoute = ApiContaRedefinirRouteImport.update({
+  id: '/api/conta/redefinir',
+  path: '/api/conta/redefinir',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaSairRoute = ApiContaSairRouteImport.update({
+  id: '/api/conta/sair',
+  path: '/api/conta/sair',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaGoogleRoute = ApiContaGoogleRouteImport.update({
+  id: '/api/conta/google',
+  path: '/api/conta/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiContaGoogleRetornoRoute = ApiContaGoogleRetornoRouteImport.update({
+  id: '/api/conta/google/retorno',
+  path: '/api/conta/google/retorno',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiContaMeusDadosRoute = ApiContaMeusDadosRouteImport.update({
   id: '/api/conta/meus-dados',
   path: '/api/conta/meus-dados',
@@ -224,6 +260,12 @@ export interface FileRoutesByFullPath {
   '/api/clima/agora': typeof ApiClimaAgoraRoute
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/entrar': typeof ApiContaEntrarRoute
+  '/api/conta/recuperar': typeof ApiContaRecuperarRoute
+  '/api/conta/redefinir': typeof ApiContaRedefinirRoute
+  '/api/conta/sair': typeof ApiContaSairRoute
+  '/api/conta/google': typeof ApiContaGoogleRoute
+  '/api/conta/google/retorno': typeof ApiContaGoogleRetornoRoute
   '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
   '/api/public/resgate': typeof ApiPublicResgateRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
@@ -257,6 +299,12 @@ export interface FileRoutesByTo {
   '/api/clima/agora': typeof ApiClimaAgoraRoute
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/entrar': typeof ApiContaEntrarRoute
+  '/api/conta/recuperar': typeof ApiContaRecuperarRoute
+  '/api/conta/redefinir': typeof ApiContaRedefinirRoute
+  '/api/conta/sair': typeof ApiContaSairRoute
+  '/api/conta/google': typeof ApiContaGoogleRoute
+  '/api/conta/google/retorno': typeof ApiContaGoogleRetornoRoute
   '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
   '/api/public/resgate': typeof ApiPublicResgateRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
@@ -292,6 +340,12 @@ export interface FileRoutesById {
   '/api/clima/agora': typeof ApiClimaAgoraRoute
   '/api/clima/lugares': typeof ApiClimaLugaresRoute
   '/api/conta/conferir-senha': typeof ApiContaConferirSenhaRoute
+  '/api/conta/entrar': typeof ApiContaEntrarRoute
+  '/api/conta/recuperar': typeof ApiContaRecuperarRoute
+  '/api/conta/redefinir': typeof ApiContaRedefinirRoute
+  '/api/conta/sair': typeof ApiContaSairRoute
+  '/api/conta/google': typeof ApiContaGoogleRoute
+  '/api/conta/google/retorno': typeof ApiContaGoogleRetornoRoute
   '/api/conta/meus-dados': typeof ApiContaMeusDadosRoute
   '/api/public/resgate': typeof ApiPublicResgateRoute
   '/api/yui/voz': typeof ApiYuiVozRoute
@@ -326,6 +380,12 @@ export interface FileRouteTypes {
     | '/api/clima/agora'
     | '/api/clima/lugares'
     | '/api/conta/conferir-senha'
+    | '/api/conta/entrar'
+    | '/api/conta/recuperar'
+    | '/api/conta/redefinir'
+    | '/api/conta/sair'
+    | '/api/conta/google'
+    | '/api/conta/google/retorno'
     | '/api/conta/meus-dados'
     | '/api/public/resgate'
     | '/api/yui/voz'
@@ -358,6 +418,12 @@ export interface FileRouteTypes {
     | '/api/clima/agora'
     | '/api/clima/lugares'
     | '/api/conta/conferir-senha'
+    | '/api/conta/entrar'
+    | '/api/conta/recuperar'
+    | '/api/conta/redefinir'
+    | '/api/conta/sair'
+    | '/api/conta/google'
+    | '/api/conta/google/retorno'
     | '/api/conta/meus-dados'
     | '/api/public/resgate'
     | '/api/yui/voz'
@@ -391,6 +457,12 @@ export interface FileRouteTypes {
     | '/api/clima/agora'
     | '/api/clima/lugares'
     | '/api/conta/conferir-senha'
+    | '/api/conta/entrar'
+    | '/api/conta/recuperar'
+    | '/api/conta/redefinir'
+    | '/api/conta/sair'
+    | '/api/conta/google'
+    | '/api/conta/google/retorno'
     | '/api/conta/meus-dados'
     | '/api/public/resgate'
     | '/api/yui/voz'
@@ -424,6 +496,12 @@ export interface RootRouteChildren {
   ApiClimaAgoraRoute: typeof ApiClimaAgoraRoute
   ApiClimaLugaresRoute: typeof ApiClimaLugaresRoute
   ApiContaConferirSenhaRoute: typeof ApiContaConferirSenhaRoute
+  ApiContaEntrarRoute: typeof ApiContaEntrarRoute
+  ApiContaRecuperarRoute: typeof ApiContaRecuperarRoute
+  ApiContaRedefinirRoute: typeof ApiContaRedefinirRoute
+  ApiContaSairRoute: typeof ApiContaSairRoute
+  ApiContaGoogleRoute: typeof ApiContaGoogleRoute
+  ApiContaGoogleRetornoRoute: typeof ApiContaGoogleRetornoRoute
   ApiContaMeusDadosRoute: typeof ApiContaMeusDadosRoute
   ApiPublicResgateRoute: typeof ApiPublicResgateRoute
   ApiEbooksIdArquivoRoute: typeof ApiEbooksIdArquivoRoute
@@ -579,6 +657,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiContaConferirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/conta/entrar': {
+      id: '/api/conta/entrar'
+      path: '/api/conta/entrar'
+      fullPath: '/api/conta/entrar'
+      preLoaderRoute: typeof ApiContaEntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/recuperar': {
+      id: '/api/conta/recuperar'
+      path: '/api/conta/recuperar'
+      fullPath: '/api/conta/recuperar'
+      preLoaderRoute: typeof ApiContaRecuperarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/redefinir': {
+      id: '/api/conta/redefinir'
+      path: '/api/conta/redefinir'
+      fullPath: '/api/conta/redefinir'
+      preLoaderRoute: typeof ApiContaRedefinirRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/sair': {
+      id: '/api/conta/sair'
+      path: '/api/conta/sair'
+      fullPath: '/api/conta/sair'
+      preLoaderRoute: typeof ApiContaSairRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/google': {
+      id: '/api/conta/google'
+      path: '/api/conta/google'
+      fullPath: '/api/conta/google'
+      preLoaderRoute: typeof ApiContaGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conta/google/retorno': {
+      id: '/api/conta/google/retorno'
+      path: '/api/conta/google/retorno'
+      fullPath: '/api/conta/google/retorno'
+      preLoaderRoute: typeof ApiContaGoogleRetornoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/conta/meus-dados': {
       id: '/api/conta/meus-dados'
       path: '/api/conta/meus-dados'
@@ -709,6 +829,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiClimaAgoraRoute: ApiClimaAgoraRoute,
   ApiClimaLugaresRoute: ApiClimaLugaresRoute,
   ApiContaConferirSenhaRoute: ApiContaConferirSenhaRoute,
+  ApiContaEntrarRoute: ApiContaEntrarRoute,
+  ApiContaRecuperarRoute: ApiContaRecuperarRoute,
+  ApiContaRedefinirRoute: ApiContaRedefinirRoute,
+  ApiContaSairRoute: ApiContaSairRoute,
+  ApiContaGoogleRoute: ApiContaGoogleRoute,
+  ApiContaGoogleRetornoRoute: ApiContaGoogleRetornoRoute,
   ApiContaMeusDadosRoute: ApiContaMeusDadosRoute,
   ApiPublicResgateRoute: ApiPublicResgateRoute,
   ApiEbooksIdArquivoRoute: ApiEbooksIdArquivoRoute,
