@@ -18,7 +18,21 @@ export type Quem = {
   admin: boolean;
   /** As fazendas a que a pessoa tem acesso, já conferidas no banco. */
   propriedades: readonly string[];
+  /**
+   * Se a pessoa passou pela verificação em duas etapas NESTA sessão ("aal2") ou só pela
+   * senha ("aal1"). Ausente vale como "aal1": na dúvida, o menor direito.
+   *
+   * Serve para as ações que não bastam ser de administrador — exigir 2FA de todos os
+   * administradores, por exemplo, só pode ser ligado por quem já está usando 2FA, senão a
+   * própria pessoa se trancaria do lado de fora.
+   */
+  aal?: "aal1" | "aal2";
+  /** A sessão em uso, quando se sabe: permite encerrar as outras sem derrubar esta. */
+  sessaoId?: string;
 };
+
+/** Passou pela verificação em duas etapas nesta sessão? */
+export const usou2fa = (quem: Quem) => quem.aal === "aal2";
 
 export class AcessoNegado extends Error {
   readonly status = 403;

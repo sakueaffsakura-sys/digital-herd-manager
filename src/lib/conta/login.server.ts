@@ -78,7 +78,10 @@ export async function abrirSessao(request: Request, userId: string): Promise<{ q
 }
 
 /** Monta quem é a pessoa a partir do banco: papel e fazendas nunca vêm do navegador. */
-export async function montarQuem(userId: string): Promise<Quem> {
+export async function montarQuem(
+  userId: string,
+  sessao?: { aal?: "aal1" | "aal2"; sessaoId?: string },
+): Promise<Quem> {
   const [papeis, fazendas] = await Promise.all([
     consultar<{ role: string }>("SELECT role FROM user_roles WHERE user_id = ?", [userId]),
     consultar<{ id: string }>(
@@ -92,6 +95,9 @@ export async function montarQuem(userId: string): Promise<Quem> {
     userId,
     admin: papeis.some((p) => p.role === "administrador"),
     propriedades: fazendas.map((f) => f.id),
+    // Sem sessão à vista, vale o menor direito: só senha.
+    aal: sessao?.aal === "aal2" ? "aal2" : "aal1",
+    ...(sessao?.sessaoId ? { sessaoId: sessao.sessaoId } : {}),
   };
 }
 
@@ -100,8 +106,8 @@ export async function quemEsta(request: Request): Promise<Quem | null> {
   const token = tokenDoPedido(request);
   if (!token) return null;
   const agora = new Date();
-  const sessao = await consultarUm<{ id: string; user_id: string; bloqueado: number }>(
-    `SELECT s.id, s.user_id, u.bloqueado
+  const sessao = await consultarUm<{ id: string; user_id: string; bloqueado: number; aal: string | null }>(
+    `SELECT s.id, s.user_id, s.aal, u.bloqueado
      FROM sessoes s JOIN usuarios u ON u.id = s.user_id
      WHERE s.token_hash = ? AND s.expira_em > ? LIMIT 1`,
     [resumoDoToken(token), instanteUtc(agora)],
@@ -112,7 +118,10 @@ export async function quemEsta(request: Request): Promise<Quem | null> {
     instanteUtc(validadeDaSessao(agora)),
     sessao.id,
   ]);
-  return montarQuem(sessao.user_id);
+  return montarQuem(sessao.user_id, {
+    aal: sessao.aal === "aal2" ? "aal2" : "aal1",
+    sessaoId: sessao.id,
+  });
 }
 
 export async function sair(request: Request): Promise<string> {

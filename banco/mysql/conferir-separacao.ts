@@ -334,6 +334,75 @@ conferir("mas continua no banco: quem lançou é que decide", 1,
   Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM pesagens WHERE propriedade_id = ? AND data > ?", [FAZENDA_NAIR, hoje]))[0]?.n));
 await recusa("pedir o diagnóstico da fazenda do vizinho", () => rodarConsulta("registros_inconsistentes", dona, { propriedade_id: FAZENDA_JOAO }));
 
+console.log("== Relatório por período ==");
+type Rel = Record<string, number>;
+// Um lançamento num dia isolado, longe de tudo, para medir a janela sem depender do que
+// as outras conferências deixaram no banco.
+await executar("INSERT INTO producao_leite (id, propriedade_id, animal_id, data, litros) VALUES (UUID(), ?, ?, ?, 7)", [FAZENDA_NAIR, animalDaNair, somarDias(hoje, -100)]);
+const noDia = somarDias(hoje, -100);
+conferir("um dia só traz o daquele dia", 7, (await rodarConsulta("relatorio_indicadores", dona, { propriedade_id: FAZENDA_NAIR, de: noDia, ate: noDia }) as Rel)["litros"]);
+conferir("o dia seguinte não traz nada", 0, (await rodarConsulta("relatorio_indicadores", dona, { propriedade_id: FAZENDA_NAIR, de: somarDias(hoje, -99), ate: somarDias(hoje, -99) }) as Rel)["litros"]);
+const todoLeite = Number((await consultar<{ s: number }>("SELECT COALESCE(SUM(litros), 0) AS s FROM producao_leite WHERE propriedade_id = ?", [FAZENDA_NAIR]))[0]?.s);
+conferir("o relatório sem período pega tudo", todoLeite, (await rodarConsulta("relatorio_indicadores", dona, { propriedade_id: FAZENDA_NAIR }) as Rel)["litros"]);
+await recusa("pedir um período de trás para frente", () => rodarConsulta("relatorio_indicadores", dona, { propriedade_id: FAZENDA_NAIR, de: hoje, ate: somarDias(hoje, -10) }));
+await recusa("pedir o relatório da fazenda do vizinho", () => rodarConsulta("relatorio_indicadores", dona, { propriedade_id: FAZENDA_JOAO }));
+
+console.log("== Diagnóstico das tabelas ==");
+type Diag = { tabela: string; contagem: number; tempo_ms: number }[];
+const quantosLeites = Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM producao_leite WHERE propriedade_id = ?", [FAZENDA_NAIR]))[0]?.n);
+const diag = await rodarConsulta("diagnostico_propriedade", dona, { propriedade_id: FAZENDA_NAIR }) as Diag;
+conferir("o diagnóstico olha as 13 tabelas de sempre", 13, diag.length);
+conferir("e conta só o que é da fazenda", quantosLeites, diag.find((l) => l.tabela === "producao_leite")?.contagem);
+conferir("o diagnóstico do vizinho mostra a fazenda dele vazia", 0, (await rodarConsulta("diagnostico_propriedade", vizinho, { propriedade_id: FAZENDA_JOAO }) as Diag).find((l) => l.tabela === "producao_leite")?.contagem);
+
+console.log("== Sincronização do aplicativo: a marca é data E identificador ==");
+type LinhaSync = { id: string; updated_at: string | Date };
+const pagina1 = await rodarConsulta("app_sincronizar", dona, { propriedade_id: FAZENDA_NAIR, tabela: "producao_leite", limite: 1 }) as LinhaSync[];
+conferir("a primeira página traz uma linha", 1, pagina1.length);
+const pagina2 = await rodarConsulta("app_sincronizar", dona, {
+  propriedade_id: FAZENDA_NAIR, tabela: "producao_leite", limite: 50,
+  apos_updated_at: new Date(pagina1[0]!.updated_at).toISOString(), apos_id: pagina1[0]!.id,
+}) as LinhaSync[];
+conferir("a página seguinte não repete a linha anterior", false, pagina2.some((l) => l.id === pagina1[0]!.id));
+conferir("e traz o resto", quantosLeites - 1, pagina2.length);
+await recusa("sincronizar uma tabela que não está na lista", () => rodarConsulta("app_sincronizar", dona, { propriedade_id: FAZENDA_NAIR, tabela: "usuarios" }));
+await recusa("sincronizar a tabela de chaves", () => rodarConsulta("app_sincronizar", dona, { propriedade_id: FAZENDA_NAIR, tabela: "chaves_sistema" }));
+await recusa("sincronizar a fazenda do vizinho", () => rodarConsulta("app_sincronizar", vizinho, { propriedade_id: FAZENDA_NAIR, tabela: "animais" }));
+
+console.log("== Painel do administrador ==");
+const chefeCom2fa: Quem = { userId: NAIR, admin: true, propriedades: [FAZENDA_NAIR], aal: "aal2" };
+await recusa("pedir os pagamentos sem ser administrador", () => rodarConsulta("admin_pagamentos", dona, {}));
+conferir("o administrador vê a lista de pagamentos", true, Array.isArray(await rodarConsulta("admin_pagamentos", chefe, {})));
+conferir("e o resumo dos eBooks", true, Array.isArray(await rodarConsulta("admin_ebooks_resumo", chefe, {})));
+await recusa("exigir 2FA de todos sem estar usando 2FA", () => rodarConsulta("admin_exigir_2fa", chefe, { ligar: true }));
+conferir("quem já usa 2FA pode exigir dos outros", true, await rodarConsulta("admin_exigir_2fa", chefeCom2fa, { ligar: true }));
+conferir("desligar não exige 2FA", false, await rodarConsulta("admin_exigir_2fa", chefe, { ligar: false }));
+conferir("e ficou gravado", "nao",
+  (await consultar<{ valor: string }>("SELECT valor FROM configuracoes_sistema WHERE chave = 'exigir_2fa_admin'"))[0]?.valor);
+
+console.log("== Plano de demonstração: toda mudança fica registrada ==");
+await recusa("liberar Premium sem ser administrador", () => rodarConsulta("setar_plano_demonstracao", dona, { propriedade_id: FAZENDA_JOAO }));
+const liberado = await rodarConsulta("setar_plano_demonstracao", chefe, { propriedade_id: FAZENDA_JOAO, motivo: "atendimento" }) as Record<string, unknown>;
+conferir("o administrador libera Premium na fazenda de outra pessoa", true, liberado["premium_ativo"]);
+conferir("e o vizinho passa a ser assinante", true, await rodarConsulta("sou_assinante", vizinho, {}));
+conferir("a mudança foi anotada com quem fez e por quê", "atendimento",
+  (await consultar<{ motivo: string }>("SELECT motivo FROM plano_auditoria WHERE propriedade_id = ? ORDER BY created_at DESC LIMIT 1", [FAZENDA_JOAO]))[0]?.motivo);
+const cancelado = await rodarConsulta("cancelar_plano_demonstracao", chefe, { propriedade_id: FAZENDA_JOAO, motivo: "fim do teste" }) as Record<string, unknown>;
+conferir("e consegue cancelar", "cancelado", cancelado["status"]);
+conferir("o vizinho deixa de ser assinante", false, await rodarConsulta("sou_assinante", vizinho, {}));
+conferir("cancelar de novo não quebra", true, (await rodarConsulta("cancelar_plano_demonstracao", chefe, { propriedade_id: FAZENDA_JOAO }) as Record<string, unknown>)["ja_cancelado"]);
+
+console.log("== Incidente de segurança ==");
+const incidente = await rodarConsulta("seg_registrar_incidente", dona, {
+  tipo: "senha_errada", severidade: "aviso", ip: "203.0.113.9", disp: "aparelho-1",
+  user: JOAO, motivo: "cinco tentativas", bloquear: true,
+}) as string;
+conferir("o incidente foi registrado", 36, String(incidente).length);
+conferir("ficou no nome de quem pediu, não de quem o pedido disse", NAIR,
+  (await consultar<{ user_id: string }>("SELECT user_id FROM incidentes_seguranca WHERE id = ?", [incidente]))[0]?.user_id);
+conferir("o pedido não consegue mandar bloquear", 0,
+  Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM bloqueios_acesso"))[0]?.n));
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências
 // na hora, então um DELETE direto na fazenda esbarraria em nascimentos -> animais.
