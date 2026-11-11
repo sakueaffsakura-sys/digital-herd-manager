@@ -1,7 +1,10 @@
 # O que só você pode fazer
 
-A mudança para a hospedagem nova tem cinco coisas que eu não consigo fazer daqui, porque
+A mudança para a hospedagem nova tem seis coisas que eu não consigo fazer daqui, porque
 dependem de contas que são suas. Nenhuma tem pressa: pode fazer na ordem que der.
+
+Se quiser escolher uma só para começar, comece pela **1**: com o banco criado, eu passo a
+conferir a migração contra o servidor de verdade, e não só contra um banco de teste.
 
 > **Regra que vale para todas:** senha e chave secreta **nunca** devem ser escritas na
 > nossa conversa nem dentro de um arquivo do site. O lugar delas é a tela
@@ -88,7 +91,27 @@ GOOGLE_CLIENT_SECRET  (só no cPanel)
 
 ---
 
-## 5. Apontar o domínio (só no fim)
+## 5. A pasta dos arquivos (uma linha, mas importante onde)
+
+Os eBooks, o APK e as imagens do site saem do Supabase e passam a morar numa pasta do
+servidor. **Essa pasta não pode ficar dentro de `public_html`**: o que está ali o Apache
+entrega direto a quem souber o endereço, sem passar pelo nosso código — e eBook é pago.
+
+No Gerenciador de Arquivos do cPanel, crie uma pasta **ao lado** de `public_html`, por
+exemplo `arquivos-pecuaria`. Depois, nas variáveis do aplicativo:
+
+```
+ARQUIVOS_DIR  /home/suaconta/arquivos-pecuaria
+```
+
+(O caminho completo aparece no próprio Gerenciador de Arquivos, na barra de cima.)
+
+Me diga o caminho que ficou. Os arquivos que já estão no Supabase eu levo depois, junto
+com os dados.
+
+---
+
+## 6. Apontar o domínio (só no fim)
 
 Quando estiver tudo no ar e conferido, o `boooh.sbs` passa a apontar para a hospedagem
 nova. Esse é o passo que troca o site de lugar de verdade, então deixe por último — e me
