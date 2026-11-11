@@ -143,7 +143,9 @@ function montarOnde(
 function montarOrdem(tabela: string, ordem: readonly Ordem[] = []): string {
   const pedacos = ordem.map((o) => {
     exigirColuna(tabela, o.coluna);
-    return `${crase(o.coluna)} ${o.crescente ? "ASC" : "DESC"}`;
+    // Sem dizer nada, é crescente: é o padrão do SQL e o do cliente antigo. Tratar a
+    // ausência como decrescente devolvia a lista ao contrário sem erro nenhum.
+    return `${crase(o.coluna)} ${o.crescente === false ? "DESC" : "ASC"}`;
   });
   // A última ordenação é sempre o id, para a paginação não repetir nem pular linha em empate.
   if (colunaValida(tabela, "id")) pedacos.push("`id` ASC");

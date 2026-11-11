@@ -118,6 +118,9 @@ CREATE TABLE `fatores_2fa` (
   `tipo` VARCHAR(20) NOT NULL DEFAULT 'totp',
   `segredo_cifrado` TEXT NOT NULL,
   `confirmado_em` DATETIME(3) NULL,
+  -- O último intervalo de 30s aceito. Um código vale uma vez: sem isto, quem visse o
+  -- código por cima do ombro teria meio minuto para usá-lo de novo em outro lugar.
+  `ultimo_contador` BIGINT NULL,
   `criado_em` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`id`),
   KEY `fatores_user_id_idx` (`user_id`),

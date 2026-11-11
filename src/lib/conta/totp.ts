@@ -83,6 +83,35 @@ export function conferirCodigo(segredoBase32: string, digitado: string, agoraMs 
   return bateu;
 }
 
+/**
+ * Qual intervalo de 30 segundos o código digitado corresponde, ou `null`.
+ *
+ * `conferirCodigo` responde "serve ou não serve"; isto responde "serve, e é o deste
+ * intervalo". A diferença importa para o código valer uma vez só: guardando o intervalo
+ * aceito, o mesmo código não entra de novo enquanto ele não passar. Sem isso, quem vir o
+ * código por cima do ombro tem até meio minuto para usá-lo em outro lugar.
+ *
+ * Percorre a janela inteira mesmo depois de achar, para o tempo de resposta não dizer em
+ * qual intervalo bateu.
+ */
+export function contadorQueConfere(
+  segredoBase32: string,
+  digitado: string,
+  agoraMs = Date.now(),
+  janela = 1,
+): number | null {
+  const limpo = (digitado ?? "").replace(/\D/g, "");
+  if (limpo.length !== DIGITOS) return null;
+  const base = Math.floor(agoraMs / 1000 / PASSO_SEGUNDOS);
+  const alvo = Buffer.from(limpo);
+  let achado: number | null = null;
+  for (let d = -janela; d <= janela; d++) {
+    const esperado = Buffer.from(codigoDoContador(segredoBase32, base + d));
+    if (esperado.length === alvo.length && timingSafeEqual(esperado, alvo)) achado = base + d;
+  }
+  return achado;
+}
+
 /** Endereço que vira QR Code no aplicativo de códigos. */
 export function enderecoDoQr(segredoBase32: string, email: string, sistema = "Pecuária Digital"): string {
   const conta = encodeURIComponent(`${sistema}:${email}`);

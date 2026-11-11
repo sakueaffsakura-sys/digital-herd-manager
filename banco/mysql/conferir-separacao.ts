@@ -480,6 +480,14 @@ const criasDoPai = await listar<{ numero_brinco: string }>(dona, {
   ordem: [{ coluna: "numero_brinco" }],
 });
 conferir("e as do pai são as duas dele", ["5003", "5004"], criasDoPai.linhas.map((l) => l.numero_brinco));
+// Ordem sem direção é crescente, como no SQL e no cliente antigo. Tratar a ausência como
+// decrescente devolvia a lista ao contrário sem erro nenhum.
+const decrescente = await listar<{ numero_brinco: string }>(dona, {
+  tabela: "animais",
+  qualquerDe: [{ coluna: "mae_id", op: "=", valor: MAE }],
+  ordem: [{ coluna: "numero_brinco", crescente: false }],
+});
+conferir("e dá para pedir decrescente de propósito", ["5004", "5002"], decrescente.linhas.map((l) => l.numero_brinco));
 conferir("o vizinho não acha cria nenhuma com os mesmos identificadores", 0, (await listar(vizinho, {
   tabela: "animais",
   qualquerDe: [{ coluna: "mae_id", op: "=", valor: MAE }, { coluna: "pai_id", op: "=", valor: PAI }],

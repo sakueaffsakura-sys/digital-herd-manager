@@ -185,7 +185,9 @@ class Consulta<T> implements PromiseLike<Resposta<T[]>> {
   ): PromiseLike<R1 | R2> {
     const pedido = chamar<T[]>(this.pedido()).then((r) =>
       // Com `head`, quem pediu quer a contagem, não as linhas.
-      this.soContar && !r.error ? ({ data: null, error: null, count: r.count } as Resposta<T[]>) : r,
+      // Com `head`, as linhas não foram pedidas. Devolver uma lista vazia diz isso sem
+      // mentir sobre o feitio: quem pediu só olha a contagem.
+      this.soContar && !r.error ? ({ data: [] as T[], error: null, count: r.count }) : r,
     );
     return pedido.then(aoResolver, aoFalhar);
   }
@@ -223,8 +225,11 @@ class Gravacao<T> implements PromiseLike<Resposta<T[]>> {
 class Tabela<L, E> {
   constructor(private readonly nome: string) {}
 
-  select<T = L>(colunas = "*"): Consulta<T> {
-    return new Consulta<T>(this.nome).select(colunas) as unknown as Consulta<T>;
+  select<T = L>(
+    colunas = "*",
+    opcoes?: { count?: "exact" | "planned" | "estimated"; head?: boolean },
+  ): Consulta<T> {
+    return new Consulta<T>(this.nome).select(colunas, opcoes);
   }
 
   insert(linhas: E | E[]): Gravacao<{ id: string }> {
