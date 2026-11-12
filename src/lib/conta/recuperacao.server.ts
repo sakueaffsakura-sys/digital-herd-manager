@@ -134,11 +134,4 @@ export async function trocarSenhaComLink(token: string, senhaNova: string): Prom
   return { userId: pedido.user_id };
 }
 
-/** Limpeza de rotina: os pedidos vencidos não servem para nada. */
-export async function limparRecuperacoesVencidas(): Promise<number> {
-  const { afetadas } = await executar(
-    "DELETE FROM recuperacoes_senha WHERE expira_em < ?",
-    [instanteUtc(new Date(Date.now() - 7 * 86_400_000))],
-  );
-  return afetadas;
-}
+/* A limpeza dos pedidos vencidos vive em `faxina.server.ts`, junto com as outras. */

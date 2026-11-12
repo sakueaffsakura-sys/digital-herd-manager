@@ -3,6 +3,7 @@ import { falha, resposta } from "@/lib/conta.server";
 import { quemEsta } from "@/lib/conta/login.server";
 import { consultarUm } from "@/lib/dados/banco.server";
 import { cunharToken } from "@/lib/conta/token-curto";
+import { talvezFaxinar } from "@/lib/conta/faxina.server";
 
 /**
  * GET — quem está nesta sessão, e um token curto para as telas usarem como Bearer.
@@ -23,6 +24,9 @@ export const Route = createFileRoute("/api/conta/eu")({
           [quem.userId],
         );
         const { token, expiraEm } = cunharToken(quem.userId);
+        // De vez em quando (um pedido em quinhentos), limpa sessão vencida e link usado.
+        // Não espera: a faxina acontece atrás, e quem pediu não é atrasado por ela.
+        talvezFaxinar();
         return resposta(200, {
           user: {
             id: quem.userId,

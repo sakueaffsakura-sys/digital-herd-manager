@@ -16,6 +16,7 @@ import { dataNoFuso, somarDias } from "../../src/lib/datas";
 import { trocarSenhaComLink } from "../../src/lib/conta/recuperacao.server";
 import { conferirSenha } from "../../src/lib/conta/senha";
 import { createHash } from "node:crypto";
+import { faxinar } from "../../src/lib/conta/faxina.server";
 import mysql from "mysql2/promise";
 
 const NAIR = "11111111-1111-4111-8111-111111111111";
@@ -496,6 +497,24 @@ await recusa("usar um campo inventado no \"qualquer destes\"", () => listar(dona
   tabela: "animais",
   qualquerDe: [{ coluna: "1=1 OR mae_id IS NOT NULL", op: "=", valor: 1 }],
 }));
+
+console.log("== Faxina: leva o lixo e não leva o que está em uso ==");
+// Uma sessão viva, uma vencida; um link pendente, um usado há muito tempo; um cadastro de
+// 2FA abandonado e um confirmado. A faxina tem de acertar só os três primeiros.
+await executar("INSERT INTO sessoes (id, user_id, token_hash, expira_em) VALUES (UUID(), ?, ?, DATE_ADD(NOW(3), INTERVAL 10 DAY))", [JOAO, resumoDe("viva")]);
+await executar("INSERT INTO sessoes (id, user_id, token_hash, expira_em) VALUES (UUID(), ?, ?, DATE_SUB(NOW(3), INTERVAL 1 DAY))", [JOAO, resumoDe("vencida")]);
+await executar("INSERT INTO recuperacoes_senha (id, user_id, token_hash, expira_em) VALUES (UUID(), ?, ?, DATE_ADD(NOW(3), INTERVAL 1 HOUR))", [JOAO, resumoDe("link-novo")]);
+await executar("INSERT INTO recuperacoes_senha (id, user_id, token_hash, expira_em, usado_em) VALUES (UUID(), ?, ?, DATE_SUB(NOW(3), INTERVAL 30 DAY), DATE_SUB(NOW(3), INTERVAL 30 DAY))", [JOAO, resumoDe("link-velho")]);
+await executar("INSERT INTO fatores_2fa (id, user_id, tipo, segredo_cifrado, criado_em) VALUES (UUID(), ?, 'totp', 'x', DATE_SUB(NOW(3), INTERVAL 30 DAY))", [JOAO]);
+await executar("INSERT INTO fatores_2fa (id, user_id, tipo, segredo_cifrado, confirmado_em, criado_em) VALUES (UUID(), ?, 'totp', 'y', NOW(3), DATE_SUB(NOW(3), INTERVAL 30 DAY))", [JOAO]);
+const faxina = await faxinar();
+conferir("levou a sessão vencida", 1, faxina.sessoes);
+conferir("levou o link já usado e antigo", 1, faxina.recuperacoes);
+conferir("levou o cadastro de 2FA abandonado", 1, faxina.cadastros2fa);
+conferir("a sessão viva ficou", 1, Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM sessoes WHERE user_id = ?", [JOAO]))[0]?.n));
+conferir("o link pendente ficou", 1, Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM recuperacoes_senha WHERE user_id = ?", [JOAO]))[0]?.n));
+conferir("o 2FA confirmado ficou", 1, Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM fatores_2fa WHERE user_id = ?", [JOAO]))[0]?.n));
+conferir("rodar de novo não acha mais nada", "0/0/0", await faxinar().then((f) => `${f.sessoes}/${f.recuperacoes}/${f.cadastros2fa}`));
 
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências

@@ -138,8 +138,4 @@ export async function derrubarOutrasSessoes(userId: string, tokenAtual?: string 
   return afetadas;
 }
 
-/** Limpeza das sessões vencidas, para a tabela não crescer sem fim. */
-export async function limparSessoesVencidas(): Promise<number> {
-  const { afetadas } = await executar("DELETE FROM sessoes WHERE expira_em < ?", [instanteUtc()]);
-  return afetadas;
-}
+/* A faxina das sessões vencidas vive em `faxina.server.ts`, junto com as outras. */
