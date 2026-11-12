@@ -17,6 +17,7 @@ import { trocarSenhaComLink } from "../../src/lib/conta/recuperacao.server";
 import { conferirSenha } from "../../src/lib/conta/senha";
 import { createHash } from "node:crypto";
 import { faxinar } from "../../src/lib/conta/faxina.server";
+import { criarConta } from "../../src/lib/conta/cadastro.server";
 import mysql from "mysql2/promise";
 
 const NAIR = "11111111-1111-4111-8111-111111111111";
@@ -515,6 +516,23 @@ conferir("a sessão viva ficou", 1, Number((await consultar<{ n: number }>("SELE
 conferir("o link pendente ficou", 1, Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM recuperacoes_senha WHERE user_id = ?", [JOAO]))[0]?.n));
 conferir("o 2FA confirmado ficou", 1, Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM fatores_2fa WHERE user_id = ?", [JOAO]))[0]?.n));
 conferir("rodar de novo não acha mais nada", "0/0/0", await faxinar().then((f) => `${f.sessoes}/${f.recuperacoes}/${f.cadastros2fa}`));
+
+console.log("== Criar conta: a resposta não conta quem já tem conta ==");
+const pedidoFalso = new Request("https://exemplo.com/cadastro", { headers: { "user-agent": "conferencia" } });
+const nova = await criarConta(pedidoFalso, "Maria do Campo", "maria@exemplo.com", "Capim-Alto-2026");
+conferir("a conta nova nasce com sessão aberta", true, "token" in nova && nova.token.length > 20);
+conferir("e dá para entrar com ela", "maria@exemplo.com",
+  (await consultar<{ email: string }>("SELECT email FROM usuarios WHERE email = 'maria@exemplo.com'"))[0]?.email);
+conferir("o nome foi para o perfil", "Maria do Campo",
+  (await consultar<{ n: string }>("SELECT p.nome_completo AS n FROM profiles p JOIN usuarios u ON u.id = p.id WHERE u.email = 'maria@exemplo.com'"))[0]?.n);
+// O mesmo e-mail de novo: não cria, não quebra, e não diz que já existia por outro caminho
+// que não seja este campo — a rota devolve a mesma resposta nos dois casos.
+const repetida = await criarConta(pedidoFalso, "Outra Pessoa", "maria@exemplo.com", "Outra-Senha-2026");
+conferir("e-mail repetido não cria segunda conta", true, "jaExistia" in repetida);
+conferir("continua existindo uma conta só com esse e-mail", 1,
+  Number((await consultar<{ n: number }>("SELECT COUNT(*) AS n FROM usuarios WHERE email = 'maria@exemplo.com'"))[0]?.n));
+conferir("e a senha da conta que já existia não foi trocada", true,
+  (await conferirSenha("Capim-Alto-2026", String((await consultar<{ h: string }>("SELECT senha_hash AS h FROM usuarios WHERE email = 'maria@exemplo.com'"))[0]?.h))).confere);
 
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências

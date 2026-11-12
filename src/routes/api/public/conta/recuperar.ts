@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { clienteDoSite, dentroDoLimite, EMAIL_VALIDO, falha, ipDe, lerCorpo, origemSegura, resposta } from "@/lib/conta.server";
+import { BANCO_NOVO } from "@/lib/dados";
+import { pedirRecuperacao } from "@/lib/conta/recuperacao.server";
 
 // Mesma resposta exista ou não a conta: ninguém descobre quem tem cadastro por aqui.
 const GENERICA = "Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha. Confira também o spam.";
@@ -17,8 +19,14 @@ export const Route = createFileRoute("/api/public/conta/recuperar")({
         // Passou do limite do e-mail: responde igual, sem enviar (não revela nada e não lota a caixa da pessoa).
         if (!(await dentroDoLimite(`rec-email:${email}`, 3, 3600))) return resposta(200, { mensagem: GENERICA });
         try {
-          const { error } = await clienteDoSite().auth.resetPasswordForEmail(email, { redirectTo: `${origemSegura(request)}/redefinir-senha` });
-          if (error && !/not found|user/i.test(error.message)) console.error("recuperar senha:", error.message);
+          if (BANCO_NOVO) {
+            // `pedirRecuperacao` já sai calado quando a conta não existe: a decisão de não
+            // contar nada mora lá, num lugar só, e não repetida em cada rota.
+            await pedirRecuperacao(email, origemSegura(request));
+          } else {
+            const { error } = await clienteDoSite().auth.resetPasswordForEmail(email, { redirectTo: `${origemSegura(request)}/redefinir-senha` });
+            if (error && !/not found|user/i.test(error.message)) console.error("recuperar senha:", error.message);
+          }
         } catch (e) {
           console.error("recuperar senha:", e);
         }
