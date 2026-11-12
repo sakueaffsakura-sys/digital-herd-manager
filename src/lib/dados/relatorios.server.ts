@@ -141,3 +141,56 @@ export async function appSincronizar(
     [propriedadeId, marca, marca, idMarca],
   );
 }
+
+export type Exclusao = { id: string; excluido_em: string; exclusao_id: string };
+
+/**
+ * O que foi apagado nesta fazenda depois da marca, para o aplicativo apagar também.
+ *
+ * Sem isto, o registro apagado no site continuaria no celular para sempre: a lista de
+ * mudanças traz o que existe, e o que não existe mais não aparece em lista nenhuma.
+ *
+ * A marca é o par (excluido_em, id), e não só a data, pelo mesmo motivo da sincronização
+ * normal: várias exclusões cabem no mesmo milésimo de segundo. O `id` aqui é um número que
+ * só cresce, o que o torna um desempate confiável.
+ */
+export async function exclusoesDoApp(
+  quem: Quem,
+  propriedadeId: string,
+  tabela: unknown,
+  aposExcluidoEm?: unknown,
+  aposId?: unknown,
+  limite = 1000,
+): Promise<Exclusao[]> {
+  exigirPropriedade(quem, propriedadeId);
+  const nome = TABELAS_DO_APLICATIVO.find((x) => x === tabela);
+  if (!nome) throw new AcessoNegado("Essa área não é sincronizável pelo aplicativo.");
+  const quantas = Math.min(Math.max(Math.trunc(Number(limite)) || 1000, 1), 1000);
+
+  const marca = aposExcluidoEm ? new Date(String(aposExcluidoEm)) : null;
+  if (marca && Number.isNaN(marca.getTime())) throw new AcessoNegado("Marca de exclusão inválida.");
+  const idMarca = typeof aposId === "string" && /^\d{1,19}$/.test(aposId) ? aposId : null;
+
+  const onde = marca
+    ? idMarca
+      ? "AND (excluido_em > ? OR (excluido_em = ? AND id > ?))"
+      : "AND excluido_em > ?"
+    : "";
+  const valores: unknown[] = [propriedadeId, nome];
+  if (marca) {
+    valores.push(marca);
+    if (idMarca) valores.push(marca, idMarca);
+  }
+
+  const linhas = await consultar<{ id: number; registro_id: string; excluido_em: Date }>(
+    `SELECT id, registro_id, excluido_em FROM registros_excluidos
+     WHERE propriedade_id = ? AND tabela = ? ${onde}
+     ORDER BY excluido_em, id LIMIT ${quantas}`,
+    valores,
+  );
+  return linhas.map((l) => ({
+    id: l.registro_id,
+    excluido_em: new Date(l.excluido_em).toISOString(),
+    exclusao_id: String(l.id),
+  }));
+}
