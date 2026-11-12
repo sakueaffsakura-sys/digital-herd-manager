@@ -21,6 +21,8 @@
  *   que a pessoa está dentro até a resposta chegar, mostraria dados de uma sessão que já
  *   acabou.
  */
+import { qrParaSvg } from "@/lib/qr";
+
 export type Pessoa = { id: string; email: string | null; created_at: string | null };
 export type Sessao = { user: Pessoa; access_token: string; expires_at: number };
 
@@ -260,10 +262,24 @@ export const sessao = {
       };
     },
 
-    async enroll(_opcoes?: { factorType?: string; friendlyName?: string }): Promise<Resposta<{ id: string; totp: { secret: string; uri: string } } | null>> {
+    async enroll(_opcoes?: { factorType?: string; friendlyName?: string }): Promise<Resposta<{ id: string; totp: { secret: string; uri: string; qr_code: string } } | null>> {
       const r = await pedir<{ id: string; segredo: string; qr: string }>("/api/conta/2fa", { acao: "cadastrar" });
       if (r.error || !r.data) return { data: null, error: r.error ?? { message: "Não deu para cadastrar." } };
-      return { data: { id: r.data.id, totp: { secret: r.data.segredo, uri: r.data.qr } }, error: null };
+      // A imagem do QR é desenhada aqui, no navegador, por `lib/qr.ts`. O endereço do
+      // segredo não precisa sair do aparelho para virar quadradinho preto e branco — e o
+      // registro de pacotes não está acessível para trazer uma biblioteca só para isso.
+      const svg = qrParaSvg(r.data.qr);
+      return {
+        data: {
+          id: r.data.id,
+          totp: {
+            secret: r.data.segredo,
+            uri: r.data.qr,
+            qr_code: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+          },
+        },
+        error: null,
+      };
     },
 
     async challengeAndVerify(opcoes: { factorId?: string; code: string }): Promise<Resposta<{ aal: string } | null>> {

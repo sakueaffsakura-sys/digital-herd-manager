@@ -22,45 +22,40 @@ type ClienteDeSessao = Pick<
 >;
 
 /**
- * O caminho antigo, repassado método a método.
+ * O caminho antigo, com cada método amarrado ao seu dono.
  *
- * Não é um espalhamento do objeto (`{ ...supabase.auth }`) de propósito: os métodos do
- * cliente antigo contam com o próprio dono para funcionar, e espalhados eles o perdem —
- * quebrando no clique, não na compilação. Repassar um a um mantém cada chamada no dono
- * certo e deixa claro quais métodos esta parte do site usa.
+ * Não é um espalhamento do objeto (`{ ...supabase.auth }`): os métodos daquele cliente
+ * contam com o próprio dono para funcionar, e espalhados eles o perdem — quebrando no
+ * clique, não na compilação. Amarrar um a um mantém o dono certo, preserva os tipos de
+ * cada chamada e deixa à vista quais métodos esta parte do site usa.
  */
 function antigo(): ClienteDeSessao {
-  const a = supabase.auth as unknown as Record<string, (...args: never[]) => unknown>;
-  const chamar = <T>(nome: string, ...args: unknown[]) =>
-    (a[nome] as unknown as (...x: unknown[]) => T).call(supabase.auth, ...args);
-  const mfa = (supabase.auth as unknown as { mfa: Record<string, (...args: never[]) => unknown> }).mfa;
-  const chamarMfa = <T>(nome: string, ...args: unknown[]) =>
-    (mfa[nome] as unknown as (...x: unknown[]) => T).call(mfa, ...args);
-
+  const a = supabase.auth;
+  const m = a.mfa;
   return {
-    getUser: (...x) => chamar("getUser", ...x),
-    getSession: (...x) => chamar("getSession", ...x),
-    getClaims: (...x) => chamar("getClaims", ...x),
-    signInWithPassword: (...x) => chamar("signInWithPassword", ...x),
-    signOut: (...x) => chamar("signOut", ...x),
-    onAuthStateChange: (...x) => chamar("onAuthStateChange", ...x),
-    setSession: (...x) => chamar("setSession", ...x),
-    exchangeCodeForSession: (...x) => chamar("exchangeCodeForSession", ...x),
-    updateUser: (...x) => chamar("updateUser", ...x),
+    getUser: a.getUser.bind(a),
+    getSession: a.getSession.bind(a),
+    getClaims: a.getClaims.bind(a),
+    signInWithPassword: a.signInWithPassword.bind(a),
+    signOut: a.signOut.bind(a),
+    onAuthStateChange: a.onAuthStateChange.bind(a),
+    setSession: a.setSession.bind(a),
+    exchangeCodeForSession: a.exchangeCodeForSession.bind(a),
+    updateUser: a.updateUser.bind(a),
     mfa: {
-      listFactors: (...x) => chamarMfa("listFactors", ...x),
-      getAuthenticatorAssuranceLevel: (...x) => chamarMfa("getAuthenticatorAssuranceLevel", ...x),
-      enroll: (...x) => chamarMfa("enroll", ...x),
-      challengeAndVerify: (...x) => chamarMfa("challengeAndVerify", ...x),
-      unenroll: (...x) => chamarMfa("unenroll", ...x),
+      listFactors: m.listFactors.bind(m),
+      getAuthenticatorAssuranceLevel: m.getAuthenticatorAssuranceLevel.bind(m),
+      enroll: m.enroll.bind(m),
+      challengeAndVerify: m.challengeAndVerify.bind(m),
+      unenroll: m.unenroll.bind(m),
     },
     // No caminho antigo, conferir a senha é uma rota própria, que já existia.
     async conferirSenhaAtual(senha: string) {
       try {
-        const { data } = await chamar<{ data: { session?: { access_token?: string } } }>("getSession");
+        const { data } = await a.getSession();
         const r = await fetch("/api/conta/conferir-senha", {
           method: "POST",
-          headers: { "content-type": "application/json", authorization: `Bearer ${data?.session?.access_token ?? ""}` },
+          headers: { "content-type": "application/json", authorization: `Bearer ${data.session?.access_token ?? ""}` },
           body: JSON.stringify({ senha }),
         });
         if (r.ok) return { error: null };
