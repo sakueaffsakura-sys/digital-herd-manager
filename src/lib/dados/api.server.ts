@@ -56,6 +56,16 @@ function lerFiltros(bruto: unknown): Filtro[] {
   return validos;
 }
 
+/** O ponto de parada: só colunas e valores, nunca condição escrita. */
+function lerCursor(bruto: unknown): Busca["depoisDe"] {
+  if (!bruto || typeof bruto !== "object") return undefined;
+  const { colunas, valores, crescente } = bruto as Record<string, unknown>;
+  if (!Array.isArray(colunas) || !Array.isArray(valores)) return undefined;
+  const nomes = colunas.slice(0, 2).filter((c): c is string => typeof c === "string");
+  if (nomes.length === 0) return undefined;
+  return { colunas: nomes, valores: valores.slice(0, nomes.length), crescente: crescente !== false };
+}
+
 function lerOrdem(bruto: unknown): Busca["ordem"] {
   if (!Array.isArray(bruto)) return [];
   return bruto.slice(0, 5).flatMap((o) => {
@@ -97,6 +107,7 @@ export async function handleDados(request: Request): Promise<Response> {
           colunas: Array.isArray(corpo["colunas"]) ? (corpo["colunas"] as string[]).slice(0, 60) : undefined,
           filtros: lerFiltros(corpo["filtros"]),
           qualquerDe: lerFiltros(corpo["qualquerDe"]),
+          depoisDe: lerCursor(corpo["depoisDe"]),
           ordem: lerOrdem(corpo["ordem"]),
           pagina: Number(corpo["pagina"] ?? 1),
           porPagina: Number(corpo["porPagina"] ?? 25),

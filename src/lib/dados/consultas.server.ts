@@ -16,7 +16,7 @@ import { centralAvisos } from "./avisos.server";
 import { agendaPeriodo, semanaDeHoje } from "./agenda.server";
 import { indicadoresPropriedade } from "./indicadores.server";
 import { minhaAreaAssinante, souAssinante, registrosInconsistentes } from "./assinante.server";
-import { relatorioIndicadores, diagnosticoPropriedade, appSincronizar } from "./relatorios.server";
+import { relatorioIndicadores, diagnosticoPropriedade, appSincronizar, appDiagnostico } from "./relatorios.server";
 import { registrarIncidente, tentativaDeBloqueado } from "./seguranca-banco.server";
 import {
   adminPagamentos, adminEbooksResumo, adminExigir2fa, adminResponderSuporte,
@@ -151,6 +151,7 @@ export const CONSULTAS: Record<string, Consulta> = {
   relatorio_indicadores: (quem, a) =>
     relatorioIndicadores(quem, propriedadeDe(quem, a), a["de"] ?? a["_de"], a["ate"] ?? a["_ate"]),
   diagnostico_propriedade: (quem, a) => diagnosticoPropriedade(quem, propriedadeDe(quem, a)),
+  app_diagnostico: (quem, a) => appDiagnostico(quem, propriedadeDe(quem, a)),
   app_sincronizar: (quem, a) =>
     appSincronizar(
       quem,

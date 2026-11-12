@@ -194,3 +194,42 @@ export async function exclusoesDoApp(
     exclusao_id: String(l.id),
   }));
 }
+
+/**
+ * O diagnóstico que o aplicativo mostra em "Sincronização": quantas linhas o servidor tem
+ * de cada tabela e quando foi a última mudança.
+ *
+ * Serve para a pessoa no pasto comparar com o que está no celular e saber se a
+ * sincronização está em dia — e para o suporte entender "não aparece no aplicativo" sem
+ * pedir print de tela.
+ *
+ * `propriedade_visivel` existe para separar duas confusões que parecem a mesma: "a fazenda
+ * não tem esses dados" e "esta conta não vê esta fazenda".
+ */
+export async function appDiagnostico(quem: Quem, propriedadeId: string): Promise<Record<string, unknown>> {
+  exigirPropriedade(quem, propriedadeId);
+  const tabelas: Record<string, unknown> = {};
+  for (const tabela of TABELAS_DO_APLICATIVO) {
+    const r = await consultarUm<{ total: number; ultimo: Date | null; criacao: Date | null }>(
+      `SELECT COUNT(*) AS total, MAX(updated_at) AS ultimo, MAX(created_at) AS criacao
+       FROM \`${tabela}\` WHERE propriedade_id = ?`,
+      [propriedadeId],
+    );
+    tabelas[tabela] = {
+      total: Number(r?.total ?? 0),
+      ultimo_updated_at: r?.ultimo ? new Date(r.ultimo).toISOString() : null,
+      ultima_criacao: r?.criacao ? new Date(r.criacao).toISOString() : null,
+    };
+  }
+  const exclusoes = await consultarUm<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM registros_excluidos WHERE propriedade_id = ?",
+    [propriedadeId],
+  );
+  return {
+    servidor_agora: new Date().toISOString(),
+    propriedade_id: propriedadeId,
+    propriedade_visivel: true,
+    exclusoes_registradas: Number(exclusoes?.n ?? 0),
+    tabelas,
+  };
+}

@@ -534,6 +534,48 @@ conferir("continua existindo uma conta só com esse e-mail", 1,
 conferir("e a senha da conta que já existia não foi trocada", true,
   (await conferirSenha("Capim-Alto-2026", String((await consultar<{ h: string }>("SELECT senha_hash AS h FROM usuarios WHERE email = 'maria@exemplo.com'"))[0]?.h))).confere);
 
+console.log("== \"Depois deste ponto\": paginar sem pular nem repetir ==="); 
+// Três linhas no mesmo instante e uma depois: é o caso que a paginação por página erra.
+const QUANDO = "2026-06-01";
+const brincosPagina: string[] = [];
+for (const b of ["6001", "6002", "6003"]) {
+  brincosPagina.push(await criar(dona, "animais", { propriedade_id: FAZENDA_NAIR, numero_brinco: b, sexo: "F", situacao: "ativo", data_nascimento: QUANDO }));
+}
+const paginaUm = await listar<{ id: string; data_nascimento: string }>(dona, {
+  tabela: "animais",
+  filtros: [{ coluna: "data_nascimento", op: "=", valor: QUANDO }],
+  ordem: [{ coluna: "data_nascimento", crescente: true }, { coluna: "id", crescente: true }],
+  porPagina: 2,
+});
+conferir("a primeira página traz duas", 2, paginaUm.linhas.length);
+const ultima = paginaUm.linhas[1]!;
+const paginaDois = await listar<{ id: string }>(dona, {
+  tabela: "animais",
+  filtros: [{ coluna: "data_nascimento", op: "=", valor: QUANDO }],
+  depoisDe: { colunas: ["data_nascimento", "id"], valores: [ultima.data_nascimento, ultima.id], crescente: true },
+  ordem: [{ coluna: "data_nascimento", crescente: true }, { coluna: "id", crescente: true }],
+  porPagina: 2,
+});
+const vistos = [...paginaUm.linhas.map((l) => l.id), ...paginaDois.linhas.map((l) => l.id)];
+conferir("a segunda não repete nenhuma da primeira", 3, new Set(vistos).size);
+conferir("e as três apareceram", true, brincosPagina.every((id) => vistos.includes(id)));
+await recusa("ponto de parada com coluna inventada", () => listar(dona, {
+  tabela: "animais",
+  depoisDe: { colunas: ["nao_existe"], valores: ["x"] },
+}));
+await recusa("ponto de parada com três colunas", () => listar(dona, {
+  tabela: "animais",
+  depoisDe: { colunas: ["data_nascimento", "id", "nome"], valores: ["a", "b", "c"] },
+}));
+await recusa("ponto de parada sem o valor", () => listar(dona, {
+  tabela: "animais",
+  depoisDe: { colunas: ["data_nascimento", "id"], valores: [QUANDO] },
+}));
+conferir("o vizinho não pagina a fazenda alheia", 0, (await listar(vizinho, {
+  tabela: "animais",
+  depoisDe: { colunas: ["data_nascimento", "id"], valores: ["1900-01-01", ""] },
+})).total);
+
 console.log("== Apagar a fazenda leva junto o que é dela, e só dela ==");
 // Pelo caminho de verdade (`apagar`), que apaga na ordem: o MySQL confere as referências
 // na hora, então um DELETE direto na fazenda esbarraria em nascimentos -> animais.

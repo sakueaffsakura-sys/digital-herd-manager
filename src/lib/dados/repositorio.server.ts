@@ -29,6 +29,19 @@ export type Busca = {
    * nunca manda pedaço de comando, só coluna (conferida) e valor.
    */
   qualquerDe?: readonly Filtro[];
+  /**
+   * "A página depois deste ponto", para quem está baixando uma tabela aos poucos.
+   *
+   * Paginar por `pagina`/`porPagina` não serve aqui: entre uma página e a outra, alguém
+   * grava uma linha, tudo desloca, e o aplicativo pula um registro ou baixa o mesmo duas
+   * vezes. Com o ponto de parada guardado — a data e o identificador da última linha que
+   * chegou — isso não acontece, porque a pergunta deixa de ser "a página 7" e passa a ser
+   * "o que vem depois desta linha".
+   *
+   * Duas colunas no máximo, de propósito: a primeira é a ordem (data), a segunda desempata
+   * (identificador). Com três, a condição cresce e ninguém precisa.
+   */
+  depoisDe?: { colunas: readonly string[]; valores: readonly unknown[]; crescente?: boolean };
   /** Procura o texto em várias colunas ao mesmo tempo. */
   texto?: { termo: string; colunas: readonly string[] };
   ordem?: readonly Ordem[];
@@ -103,12 +116,36 @@ function pedacoDoFiltro(tabela: string, f: Filtro): Condicao {
   }
 }
 
+/**
+ * `(a > X)` ou, com duas colunas, `(a > X OR (a = X AND b > Y))`.
+ *
+ * É a condição do "depois deste ponto". Fica aqui, montada a partir de colunas conferidas
+ * e valores separados, e não vinda do cliente como texto: o jeito antigo mandava a
+ * condição escrita pelo navegador, e condição escrita do lado de fora é comando.
+ */
+function pedacoDoCursor(tabela: string, cursor: NonNullable<Busca["depoisDe"]>): Condicao {
+  const colunas = cursor.colunas.slice(0, 2);
+  if (colunas.length === 0) throw new AcessoNegado("Diga a partir de qual coluna continuar.");
+  if (cursor.colunas.length > 2) throw new AcessoNegado("O ponto de parada usa no máximo duas colunas.");
+  if (cursor.valores.length !== colunas.length) throw new AcessoNegado("Faltou um valor do ponto de parada.");
+  for (const c of colunas) exigirColuna(tabela, c);
+  const sinal = cursor.crescente === false ? "<" : ">";
+  const [a, b] = colunas as [string, string?];
+  const [va, vb] = cursor.valores as [unknown, unknown?];
+  if (!b) return { sql: `${crase(a)} ${sinal} ?`, valores: [va] };
+  return {
+    sql: `(${crase(a)} ${sinal} ? OR (${crase(a)} = ? AND ${crase(b)} ${sinal} ?))`,
+    valores: [va, va, vb],
+  };
+}
+
 function montarOnde(
   tabela: string,
   quem: Quem,
   filtros: readonly Filtro[] = [],
   texto?: Busca["texto"],
   qualquerDe?: readonly Filtro[],
+  depoisDe?: Busca["depoisDe"],
 ): Condicao {
   const partes: string[] = [];
   const valores: unknown[] = [];
@@ -118,6 +155,11 @@ function montarOnde(
   for (const f of filtros) {
     const p = pedacoDoFiltro(tabela, f);
     partes.push(`(${p.sql})`);
+    valores.push(...p.valores);
+  }
+  if (depoisDe) {
+    const p = pedacoDoCursor(tabela, depoisDe);
+    partes.push(p.sql);
     valores.push(...p.valores);
   }
   if (qualquerDe?.length) {
@@ -155,7 +197,7 @@ function montarOrdem(tabela: string, ordem: readonly Ordem[] = []): string {
 export async function listar<T = Record<string, unknown>>(quem: Quem, busca: Busca): Promise<{ linhas: T[]; total: number }> {
   const { tabela } = busca;
   if (!COLUNAS_DA_TABELA[tabela]) throw new AcessoNegado("Área desconhecida.");
-  const onde = montarOnde(tabela, quem, busca.filtros, busca.texto, busca.qualquerDe);
+  const onde = montarOnde(tabela, quem, busca.filtros, busca.texto, busca.qualquerDe, busca.depoisDe);
   const porPagina = Math.min(Math.max(1, busca.porPagina ?? POR_PAGINA_PADRAO), POR_PAGINA_MAXIMO);
   const pagina = Math.max(1, busca.pagina ?? 1);
   const pulo = (pagina - 1) * porPagina;
