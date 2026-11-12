@@ -46,7 +46,30 @@ export function cookieDeSaida(): string {
 }
 
 /** Lê o token do cabeçalho de cookies, sem confundir com outro cookie de nome parecido. */
+/**
+ * O token da sessão, do cookie ou do cabeçalho `Authorization`.
+ *
+ * O site manda no cookie, que o navegador envia sozinho e que script na página não lê. O
+ * aplicativo Android manda no cabeçalho, porque ele não é uma página: é um programa, com
+ * assets locais, falando com outro endereço — não existe cookie de mesma origem para
+ * mandar, e guardar o token no aparelho é o que ele tem.
+ *
+ * O cookie vem primeiro de propósito: num pedido do próprio site, o cabeçalho pode ter
+ * vindo de qualquer lugar, e o cookie é o que o navegador garante.
+ */
 export function tokenDoPedido(request: Request): string | null {
+  const doCookie = tokenDoCookie(request);
+  if (doCookie) return doCookie;
+  const auth = request.headers.get("authorization") ?? "";
+  const m = /^Bearer\s+(.+)$/i.exec(auth.trim());
+  const valor = m?.[1]?.trim();
+  // Os tokens de sessão têm o tamanho que `novoToken` gera; o token curto das telas tem
+  // pontos e é conferido em outro lugar. Separar pelo formato evita consultar o banco com
+  // um valor que nunca poderia ser uma sessão.
+  return valor && !valor.includes(".") ? valor : null;
+}
+
+function tokenDoCookie(request: Request): string | null {
   const cru = request.headers.get("cookie");
   if (!cru) return null;
   for (const parte of cru.split(";")) {

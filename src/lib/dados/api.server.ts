@@ -14,10 +14,32 @@ import { allowRequest, clientIp } from "@/lib/rate-limit";
 
 const TAMANHO_MAXIMO = 512 * 1024;
 
+/**
+ * Esta porta atende também o aplicativo Android, que é outro endereço — assets locais
+ * falando com o site. Daí o CORS.
+ *
+ * Liberar para qualquer origem é seguro aqui, e o motivo merece ser escrito: sem
+ * `Allow-Credentials`, o navegador não manda o cookie de sessão num pedido de outro site,
+ * e sem o cookie quem chega aqui não é ninguém. Um site malicioso também não consegue
+ * "pegar carona" no cookie de quem está logado: o pedido vem em JSON, o que obriga o
+ * navegador a perguntar antes (preflight), e um pedido COM cookie exige
+ * `Allow-Credentials: true`, que não está aqui — então ele é barrado antes de sair.
+ *
+ * Quem entra, entra pelo token no cabeçalho `Authorization`, que só o aplicativo tem.
+ */
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "authorization, content-type",
+  "access-control-max-age": "86400",
+};
+
+export const preflight = () => new Response(null, { status: 204, headers: CORS });
+
 function resposta(status: number, corpo: unknown): Response {
   return new Response(JSON.stringify(corpo), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS },
   });
 }
 

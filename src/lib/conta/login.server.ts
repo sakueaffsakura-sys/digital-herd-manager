@@ -35,7 +35,7 @@ export class EntradaBloqueada extends Error {
 /** Mesmo com e-mail inexistente, gasta um tempo parecido: senão o relógio entrega quem existe. */
 const HASH_FALSO = "$2b$12$C6UzMDM.H6dfI/f/IKcEe.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-export async function entrar(request: Request, email: string, senha: string): Promise<{ quem: Quem; cookie: string }> {
+export async function entrar(request: Request, email: string, senha: string): Promise<{ quem: Quem; cookie: string; token: string }> {
   const endereco = clientIp(request);
   const alvo = (email ?? "").trim().toLowerCase();
   if (!allowRequest(`entrada:ip:${endereco}`, 10, 5 * 60_000, 10 * 60_000)) throw new EntradaBloqueada();
@@ -57,7 +57,17 @@ export async function entrar(request: Request, email: string, senha: string): Pr
   return abrirSessao(request, usuario.id);
 }
 
-export async function abrirSessao(request: Request, userId: string): Promise<{ quem: Quem; cookie: string }> {
+/**
+ * Abre a sessão. Devolve o cookie (para o site) e o token cru (para o aplicativo, que não
+ * tem cookie e guarda o token no aparelho).
+ *
+ * O token cru sai daqui e de nenhum outro lugar: o banco guarda só o resumo dele, então
+ * depois deste instante ninguém mais consegue saber qual era.
+ */
+export async function abrirSessao(
+  request: Request,
+  userId: string,
+): Promise<{ quem: Quem; cookie: string; token: string }> {
   const token = novoToken();
   const agora = new Date();
   await executar(
@@ -74,7 +84,7 @@ export async function abrirSessao(request: Request, userId: string): Promise<{ q
     ],
   );
   await executar("UPDATE usuarios SET ultimo_acesso = ? WHERE id = ?", [instanteUtc(agora), userId]);
-  return { quem: await montarQuem(userId), cookie: cookieDaSessao(token, agora) };
+  return { quem: await montarQuem(userId), cookie: cookieDaSessao(token, agora), token };
 }
 
 /** Monta quem é a pessoa a partir do banco: papel e fazendas nunca vêm do navegador. */

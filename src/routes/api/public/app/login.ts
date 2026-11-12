@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { clientePublico, contaBloqueada, erro, json, lerJson, limitarIp, preflight, sessaoPublica } from "@/lib/app-api.server";
 import { limiteBanco } from "@/lib/limite-banco.server";
 import { clientIp } from "@/lib/rate-limit";
+import { BANCO_NOVO } from "@/lib/dados";
+import { entrarNoApp, renovarNoApp } from "@/lib/app-api-novo.server";
 
 const MUITAS = "Muitas tentativas. Aguarde alguns minutos.";
 
@@ -17,6 +19,24 @@ export const Route = createFileRoute("/api/public/app/login")({
         if (!limitarIp(request, "login", 10)) return erro(429, MUITAS);
         const body = await lerJson<{ email?: string; senha?: string; refresh_token?: string; codigo?: string }>(request, 4096);
         if (!body) return erro(400, "Pedido inválido.");
+
+        // Banco novo: a sessão é a mesma do site, e o aplicativo guarda o token em vez do
+        // cookie. A resposta tem o mesmo formato de antes, para o aplicativo não mudar.
+        if (BANCO_NOVO) {
+          if (typeof body.refresh_token === "string" && body.refresh_token) {
+            if (!(await limiteBanco(`app-renovar-ip:${ip}`, 120, 600))) return erro(429, MUITAS);
+            return renovarNoApp(request, body.refresh_token);
+          }
+          const email = typeof body.email === "string" ? body.email.trim() : "";
+          const senha = typeof body.senha === "string" ? body.senha : "";
+          if (!email || !senha) return erro(400, "Informe e-mail e senha.");
+          if (!(await limiteBanco(`app-login-ip:${ip}`, 30, 600)) || !(await limiteBanco(`app-login-email:${email.toLowerCase()}`, 10, 900))) {
+            return erro(429, MUITAS);
+          }
+          const codigo = typeof body.codigo === "string" ? body.codigo.replace(/\D/g, "") : "";
+          return entrarNoApp(request, email, senha, codigo || undefined);
+        }
+
         const sb = clientePublico();
         if (typeof body.refresh_token === "string" && body.refresh_token) {
           if (!(await limiteBanco(`app-renovar-ip:${ip}`, 120, 600))) return erro(429, MUITAS);
