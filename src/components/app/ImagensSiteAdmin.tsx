@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUp, Link2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IMAGENS_INFO, IMAGENS_PADRAO, IMAGENS_QUERY, useImagensSite, type ChaveImagem } from "./imagensSite";
@@ -34,9 +35,9 @@ function Item({ info }: { info: (typeof IMAGENS_INFO)[number] }) {
 
   const salvar = useMutation({
     mutationFn: async (valor: string | null) => {
-      const t = supabase.from("imagens_site" as never);
+      const t = dados.from("imagens_site" as never);
       if (valor === null) { const { error } = await t.delete().eq("chave", info.chave); if (error) throw error; return; }
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await sessao.getUser();
       const { error } = await t.upsert({ chave: info.chave, valor, atualizado_em: new Date().toISOString(), atualizado_por: u.user?.id ?? null } as never);
       if (error) throw error;
     },

@@ -1,4 +1,5 @@
-import { Search, ShieldCheck, X } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Search, ShieldCheck, X } from "lucide-react";
 import marcaBranca from "@/assets/marca/marca-branca.webp";
 import type { GrupoMenu } from "./navegacao";
 
@@ -20,6 +21,7 @@ type Props = {
  * aponta para os itens pelo atributo data-tour).
  */
 export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, aoAdmin, aoBuscar }: Props) {
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
   return (
     <>
       <aside
@@ -48,9 +50,13 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
           </div>
         )}
         <nav aria-label="Áreas da fazenda" className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
-          {grupos.map((g, i) => (
-            <div key={g.rotulo ?? `g${i}`} className={i === 0 ? "mt-1" : "mt-4"}>
-              {g.rotulo && <p className="px-3 pb-0.5 text-sm font-bold text-sidebar-foreground/65">{g.rotulo}</p>}
+          {grupos.map((g, i) => {
+            const nome = g.rotulo ?? `g${i}`;
+            // Grupo com nome abre e fecha: com muitas áreas, o menu aberto todo viraria
+            // uma rolagem sem fim. Abre o grupo da área em que a pessoa está.
+            const temAtiva = g.itens.some((it) => it.chave === secao);
+            const aberta = !g.rotulo || (abertos[nome] ?? temAtiva);
+            const itens = (
               <ul className="space-y-0.5">
                 {g.itens.map(({ chave, rotulo, icone: Icone }) => {
                   const ativo = secao === chave;
@@ -66,14 +72,33 @@ export function MenuLateral({ grupos, secao, aberto, ehAdmin, aoIr, aoFechar, ao
                         }`}
                       >
                         <Icone className="size-5 shrink-0" />
-                        <span className="min-w-0 truncate">{rotulo}</span>
+                        {/* Nome comprido ("Movimentação de animais") quebra em duas linhas em vez
+                            de virar reticências: o menu é o único lugar onde ele aparece inteiro. */}
+                        <span className="min-w-0 py-2 leading-snug">{rotulo}</span>
                       </button>
                     </li>
                   );
                 })}
               </ul>
-            </div>
-          ))}
+            );
+            return (
+              <div key={nome} className={i === 0 ? "mt-1" : "mt-2"}>
+                {g.rotulo && (
+                  <button
+                    type="button"
+                    aria-expanded={aberta}
+                    onClick={() => setAbertos((a) => ({ ...a, [nome]: !aberta }))}
+                    className="flex min-h-11 w-full items-center gap-2 rounded-[10px] px-3 text-left text-sm font-bold text-sidebar-foreground/65 hover:bg-white/[0.07] hover:text-white"
+                  >
+                    <ChevronDown className={`size-4 shrink-0 transition-transform ${aberta ? "" : "-rotate-90"}`} />
+                    <span className="min-w-0 truncate">{g.rotulo}</span>
+                    {!aberta && temAtiva && <span className="ml-auto size-2 shrink-0 rounded-full bg-white" aria-hidden />}
+                  </button>
+                )}
+                {aberta && itens}
+              </div>
+            );
+          })}
         </nav>
         {ehAdmin && (
           <div className="shrink-0 border-t border-sidebar-border px-3 py-2.5">

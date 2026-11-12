@@ -11,8 +11,13 @@ const cache = new Map<NomeChave, { v: string | null; ate: number }>();
 async function servico(): Promise<SupabaseClient> {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin as unknown as SupabaseClient;
 }
+/**
+ * Chave que cifra as outras. Preferência para CHAVES_MESTRA; sem ela, usa a chave de serviço
+ * do banco, que só existe no servidor — assim o painel já funciona sem mais nenhum ajuste.
+ * Quem trocar a chave de serviço precisa colar as chaves de novo no painel (o aviso aparece lá).
+ */
 function mestra(): string | null {
-  return process.env["CHAVES_MESTRA"] || null;
+  return process.env["CHAVES_MESTRA"] || process.env["SUPABASE_SERVICE_ROLE_KEY"] || null;
 }
 async function evento(request: Request, tipo: string, severidade: "info" | "aviso" | "critico", detalhe: string) {
   const { registrarEvento } = await import("./security-events.server");
@@ -52,15 +57,24 @@ async function exigirAdmin(request: Request) {
 export async function handleListarChaves(request: Request) {
   const u = await exigirAdmin(request);
   if (u instanceof Response) return u;
-  const { data } = await (await servico()).from("chaves_sistema").select("nome,final,alterado_em");
-  const linhas = (data ?? []) as { nome: string; final: string; alterado_em: string }[];
-  return resposta(200, {
-    mestra: !!mestra(),
-    chaves: NOMES_CHAVES.map((nome) => {
-      const l = linhas.find((x) => x.nome === nome);
-      return { nome, origem: l ? "painel" : process.env[nome] ? "ambiente" : "nenhuma", final: l?.final ?? "", alterado_em: l?.alterado_em ?? null };
-    }),
-  }, { "cache-control": "no-store" });
+  const { data } = await (await servico()).from("chaves_sistema").select("nome,final,alterado_em,valor_cifrado");
+  const linhas = (data ?? []) as { nome: string; final: string; alterado_em: string; valor_cifrado: string }[];
+  const m = mestra();
+  const chaves = [];
+  for (const nome of NOMES_CHAVES) {
+    const l = linhas.find((x) => x.nome === nome);
+    // Confere se a chave guardada ainda abre: se a chave mestra mudou, ela não abre mais
+    // e o painel precisa dizer isso, em vez de mostrar tudo certo e o pagamento falhar.
+    const legivel = l ? (m ? (await decifrar(l.valor_cifrado, m)) !== null : false) : true;
+    chaves.push({
+      nome,
+      origem: l ? "painel" : process.env[nome] ? "ambiente" : "nenhuma",
+      final: l?.final ?? "",
+      alterado_em: l?.alterado_em ?? null,
+      legivel,
+    });
+  }
+  return resposta(200, { mestra: !!m, chaves }, { "cache-control": "no-store" });
 }
 
 // POST /api/admin/chaves { nome, valor | null } — salva (ou apaga com valor null)

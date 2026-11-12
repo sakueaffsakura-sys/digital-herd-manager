@@ -4,7 +4,8 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Compass, Copy, MessageCircle, NotebookPen, PlusCircle as HerdPlus, RefreshCw, RotateCcw, Syringe, TrendingUp, Volume2, X } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -40,7 +41,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
   const transport = useMemo(() => new DefaultChatTransport({
     api: "/api/yui",
     headers: async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await sessao.getSession();
       const t = data.session?.access_token;
       return t ? { Authorization: `Bearer ${t}` } : ({} as Record<string, string>);
     },
@@ -61,7 +62,7 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
     queryKey: ["yui-historico"],
     staleTime: Infinity,
     queryFn: async () => {
-      const { data, error } = await supabase.from("suporte_mensagens" as never).select("mensagem_id,papel,partes,created_at").order("created_at", { ascending: false }).limit(80);
+      const { data, error } = await dados.from("suporte_mensagens" as never).select("mensagem_id,papel,partes,created_at").order("created_at", { ascending: false }).limit(80);
       if (error) throw error;
       return ((data ?? []) as { mensagem_id: string; papel: "user" | "assistant"; partes: UIMessage["parts"] }[]).reverse().map((r) => ({ id: r.mensagem_id, role: r.papel, parts: r.partes }) as UIMessage);
     },
@@ -107,10 +108,10 @@ export function YuiAssistant({ section, go, abrirMenu, isAdmin, propriedadeId }:
   const limpar = async () => {
     if (!confirm("Apagar toda a conversa com a Yui?")) return;
     stop();
-    const { data } = await supabase.auth.getSession();
+    const { data } = await sessao.getSession();
     const uid = data.session?.user.id;
     if (uid) {
-      const r = await supabase.from("suporte_mensagens" as never).delete().eq("user_id", uid);
+      const r = await dados.from("suporte_mensagens" as never).delete().eq("user_id", uid);
       if (r.error) { toast.error("Não foi possível apagar a conversa."); return; }
     }
     setMessages([]);

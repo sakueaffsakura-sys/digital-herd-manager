@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
+import { armazem } from "@/lib/arquivos";
 import { diaBR } from "@/lib/datas";
 import { CampoArquivo, Status } from "../shared";
 import { CHAVE_APP, useAppAndroid, type AppAndroid } from "../aplicativo/Aplicativo";
@@ -38,13 +40,14 @@ function AppAdmin() {
       if (inicio[0] !== 0x50 || inicio[1] !== 0x4b) throw new Error("Este arquivo não parece um APK.");
       setEtapa("Enviando…");
       const caminho = `apecuaria-digital-${v}.apk`;
-      const up = await supabase.storage.from("aplicativo").upload(caminho, arquivo, { contentType: "application/vnd.android.package-archive", upsert: true, cacheControl: "0" });
+      const up = await armazem.from("aplicativo").upload(caminho, arquivo, { contentType: "application/vnd.android.package-archive", upsert: true, cacheControl: "0" });
       if (up.error) throw new Error("Não foi possível enviar o arquivo.");
       setEtapa("Salvando…");
-      const dados: AppAndroid = { versao: v, arquivo: caminho, tamanho: arquivo.size, publicado_em: new Date().toISOString(), novidades: novidades.trim().slice(0, 2000) };
-      const { data: auth } = await supabase.auth.getUser();
-      const { error } = await supabase.from("configuracoes_sistema").upsert({
-        chave: CHAVE_APP, valor: JSON.stringify(dados), atualizado_em: new Date().toISOString(), atualizado_por: auth.user?.id ?? null,
+      // "versaoApp", e não "dados": o nome `dados` agora é o do caminho de dados importado.
+      const versaoApp: AppAndroid = { versao: v, arquivo: caminho, tamanho: arquivo.size, publicado_em: new Date().toISOString(), novidades: novidades.trim().slice(0, 2000) };
+      const { data: auth } = await sessao.getUser();
+      const { error } = await dados.from("configuracoes_sistema").upsert({
+        chave: CHAVE_APP, valor: JSON.stringify(versaoApp), atualizado_em: new Date().toISOString(), atualizado_por: auth.user?.id ?? null,
       });
       if (error) throw new Error("O arquivo subiu, mas não deu para salvar os dados da versão.");
       toast.success(`Versão ${v} publicada. Já aparece em "Use no celular".`);
@@ -87,7 +90,7 @@ function Responder({ linha, aoFechar }: { linha: Linha; aoFechar: () => void }) 
   const responder = async (fechar: boolean) => {
     if (texto.trim().length < 2) { toast.error("Escreva a resposta."); return; }
     setEnviando(true);
-    const { error } = await supabase.rpc("admin_responder_suporte", { _id: linha.id, _resposta: texto.trim(), _fechar: fechar });
+    const { error } = await dados.rpc("admin_responder_suporte", { _id: linha.id, _resposta: texto.trim(), _fechar: fechar });
     setEnviando(false);
     if (error) { toast.error(error.message || "Não foi possível responder."); return; }
     toast.success(fechar ? "Respondido e encerrado." : "Resposta enviada.");
@@ -114,7 +117,7 @@ export function SuporteAdmin() {
     queryKey: ["admin-suporte", status],
     refetchInterval: 60_000,
     queryFn: async (): Promise<Linha[]> => {
-      const { data, error } = await supabase.rpc("admin_suporte", status === "todas" ? { _limite: 200 } : { _status: status, _limite: 200 });
+      const { data, error } = await dados.rpc("admin_suporte", status === "todas" ? { _limite: 200 } : { _status: status, _limite: 200 });
       if (error) throw error;
       return (data ?? []) as Linha[];
     },

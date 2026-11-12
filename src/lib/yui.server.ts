@@ -4,7 +4,6 @@ import { createClient } from "@supabase/supabase-js";
 import { createLovableAiGatewayRunIdFetch, getLovableAiGatewayRunId, withLovableAiGatewayRunIdHeader } from "./ai/run-id.server";
 import { allowRequest, clientIp } from "./rate-limit";
 import { limiteBanco } from "./limite-banco.server";
-import { dataNoFuso, somarDias } from "./datas";
 
 /** Cotas diárias por conta (dia de Brasília). Administradores não têm cota. */
 export const COTA_MENSAGENS_DIA = 40;
@@ -132,17 +131,16 @@ COMO RESPONDER MELHOR:
  */
 async function contextoConta(supabase: ReturnType<typeof createClient>, propriedadeId: string | null) {
   try {
-    const hoje = dataNoFuso();
-    const daqui30 = somarDias(hoje, 30);
     const props = await supabase.from("propriedades" as never).select("id,nome").order("nome" as never).limit(20);
     const lista = ((props.data ?? []) as { id: string; nome: string }[]);
     if (!lista.length) return "\n\nDADOS DA CONTA: a pessoa ainda não cadastrou nenhuma propriedade.";
     const atual = lista.find((p) => p.id === propriedadeId) ?? lista[0];
     const c = (t: string) => supabase.from(t as never).select("id", { count: "exact", head: true }).eq("propriedade_id" as never, atual.id as never);
-    const [resumo, vencidas, partos, pesagens] = await Promise.all([
+    // As vacinas vencidas e os partos previstos saem do próprio resumo, que já os conta
+    // com a regra da última dose. Contar de novo aqui seria uma segunda versão da mesma
+    // regra, livre para divergir da primeira.
+    const [resumo, pesagens] = await Promise.all([
       supabase.rpc("dashboard_resumo" as never, { _propriedade_id: atual.id } as never),
-      c("v_vacinacoes_status").eq("status_atual" as never, "vencida" as never),
-      c("inseminacoes").gte("previsao_parto" as never, hoje as never).lte("previsao_parto" as never, daqui30 as never).in("situacao" as never, ["em_andamento", "confirmada"] as never),
       c("pesagens"),
     ]);
     const r = (resumo.data ?? {}) as Record<string, unknown>;
@@ -152,8 +150,8 @@ async function contextoConta(supabase: ReturnType<typeof createClient>, propried
     const outras = lista.length > 1 ? ` A pessoa tem ${lista.length} propriedades: ${lista.map((p) => p.nome).join(", ")}.` : "";
     return `\n\nDADOS DA CONTA (agora, só da propriedade selecionada: ${atual.nome}).${outras}\n` +
       `- Animais ativos: ${n(r.animais_ativos)} · bezerros (até 12 meses): ${n(r.bezerros)} · lotes: ${n(r.total_lotes)}\n` +
-      `- Vacinas vencidas (última dose de cada vacina): ${qtd(vencidas)} · vacinações em dia: ${n(r.vacinacoes_em_dia)}\n` +
-      `- Inseminações em andamento ou confirmadas: ${n(r.inseminacoes)} · partos previstos em 30 dias: ${qtd(partos)}\n` +
+      `- Vacinas vencidas (última dose de cada vacina): ${n(r.vacinas_vencidas)} · vacinações em dia: ${n(r.vacinacoes_em_dia)}\n` +
+      `- Inseminações em andamento ou confirmadas: ${n(r.inseminacoes)} · partos previstos em 30 dias: ${n(r.partos_30d)}\n` +
       `- Neste mês: ${n(r.leite_mes)} litros de leite, receitas ${reais(r.receitas_mes)}, despesas ${reais(r.despesas_mes)}, nascimentos ${n(r.nascidos_mes)}\n` +
       `- Pesagens registradas: ${qtd(pesagens)}`;
   } catch (e) {

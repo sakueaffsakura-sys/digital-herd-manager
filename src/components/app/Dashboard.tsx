@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, CalendarClock, CheckCircle2, Info, Milk, NotebookPen, Plus, Scale, Syringe } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ClipboardCheck, Info, Milk, NotebookPen, Plus, Scale, Stethoscope, Syringe } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Brinco } from "./Brinco";
 import { useAvisos, type Aviso } from "./casca/Avisos";
@@ -35,34 +35,45 @@ export default function Dashboard({
       const hoje = dataLocalISO();
       const desde = primeiroDiaDoMes(-11);
       const [resumo, financas, leite, agenda, partos] = await Promise.all([
-        supabase.rpc("dashboard_resumo", { _propriedade_id: propertyId }),
-        supabase.from("v_financeiro_mensal").select("mes,receitas,despesas").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
-        supabase.from("v_producao_mensal").select("mes,total_litros").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
-        supabase.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: hoje, _ate: somarDias(hoje, 7) }),
-        supabase.from("inseminacoes").select("id,previsao_parto,situacao,animais(nome,numero_brinco)").eq("propriedade_id", propertyId)
+        dados.rpc("dashboard_resumo", { _propriedade_id: propertyId }),
+        dados.from("v_financeiro_mensal").select("mes,receitas,despesas").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
+        dados.from("v_producao_mensal").select("mes,total_litros").eq("propriedade_id", propertyId).gte("mes", desde).order("mes"),
+        dados.rpc("agenda_periodo", { _propriedade_id: propertyId, _de: hoje, _ate: somarDias(hoje, 7) }),
+        dados.from("inseminacoes").select("id,previsao_parto,situacao,animal_id").eq("propriedade_id", propertyId)
           .in("situacao", ["em_andamento", "confirmada"]).gte("previsao_parto", hoje).order("previsao_parto").limit(5),
       ]);
       const erro = [resumo, financas, leite].map((x) => x.error).find(Boolean);
       if (erro) throw erro;
+      // A vaca de cada parto vem numa segunda leitura, e não num `select` aninhado: são
+      // cinco linhas, e uma consulta que o servidor sabe conferir vale mais do que uma
+      // junção que só o banco antigo entendia.
+      const vacas = new Map<string, { nome: string | null; numero_brinco: string }>();
+      const ids = [...new Set((partos.data ?? []).map((p) => p.animal_id).filter(Boolean))];
+      if (ids.length) {
+        const { data: animais } = await dados.from("animais").select("id,nome,numero_brinco").in("id", ids);
+        for (const a of animais ?? []) vacas.set(a.id, { nome: a.nome, numero_brinco: a.numero_brinco });
+      }
       const ag = (agenda.data ?? null) as { eventos?: EventoAgenda[] } | null;
       return {
         resumo: (resumo.data ?? {}) as Row,
         financas: financas.data ?? [],
         leite: leite.data ?? [],
         semana: agenda.error ? null : (ag?.eventos ?? []).slice(0, 6),
-        partos: partos.data ?? [],
+        partos: (partos.data ?? []).map((p) => ({ ...p, vaca: vacas.get(p.animal_id) ?? null })),
       };
     },
   });
 
-  const dados = query.data;
+  // Chama-se painel, e não dados, para não cobrir o `dados` importado: o queryFn acima
+  // usa o import, e um nome só para os dois deixaria a consulta dependendo de si mesma.
+  const painel = query.data;
   const meses = useMemo(() => {
     const lista = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(new Date().getFullYear(), new Date().getMonth() - 11 + i, 1);
       return { chave: mesLocalISO(d), mes: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""), atual: i === 11, receitas: 0, despesas: 0, resultado: 0, leite: 0 };
     });
-    const fin = new Map((dados?.financas ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
-    const lt = new Map((dados?.leite ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
+    const fin = new Map((painel?.financas ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
+    const lt = new Map((painel?.leite ?? []).map((r) => [String(r.mes).slice(0, 7), r]));
     for (const m of lista) {
       const f = fin.get(m.chave);
       m.receitas = Number(f?.receitas ?? 0);
@@ -71,9 +82,9 @@ export default function Dashboard({
       m.leite = Number(lt.get(m.chave)?.total_litros ?? 0);
     }
     return lista;
-  }, [dados]);
+  }, [painel]);
 
-  const s = dados?.resumo ?? {};
+  const s = painel?.resumo ?? {};
   const n = (k: string) => Number(s[k] ?? 0);
   const carregando = query.isLoading;
   const v = (x: number, fmt = inteiro) => (carregando ? "…" : fmt(x));
@@ -186,13 +197,13 @@ export default function Dashboard({
               <h2 className="titulo-secao">Esta semana</h2>
               <Button variant="ghost" className="h-10" onClick={() => go("agenda")}>Ver agenda</Button>
             </div>
-            {dados?.semana == null ? (
+            {painel?.semana == null ? (
               <p className="mt-3 text-muted-foreground">{carregando ? "Carregando…" : "A agenda não abriu agora."}</p>
-            ) : dados.semana.length === 0 ? (
+            ) : painel.semana.length === 0 ? (
               <p className="mt-3 text-muted-foreground">Nada marcado para os próximos 7 dias.</p>
             ) : (
               <ul className="mt-3 divide-y divide-border">
-                {dados.semana.map((e, i) => (
+                {painel.semana.map((e, i) => (
                   <li key={`${e.tipo}-${e.data}-${i}`} className="flex min-h-14 items-center gap-3 py-2">
                     <span className="w-14 shrink-0 text-center">
                       <span className="block font-display text-2xl font-extrabold leading-none">{formatarDataBR(e.data).slice(0, 5)}</span>
@@ -210,12 +221,12 @@ export default function Dashboard({
 
           <section className="painel p-4 sm:p-5">
             <h2 className="titulo-secao">Partos previstos</h2>
-            {(dados?.partos ?? []).length === 0 ? (
+            {(painel?.partos ?? []).length === 0 ? (
               <p className="mt-3 text-muted-foreground">{carregando ? "Carregando…" : "Nenhuma vaca com parto previsto."}</p>
             ) : (
               <ul className="mt-3 divide-y divide-border">
-                {(dados?.partos ?? []).map((p) => {
-                  const a = (p.animais ?? null) as unknown as { nome: string | null; numero_brinco: string } | null;
+                {(painel?.partos ?? []).map((p) => {
+                  const a = p.vaca;
                   return (
                     <li key={p.id} className="flex min-h-14 items-center gap-3 py-2">
                       {a?.numero_brinco ? <Brinco tamanho="pequeno" valor={a.numero_brinco} /> : null}
@@ -238,6 +249,8 @@ export default function Dashboard({
               <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("vacinacao", "1")}><Syringe />Registrar vacina</Button>
               <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("bezerros", "1")}><Scale />Registrar pesagem</Button>
               <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("producao", "anotacao")}><NotebookPen />Fazer uma anotação</Button>
+              <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("tarefas", "1")}><ClipboardCheck />Anotar uma tarefa</Button>
+              <Button variant="outline" className="h-12 justify-start text-base" onClick={() => abrir("tratamentos", "1")}><Stethoscope />Registrar tratamento</Button>
             </div>
           </section>
         </aside>

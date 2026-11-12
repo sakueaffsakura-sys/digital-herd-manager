@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { escapeILikeValue, quoteOrValue, termoDeBusca } from "@/lib/busca";
+import { dados } from "@/lib/dados";
+import { termoDeBusca } from "@/lib/busca";
 import { useDebouncedValue } from "../usePagedRows";
 import { Brinco } from "../Brinco";
 import type { GrupoMenu } from "./navegacao";
@@ -45,12 +45,15 @@ export function BuscaGlobal({
     enabled: aberta && !!propriedadeId && termo.length >= 1,
     staleTime: 30_000,
     queryFn: async (): Promise<Achado[]> => {
-      const t = escapeILikeValue(termoDeBusca(termo));
-      const { data, error } = await supabase
+      // Uma busca só nas duas colunas, montada no servidor. Antes era um `or` com o
+      // padrão escrito à mão; agora o termo viaja como valor, e não como pedaço de
+      // comando. O brinco passou a casar em qualquer posição, e não só no começo: acha
+      // mais, nunca menos, e quem digita "124" procurando o brinco 1124 agora encontra.
+      const { data, error } = await dados
         .from("animais")
         .select("id,nome,numero_brinco,situacao")
         .eq("propriedade_id", propriedadeId!)
-        .or(`numero_brinco.ilike.${quoteOrValue(`${t}%`)},nome.ilike.${quoteOrValue(`%${t}%`)}`)
+        .procurar(termoDeBusca(termo), ["numero_brinco", "nome"])
         .order("numero_brinco")
         .limit(8);
       if (error) throw error;

@@ -3,7 +3,8 @@ import { AlertTriangle, Bell, CalendarClock, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 
 export type Aviso = { chave: string; nivel: "alerta" | "aviso" | "info"; secao: string; titulo: string; texto: string };
 type Notificacao = { id: string; titulo: string; mensagem: string; created_at: string };
@@ -19,8 +20,8 @@ export function useAvisos(propriedadeId: string | null) {
     refetchInterval: 5 * 60_000,
     queryFn: async () => {
       const [calc, notas] = await Promise.all([
-        supabase.rpc("central_avisos", { _propriedade_id: propriedadeId! }),
-        supabase.from("notificacoes").select("id,titulo,mensagem,created_at").eq("lida", false).is("chave", null).order("created_at", { ascending: false }).limit(20),
+        dados.rpc("central_avisos", { _propriedade_id: propriedadeId! }),
+        dados.from("notificacoes").select("id,titulo,mensagem,created_at").eq("lida", false).is("chave", null).order("created_at", { ascending: false }).limit(20),
       ]);
       return {
         avisos: calc.error ? [] : ((calc.data ?? []) as unknown as Aviso[]),
@@ -40,9 +41,9 @@ export function Avisos({ propriedadeId, aoIr }: { propriedadeId: string | null; 
   const total = avisos.length + notas.length;
 
   const marcarVisto = async (a: Aviso) => {
-    const { data } = await supabase.auth.getUser();
+    const { data } = await sessao.getUser();
     if (!data.user) return;
-    const { error } = await supabase.from("notificacoes").upsert(
+    const { error } = await dados.from("notificacoes").upsert(
       { user_id: data.user.id, propriedade_id: propriedadeId, chave: a.chave, titulo: a.titulo, mensagem: a.texto, lida: true },
       { onConflict: "user_id,chave" },
     );
@@ -50,7 +51,7 @@ export function Avisos({ propriedadeId, aoIr }: { propriedadeId: string | null; 
     else void qc.invalidateQueries({ queryKey: ["avisos", propriedadeId] });
   };
   const marcarLida = async (n: Notificacao) => {
-    const { error } = await supabase.from("notificacoes").update({ lida: true }).eq("id", n.id);
+    const { error } = await dados.from("notificacoes").update({ lida: true }).eq("id", n.id);
     if (error) toast.error("Não foi possível marcar como lida.");
     else void qc.invalidateQueries({ queryKey: ["avisos", propriedadeId] });
   };

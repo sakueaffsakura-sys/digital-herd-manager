@@ -4,7 +4,8 @@ import { BookOpenText, Check, Crown, LoaderCircle, ShieldCheck } from "lucide-re
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { diaBR } from "@/lib/datas";
 import { plural } from "@/lib/texto";
 import { nomeDoMetodo } from "@/lib/mercadopago";
@@ -32,7 +33,7 @@ export default function AreaAssinante({
 }) {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
-  useEffect(() => { void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null)); }, []);
+  useEffect(() => { void sessao.getUser().then(({ data }) => setUserId(data.user?.id ?? null)); }, []);
   const minhas = useMemo(() => propriedades.filter((p) => p.proprietario_id === userId), [propriedades, userId]);
   const [escolhida, setEscolhida] = useState<string | null>(null);
   const propriedadeDoPagamento = escolhida ?? (minhas.some((p) => p.id === propriedadeId) ? propriedadeId : minhas[0]?.id ?? null);
@@ -43,7 +44,7 @@ export default function AreaAssinante({
     queryKey: ["area-assinante"],
     refetchInterval: esperando ? 5000 : false,
     queryFn: async (): Promise<Area> => {
-      const { data, error } = await supabase.rpc("minha_area_assinante");
+      const { data, error } = await dados.rpc("minha_area_assinante");
       if (error) throw error;
       return (data ?? { assinante: false, assinaturas: [] }) as unknown as Area;
     },
@@ -51,7 +52,7 @@ export default function AreaAssinante({
   const planos = useQuery({
     queryKey: ["planos-ativos"],
     queryFn: async (): Promise<Plano[]> => {
-      const { data, error } = await supabase.from("planos").select("id,nome,descricao,meses,preco_centavos").eq("ativo", true).gt("preco_centavos", 0).order("ordem");
+      const { data, error } = await dados.from("planos").select("id,nome,descricao,meses,preco_centavos").eq("ativo", true).gt("preco_centavos", 0).order("ordem");
       if (error) throw error;
       return data ?? [];
     },
@@ -60,7 +61,7 @@ export default function AreaAssinante({
     queryKey: ["meus-pagamentos"],
     refetchInterval: esperando ? 5000 : false,
     queryFn: async (): Promise<Pagamento[]> => {
-      const { data, error } = await supabase.from("pagamentos").select("id,criado_em,plano_nome,valor_centavos,status,metodo,aprovado_em").order("criado_em", { ascending: false }).limit(50);
+      const { data, error } = await dados.from("pagamentos").select("id,criado_em,plano_nome,valor_centavos,status,metodo,aprovado_em").order("criado_em", { ascending: false }).limit(50);
       if (error) throw error;
       return data ?? [];
     },
@@ -87,7 +88,7 @@ export default function AreaAssinante({
     if (!propriedadeDoPagamento) { toast.error("Cadastre uma propriedade sua para assinar."); return; }
     setAbrindo(plano.id);
     try {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await sessao.getSession();
       const r = await fetch("/api/assinatura/checkout", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${data.session?.access_token ?? ""}` },

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PaginaPublica } from "@/components/publico/PaginaPublica";
 import { CampoSenha, RegrasSenha } from "@/components/app/conta/CampoSenha";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { avaliarSenha, motivoSenhaFraca } from "@/lib/senha";
 
 export const Route = createFileRoute("/redefinir-senha")({
@@ -35,14 +36,14 @@ function RedefinirSenha() {
     if (hash.get("error_code") || hash.get("error") || busca.get("error_code")) { setEstado("invalido"); return; }
     let feito = false;
     const pronto = (mail?: string | null) => { if (feito) return; feito = true; setEmail(mail ?? ""); setEstado("pronto"); };
-    const { data: sub } = supabase.auth.onAuthStateChange((evento, sessao) => {
+    const { data: sub } = sessao.onAuthStateChange((evento, sessao) => {
       if ((evento === "PASSWORD_RECOVERY" || evento === "SIGNED_IN") && sessao) pronto(sessao.user.email);
     });
     // Links com "?code=" (fluxo PKCE) trocam o código pela sessão aqui.
     const code = busca.get("code");
-    const trocar = code ? supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => { if (!error && data.session) pronto(data.session.user.email); }) : Promise.resolve();
+    const trocar = code ? sessao.exchangeCodeForSession(code).then(({ data, error }) => { if (!error && data.session) pronto(data.session.user.email); }) : Promise.resolve();
     void trocar.then(() =>
-      supabase.auth.getSession().then(({ data }) => {
+      sessao.getSession().then(({ data }) => {
         if (data.session && /type=recovery|access_token/.test(window.location.hash + window.location.search + (code ? "code" : ""))) pronto(data.session.user.email);
       }),
     );
@@ -59,14 +60,14 @@ function RedefinirSenha() {
     setSalvando(true);
     try {
       if (precisaCodigo) {
-        const { data } = await supabase.auth.mfa.listFactors();
+        const { data } = await sessao.mfa.listFactors();
         const fator = data?.totp?.find((f) => f.status === "verified");
         if (fator) {
-          const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: fator.id, code: codigo.replace(/\D/g, "") });
+          const { error } = await sessao.mfa.challengeAndVerify({ factorId: fator.id, code: codigo.replace(/\D/g, "") });
           if (error) { setErro("Código errado ou vencido. Digite o código que aparece agora no aplicativo."); return; }
         }
       }
-      const { error } = await supabase.auth.updateUser({ password: nova });
+      const { error } = await sessao.updateUser({ password: nova });
       if (error) {
         if (/aal2|insufficient_aal|mfa/i.test(error.message)) { setPrecisaCodigo(true); setErro("Esta conta usa verificação em duas etapas: digite o código do aplicativo."); return; }
         if (/same|different/i.test(error.message)) { setErro("A senha nova precisa ser diferente da anterior."); return; }
@@ -75,8 +76,8 @@ function RedefinirSenha() {
         setErro("Não foi possível salvar a senha agora. Tente de novo.");
         return;
       }
-      await supabase.auth.signOut({ scope: "others" }).catch(() => {});
-      await supabase.auth.signOut().catch(() => {});
+      await sessao.signOut({ scope: "others" }).catch(() => {});
+      await sessao.signOut().catch(() => {});
       navigate({ to: "/", search: { motivo: "senha-alterada" }, replace: true });
     } finally {
       setSalvando(false);

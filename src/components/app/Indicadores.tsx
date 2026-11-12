@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Baby, Droplets, Scale, Wallet } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import { formatarDataBR } from "@/lib/datas";
 import { palavraPlural, plural } from "@/lib/texto";
 import { Empty, PageTitle, money } from "./shared";
@@ -63,7 +63,7 @@ export default function Indicadores({ propertyId }: { propertyId: string | null 
     enabled: !!propertyId,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<Indicadores | null> => {
-      const { data, error } = await supabase.rpc("indicadores_propriedade", { _propriedade_id: propertyId! });
+      const { data, error } = await dados.rpc("indicadores_propriedade", { _propriedade_id: propertyId! });
       if (error) throw error;
       return (data ?? null) as unknown as Indicadores | null;
     },

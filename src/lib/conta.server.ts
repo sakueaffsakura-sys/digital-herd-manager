@@ -3,6 +3,8 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { allowRequest, clientIp } from "./rate-limit";
 import { limiteBanco } from "./limite-banco.server";
+import { donoDoToken } from "./conta/token-curto";
+import { consultarUm } from "./dados/banco.server";
 
 export const resposta = (status: number, corpo: unknown, extra: Record<string, string> = {}) =>
   new Response(JSON.stringify(corpo), {
@@ -35,11 +37,41 @@ export function clienteDoSite(token?: string): SupabaseClient {
   });
 }
 
-/** Confere o token do cabeçalho Authorization e devolve a pessoa (ou a resposta de erro). */
+/**
+ * Confere o token do cabeçalho Authorization e devolve a pessoa (ou a resposta de erro).
+ *
+ * Dois formatos de token valem, e é de propósito: o do Supabase, que é o que está no ar
+ * hoje, e o token curto do nosso servidor (`conta/token-curto.ts`), que é o que as telas
+ * mandam depois da mudança de banco. Aceitar os dois é o que deixa trocar as telas uma a
+ * uma, em vez de derrubar as oito rotas que leem Bearer de uma vez só.
+ */
 export async function exigirUsuario(request: Request): Promise<{ supabase: SupabaseClient; user: User; token: string } | Response> {
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return falha(401, "Entre na sua conta para continuar.");
   const token = auth.slice(7).trim();
+
+  // Token nosso: o identificador sai da assinatura, e o resto vem do banco novo.
+  const donoCurto = donoDoToken(token);
+  if (donoCurto) {
+    if (!allowRequest(`conta-user:${donoCurto}`, 60, 60_000, 60_000)) {
+      return falha(429, "Muitas tentativas. Espere um minuto.");
+    }
+    const pessoa = await consultarUm<{ email: string; bloqueado: number }>(
+      "SELECT email, bloqueado FROM usuarios WHERE id = ?",
+      [donoCurto],
+    );
+    if (!pessoa || pessoa.bloqueado) return falha(401, "Sua sessão expirou. Entre novamente.");
+    // O `supabase` aqui é o cliente de serviço: as rotas que o usam para ler dados vão
+    // trocar para `src/lib/dados` junto com as telas, e então este campo some.
+    let servico: SupabaseClient;
+    try { servico = clienteDoSite(token); } catch { return falha(503, "Serviço indisponível no momento."); }
+    return {
+      supabase: servico,
+      user: { id: donoCurto, email: pessoa.email } as unknown as User,
+      token,
+    };
+  }
+
   let supabase: SupabaseClient;
   try { supabase = clienteDoSite(token); } catch { return falha(503, "Serviço indisponível no momento."); }
   const { data, error } = await supabase.auth.getUser(token);

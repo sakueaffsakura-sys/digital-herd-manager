@@ -8,7 +8,11 @@ import {
   diasNoMes,
   isoValido,
   mesLocalISO,
+  inicioDoDiaNoFuso,
+  primeiroDiaDe,
   primeiroDiaDoMes,
+  primeiroDiaDoMesSeguinte,
+  semanaISO,
   somarDias,
 } from "../datas";
 
@@ -85,5 +89,39 @@ describe("diaBR", () => {
     expect(diaBR(null)).toBe("—");
     expect(diaBR("")).toBe("—");
     expect(diaBR("lixo")).toBe("—");
+  });
+});
+
+describe("semanaISO", () => {
+  it("segue a regra da ISO 8601: a semana pertence ao ano da sua quinta-feira", () => {
+    // 2026-01-01 é quinta — então a semana 1 de 2026 começa na segunda, 29/12/2025.
+    expect(semanaISO("2025-12-29")).toBe("2026-01");
+    expect(semanaISO("2026-01-01")).toBe("2026-01");
+    expect(semanaISO("2026-01-04")).toBe("2026-01");
+    expect(semanaISO("2026-01-05")).toBe("2026-02");
+    // 2027-01-01 é sexta: ainda é a última semana de 2026.
+    expect(semanaISO("2027-01-01")).toBe("2026-53");
+    expect(semanaISO("2026-11-11")).toBe("2026-46");
+  });
+});
+
+describe("inicioDoDiaNoFuso", () => {
+  it("o dia no Brasil começa três horas depois do dia em UTC", () => {
+    expect(inicioDoDiaNoFuso("2026-11-01").toISOString()).toBe("2026-11-01T03:00:00.000Z");
+    expect(inicioDoDiaNoFuso("2026-07-01").toISOString()).toBe("2026-07-01T03:00:00.000Z");
+  });
+  it("uma anotação das 23h de Brasília cai no dia certo do mês", () => {
+    const noite = new Date("2026-11-30T23:30:00-03:00"); // 01/12 às 02:30 em UTC
+    const comecoDeDezembro = inicioDoDiaNoFuso("2026-12-01");
+    expect(noite < comecoDeDezembro).toBe(true);
+    expect(dataNoFuso(noite)).toBe("2026-11-30");
+  });
+});
+
+describe("primeiroDiaDe e primeiroDiaDoMesSeguinte", () => {
+  it("viram o ano sem passar por Date", () => {
+    expect(primeiroDiaDe("2026-11-11")).toBe("2026-11-01");
+    expect(primeiroDiaDoMesSeguinte("2026-11-11")).toBe("2026-12-01");
+    expect(primeiroDiaDoMesSeguinte("2026-12-31")).toBe("2027-01-01");
   });
 });

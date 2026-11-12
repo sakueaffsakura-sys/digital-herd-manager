@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
 import { lovable } from "@/integrations/lovable";
 import { avaliarSenha, motivoSenhaFraca } from "@/lib/senha";
 import { CampoSenha, RegrasSenha } from "@/components/app/conta/CampoSenha";
@@ -80,7 +80,7 @@ function Entrar() {
   };
   /** Depois da senha: se a conta usa duas etapas, pede o código; senão, entra. */
   const continuar = async () => {
-    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const { data } = await sessao.mfa.getAuthenticatorAssuranceLevel();
     if (data && data.nextLevel === "aal2" && data.currentLevel !== "aal2") { setEtapa("codigo"); setErro(null); return; }
     irParaApp();
   };
@@ -91,7 +91,7 @@ function Entrar() {
   }, [motivo]);
   useEffect(() => {
     if (motivo === "conta-bloqueada") return;
-    void supabase.auth.getSession().then(({ data }) => { if (data.session) void continuar(); });
+    void sessao.getSession().then(({ data }) => { if (data.session) void continuar(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -112,14 +112,14 @@ function Entrar() {
         if (!r.ok) { setErro(corpo.erro ?? "Não foi possível criar a conta agora."); return; }
         if (corpo.confirmar) { setConfirmarEmail(true); return; }
         if (corpo.sessao) {
-          const { error } = await supabase.auth.setSession(corpo.sessao);
+          const { error } = await sessao.setSession(corpo.sessao);
           if (error) { setErro("Conta criada. Entre com o e-mail e a senha."); setAba("entrar"); return; }
           toast.success("Conta criada. Bem-vindo(a)!");
           irParaApp();
         }
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
+      const { error } = await sessao.signInWithPassword({ email: email.trim(), password: senha });
       if (error) { setErro(traduzir(error.message)); return; }
       await continuar();
     } finally {
@@ -132,10 +132,10 @@ function Entrar() {
     setErro(null);
     setCarregando(true);
     try {
-      const { data } = await supabase.auth.mfa.listFactors();
+      const { data } = await sessao.mfa.listFactors();
       const fator = data?.totp?.find((f) => f.status === "verified");
       if (!fator) { irParaApp(); return; }
-      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: fator.id, code: codigo.replace(/\D/g, "") });
+      const { error } = await sessao.mfa.challengeAndVerify({ factorId: fator.id, code: codigo.replace(/\D/g, "") });
       if (error) { setErro("Código errado ou vencido. Digite o código que aparece agora no aplicativo."); return; }
       irParaApp();
     } finally {
@@ -148,7 +148,7 @@ function Entrar() {
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (r && "error" in r && r.error) setErro("Entrar com Google não está disponível agora. Use o e-mail e a senha.");
   };
-  const sairDaConta = async () => { await supabase.auth.signOut(); setEtapa("senha"); setCodigo(""); };
+  const sairDaConta = async () => { await sessao.signOut(); setEtapa("senha"); setCodigo(""); };
 
   return (
     <main className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">

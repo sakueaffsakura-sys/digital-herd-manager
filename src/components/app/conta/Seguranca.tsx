@@ -10,14 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { avaliarSenha, motivoSenhaFraca } from "@/lib/senha";
 import { formatarDataBR } from "@/lib/datas";
 import { PageTitle, Status } from "../shared";
 import { CampoSenha, RegrasSenha } from "./CampoSenha";
 
 async function token() {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await sessao.getSession();
   return data.session?.access_token ?? null;
 }
 
@@ -45,15 +46,18 @@ function TrocarSenha({ email }: { email: string }) {
     if (nova === atual) { setErro("A senha nova precisa ser diferente da atual."); return; }
     setSalvando(true);
     try {
-      const t = await token();
-      const r = await fetch("/api/conta/conferir-senha", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${t}` }, body: JSON.stringify({ senha: atual }) });
-      if (!r.ok) { setErro(((await r.json().catch(() => ({}))) as { erro?: string }).erro ?? "A senha atual não confere."); return; }
-      const { error } = await supabase.auth.updateUser({ password: nova });
+      // Conferir a senha atual e trocá-la são duas chamadas, e é o servidor que as liga:
+      // sem a senha atual digitada há pouco nesta sessão, a troca é recusada.
+      const conferida = await sessao.conferirSenhaAtual(atual);
+      if (conferida.error) { setErro(conferida.error.message); return; }
+      const { error } = await sessao.updateUser({ password: nova });
       if (error) {
-        setErro(/pwned|breach|leaked|weak/i.test(error.message) ? "Essa senha apareceu em vazamentos de dados. Escolha outra." : /aal2|reauth/i.test(error.message) ? "Confirme o código das duas etapas e tente de novo." : "Não foi possível trocar a senha agora.");
+        setErro(/pwned|breach|leaked|weak/i.test(error.message) ? "Essa senha apareceu em vazamentos de dados. Escolha outra." : /aal2|duas etapas|reauth/i.test(error.message) ? "Confirme o código das duas etapas e tente de novo." : error.message || "Não foi possível trocar a senha agora.");
         return;
       }
-      await supabase.auth.signOut({ scope: "others" }).catch(() => {});
+      // O caminho novo já derruba as outras sessões ao trocar a senha; o antigo precisa
+      // desta chamada. Nos dois casos, quem tinha entrado antes sai.
+      await sessao.signOut({ scope: "others" }).catch(() => {});
       setAtual(""); setNova(""); setConfirma("");
       toast.success("Senha trocada. Os outros aparelhos vão precisar entrar de novo.");
     } finally {
@@ -85,9 +89,9 @@ function DuasEtapas() {
   const fatores = useQuery({
     queryKey: ["mfa-fatores"],
     queryFn: async () => {
-      const { data, error } = await supabase.auth.mfa.listFactors();
+      const { data, error } = await sessao.mfa.listFactors();
       if (error) throw error;
-      const nivel = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const nivel = await sessao.mfa.getAuthenticatorAssuranceLevel();
       return { totp: (data?.all ?? []).filter((f) => f.factor_type === "totp") as Fator[], nivel: nivel.data?.currentLevel ?? "aal1" };
     },
   });
@@ -101,8 +105,8 @@ function DuasEtapas() {
     setOcupado(true);
     try {
       // Cadastros começados e não confirmados atrapalham um novo: apaga antes.
-      for (const f of fatores.data?.totp ?? []) if (f.status !== "verified") await supabase.auth.mfa.unenroll({ factorId: f.id });
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Autenticador ${new Date().toLocaleDateString("pt-BR")}` });
+      for (const f of fatores.data?.totp ?? []) if (f.status !== "verified") await sessao.mfa.unenroll({ factorId: f.id });
+      const { data, error } = await sessao.mfa.enroll({ factorType: "totp", friendlyName: `Autenticador ${new Date().toLocaleDateString("pt-BR")}` });
       if (error || !data) throw error ?? new Error("sem dados");
       setCadastro({ id: data.id, qr: data.totp.qr_code, segredo: data.totp.secret });
       setCodigo("");
@@ -116,7 +120,7 @@ function DuasEtapas() {
     e.preventDefault();
     if (!cadastro) return;
     setOcupado(true);
-    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: cadastro.id, code: codigo.replace(/\D/g, "") });
+    const { error } = await sessao.mfa.challengeAndVerify({ factorId: cadastro.id, code: codigo.replace(/\D/g, "") });
     setOcupado(false);
     if (error) { toast.error("Código errado ou vencido. Confira a hora do celular e digite o código novo."); return; }
     setCadastro(null);
@@ -128,10 +132,10 @@ function DuasEtapas() {
     setOcupado(true);
     try {
       if (fatores.data?.nivel !== "aal2") {
-        const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: verificado.id, code: codigo.replace(/\D/g, "") });
+        const { error } = await sessao.mfa.challengeAndVerify({ factorId: verificado.id, code: codigo.replace(/\D/g, "") });
         if (error) { toast.error("Código errado. Digite o código que aparece agora no aplicativo."); return; }
       }
-      const { error } = await supabase.auth.mfa.unenroll({ factorId: verificado.id });
+      const { error } = await sessao.mfa.unenroll({ factorId: verificado.id });
       if (error) { toast.error("Não foi possível desligar agora."); return; }
       setDesligar(false);
       setCodigo("");
@@ -208,18 +212,18 @@ function Aparelhos() {
   const sessoes = useQuery({
     queryKey: ["minhas-sessoes"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("minhas_sessoes");
+      const { data, error } = await dados.rpc("minhas_sessoes");
       if (error) throw error;
       return data ?? [];
     },
   });
   const encerrar = async (id: string) => {
-    const { error } = await supabase.rpc("encerrar_sessao", { _id: id });
+    const { error } = await dados.rpc("encerrar_sessao", { _id: id });
     if (error) toast.error("Não foi possível encerrar este aparelho.");
     else { toast.success("Aparelho desconectado. Ele perde o acesso em até 1 hora."); void qc.invalidateQueries({ queryKey: ["minhas-sessoes"] }); }
   };
   const sairDeTodos = async () => {
-    await supabase.auth.signOut({ scope: "global" });
+    await sessao.signOut({ scope: "global" });
     qc.clear();
     navigate({ to: "/", search: { motivo: "saiu-de-todos" }, replace: true });
   };
@@ -265,7 +269,7 @@ function Privacidade({ email }: { email: string }) {
   const pedido = useQuery({
     queryKey: ["pedido-exclusao"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("solicitacoes_exclusao").select("id,status,criado_em,prazo").eq("status", "pendente").maybeSingle();
+      const { data, error } = await dados.from("solicitacoes_exclusao").select("id,status,criado_em,prazo").eq("status", "pendente").maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -289,9 +293,9 @@ function Privacidade({ email }: { email: string }) {
     }
   };
   const pedirExclusao = async () => {
-    const { data } = await supabase.auth.getUser();
+    const { data } = await sessao.getUser();
     if (!data.user) return;
-    const { error } = await supabase.from("solicitacoes_exclusao").insert({ user_id: data.user.id, email, motivo: motivo.trim() || null });
+    const { error } = await dados.from("solicitacoes_exclusao").insert({ user_id: data.user.id, email, motivo: motivo.trim() || null });
     if (error) { toast.error(error.code === "23505" ? "Você já tem um pedido em andamento." : "Não foi possível registrar o pedido."); return; }
     setPedir(false);
     setMotivo("");
@@ -300,7 +304,7 @@ function Privacidade({ email }: { email: string }) {
   };
   const cancelarPedido = async () => {
     if (!pedido.data) return;
-    const { error } = await supabase.from("solicitacoes_exclusao").delete().eq("id", pedido.data.id);
+    const { error } = await dados.from("solicitacoes_exclusao").delete().eq("id", pedido.data.id);
     if (error) toast.error("Não foi possível cancelar o pedido.");
     else { toast.success("Pedido cancelado."); void qc.invalidateQueries({ queryKey: ["pedido-exclusao"] }); }
   };

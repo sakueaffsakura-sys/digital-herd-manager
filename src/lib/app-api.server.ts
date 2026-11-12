@@ -3,9 +3,19 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { allowRequest, clientIp } from "./rate-limit";
 
+// A lista é escrita à mão de propósito: este arquivo roda no servidor e não pode importar
+// os módulos da tela (que trazem ícones e React junto).
 export const TABELAS_APP = [
   "animais", "lotes", "tipos_vacinas", "vacinacoes", "inseminacoes", "nascimentos", "pesagens",
   "producao_leite", "anotacoes_producao", "movimentacoes_financeiras", "compras", "vendas", "investimentos",
+  // As 39 áreas que o aplicativo guardava só no celular: já podem subir por aqui.
+  "pastos", "pasto_mov", "estoque_itens", "estoque_mov", "alimentacao", "planos_alim", "tratamentos",
+  "campanhas", "cios", "ocorr_reprod", "bezerros_info", "animal_extra", "mov_animais", "engorda",
+  "qualidade_leite", "lancamentos", "avaliacoes", "gta",
+  "instalacoes", "funcionarios", "tarefas", "ocorrencias", "maquinas", "manutencoes", "documentos",
+  "fornecedores", "pedidos_compra", "contas", "horas_trabalho", "cotacoes",
+  "talhoes", "plantios", "atividades_agro", "irrig_sistemas", "irrigacoes", "irrig_manut",
+  "clima_obs", "clientes", "pedidos_venda",
 ] as const;
 export type TabelaApp = (typeof TABELAS_APP)[number];
 export const ehTabelaApp = (t: unknown): t is TabelaApp => typeof t === "string" && (TABELAS_APP as readonly string[]).includes(t);

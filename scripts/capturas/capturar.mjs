@@ -62,6 +62,22 @@ const CENAS = [
   { nome: "admin-acesso", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Duas etapas") },
   { nome: "admin-contas", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["dark"], acao: abaAdmin("Contas") },
   { nome: "admin-suporte", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Suporte e aplicativo") },
+  { nome: "admin-chaves", caminho: "/admin", logado: true, admin: true, tamanhos: ["computador"], temas: ["light"], acao: abaAdmin("Chaves e integrações") },
+  // Áreas que vieram do aplicativo: uma de cada tipo de tela (cadastro com nome, movimento com
+  // cadastro ligado, ficha comprida, dinheiro e lavoura).
+  { nome: "pastos", caminho: "/app/pastos", logado: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
+  { nome: "pasto-mov", caminho: "/app/pasto_mov", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "estoque", caminho: "/app/estoque_itens", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "estoque-mov", caminho: "/app/estoque_mov", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "tratamentos", caminho: "/app/tratamentos", logado: true, tamanhos: ["computador", "celular360"], temas: ["light", "dark"] },
+  { nome: "tarefas", caminho: "/app/tarefas", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"] },
+  { nome: "contas", caminho: "/app/contas", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "plantios", caminho: "/app/plantios", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "cios-vazio", caminho: "/app/cios", logado: true, tamanhos: ["celular360"], temas: ["light"] },
+  { nome: "novo-produto", caminho: "/app/estoque_itens", logado: true, tamanhos: ["computador", "celular360"], temas: ["light"], acao: async (page) => { await page.getByRole("button", { name: "Novo produto" }).click(); await page.waitForTimeout(800); } },
+  // Conferem se o endereço com ?novo=1 abre o formulário (é o caminho do botão "Lançar" do Início).
+  { nome: "novo-produto-endereco", caminho: "/app/estoque_itens?novo=1", logado: true, tamanhos: ["computador"], temas: ["light"] },
+  { nome: "novo-animal-endereco", caminho: "/app/rebanho?novo=1", logado: true, tamanhos: ["computador"], temas: ["light"] },
 ];
 
 const filtro = process.env.CENAS ? new Set(process.env.CENAS.split(",")) : null;
@@ -106,6 +122,19 @@ for (const cena of CENAS) {
         }).catch(() => []);
         // Largura real do conteúdo: no celular, maior que a tela = rolagem para o lado.
         info.larguraPagina = await page.evaluate(() => document.documentElement.scrollWidth);
+        // Quem está passando da tela: sem isto, "estouro horizontal" vira caça ao tesouro.
+        info.culpados = await page.evaluate(() => {
+          const limite = window.innerWidth + 1;
+          const achados = [];
+          for (const el of document.querySelectorAll("body *")) {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.right <= limite) continue;
+            if ([...el.children].some((f) => f.getBoundingClientRect().right > limite)) continue; // só o mais interno
+            achados.push(`${el.tagName.toLowerCase()}.${(el.className || "").toString().split(" ").slice(0, 3).join(".")} → ${Math.round(r.right)}px`);
+            if (achados.length >= 5) break;
+          }
+          return achados;
+        }).catch(() => []);
         if (TAMANHOS[tamanho].viewport.width < info.larguraPagina - 1) info.estouroHorizontal = true;
         await page.screenshot({ path: join(SAIDA, arquivo), fullPage: true });
       } catch (e) {

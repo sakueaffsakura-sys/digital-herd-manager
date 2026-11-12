@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
 import yuiPadrao from "@/assets/yui-suporte.jpg.asset.json";
 
 export const YUI_FOTO_CHAVE = "yui_foto";
@@ -13,7 +13,7 @@ export function useYuiAvatar(enabled = true): string {
     enabled,
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("configuracoes_sistema").select("valor").eq("chave", YUI_FOTO_CHAVE).maybeSingle();
+      const { data, error } = await dados.from("configuracoes_sistema").select("valor").eq("chave", YUI_FOTO_CHAVE).maybeSingle();
       if (error) throw error;
       return (data?.valor as string | null) ?? null;
     },

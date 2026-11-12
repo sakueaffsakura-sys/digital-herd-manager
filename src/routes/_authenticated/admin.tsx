@@ -5,7 +5,8 @@ import { ImageIcon, Bot, AlertTriangle, BellRing, BookOpenText, ShieldAlert, Act
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ import { CriadoresAdmin } from "@/components/app/CriadoresAdmin";
 import { ImagensSiteAdmin } from "@/components/app/ImagensSiteAdmin";
 import { FaixaManutencaoAdmin, ManutencaoAdmin, MonitoramentoSeguranca } from "@/components/app/ManutencaoAdmin";
 import { Hammer, Siren } from "lucide-react";
+import { ChavesAdmin } from "@/components/app/admin/ChavesAdmin";
 import marcaBranca from "@/assets/marca/marca-branca.webp";
 import { AssinaturasAdmin } from "@/components/app/admin/AssinaturasAdmin";
 import { EbooksAdmin } from "@/components/app/admin/EbooksAdmin";
@@ -72,11 +74,11 @@ type Saude = {
   bloqueios: number;
 };
 
-const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+const rpc = dados.rpc.bind(dados) as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
 
 /** Bloquear/desbloquear e virar administrador passam pelo servidor, que também trava o login (Auth) da conta. */
 async function definirConta(user_id: string, a: { bloqueado?: boolean; admin?: boolean }) {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await sessao.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
   const resp = await fetch("/api/admin/conta", {
@@ -107,7 +109,7 @@ function AdminPage() {
   useEffect(() => {
     const LIMITE = 30 * 60_000;
     let t = setTimeout(sair, LIMITE);
-    function sair() { void supabase.auth.signOut().then(() => { window.location.replace("/?motivo=sessao-expirada"); }); }
+    function sair() { void sessao.signOut().then(() => { window.location.replace("/?motivo=sessao-expirada"); }); }
     const reset = () => { clearTimeout(t); t = setTimeout(sair, LIMITE); };
     const ev = ["pointerdown", "keydown", "scroll", "visibilitychange"] as const;
     ev.forEach((e) => window.addEventListener(e, reset, { passive: true }));
@@ -130,11 +132,11 @@ function AdminPage() {
   const contas = useQuery({ queryKey: ["admin-contas"], enabled: isAdmin.data === true, queryFn: async () => { const r = await rpc("admin_contas"); if (r.error) throw r.error; return (r.data ?? []) as Conta[]; } });
   const suporteAberto = useQuery({
     queryKey: ["admin-suporte", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
-    queryFn: async () => { const { count, error } = await supabase.from("suporte_contatos").select("id", { count: "exact", head: true }).eq("status", "aberto"); if (error) throw error; return count ?? 0; },
+    queryFn: async () => { const { count, error } = await dados.from("suporte_contatos").select("id", { count: "exact", head: true }).eq("status", "aberto"); if (error) throw error; return count ?? 0; },
   });
   const pedidosAbertos = useQuery({
     queryKey: ["admin-exclusoes", "abertas"], enabled: isAdmin.data === true, refetchInterval: 60_000,
-    queryFn: async () => { const { count, error } = await supabase.from("solicitacoes_exclusao").select("id", { count: "exact", head: true }).eq("status", "pendente"); if (error) throw error; return count ?? 0; },
+    queryFn: async () => { const { count, error } = await dados.from("solicitacoes_exclusao").select("id", { count: "exact", head: true }).eq("status", "pendente"); if (error) throw error; return count ?? 0; },
   });
 
   const acao = useMutation({
@@ -165,7 +167,7 @@ function AdminPage() {
   );
 
   const s = sistema.data;
-  const titulos: Record<Aba, readonly [string, string]> = { exclusoes: ["Pedidos de exclusão", "Contas que pediram para ser apagadas (LGPD). Atenda em até 15 dias."], acesso: ["Duas etapas", "Exija o código do celular de quem administra o sistema."], suporte: ["Suporte e aplicativo", "Responda as mensagens de quem usa e publique a versão do aplicativo Android."], assinaturas: ["Assinaturas", "Mercado Pago, planos, preços e pagamentos recebidos."], ebooks: ["eBooks", "Envie, publique e acompanhe a leitura dos eBooks dos assinantes."], tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."] };
+  const titulos: Record<Aba, readonly [string, string]> = { exclusoes: ["Pedidos de exclusão", "Contas que pediram para ser apagadas (LGPD). Atenda em até 15 dias."], acesso: ["Duas etapas", "Exija o código do celular de quem administra o sistema."], suporte: ["Suporte e aplicativo", "Responda as mensagens de quem usa e publique a versão do aplicativo Android."], assinaturas: ["Assinaturas", "Mercado Pago, planos, preços e pagamentos recebidos."], ebooks: ["eBooks", "Envie, publique e acompanhe a leitura dos eBooks dos assinantes."], tempo: ["Tempo real", "Desempenho do site ao vivo, atualizado a cada 3 segundos."], manutencao: ["Modo de manutenção", "Ative, desative e personalize a tela de manutenção. Vale na hora para todos."], protecao: ["Proteção e bloqueios", "Tentativas suspeitas, IPs, dispositivos e contas bloqueados — atualizado a cada 10 segundos."], contas: ["Contas", "Todas as contas, espaço usado e ações de administração."], metricas: ["Métricas", "Crescimento, uso e movimentação do sistema."], desempenho: ["Desempenho", "Saúde do banco de dados e consultas lentas."], seguranca: ["Segurança e alertas", "Proteção contra ataques DoS/DDoS e avisos de desempenho, atualizado a cada 15 segundos."], yui: ["Yui", "Aparência da assistente de suporte."], criadores: ["Criadores do site", "Nomes e redes sociais exibidos na janela Sobre."], imagens: ["Imagens do site", "Troque o fundo da entrada, o banner inicial e o fundo do menu por link ou upload."], chaves: ["Chaves e integrações", "Cole aqui a chave do Mercado Pago e a chave de resgate. Ficam cifradas e só o servidor as lê."] };
   return (
     <Shell tab={tab} setTab={setTab} alertaCount={(alertas.data?.alertas ?? []).filter((a) => a.severidade !== "info").length} pedidosCount={pedidosAbertos.data ?? 0} suporteCount={suporteAberto.data ?? 0}>
       <div>
@@ -197,6 +199,7 @@ function AdminPage() {
       {tab === "exclusoes" && <ExclusoesAdmin />}
       {tab === "acesso" && <AcessoAdmin />}
       {tab === "suporte" && <SuporteAdmin />}
+      {tab === "chaves" && <ChavesAdmin />}
 
       {detalheId && <ContaDialog id={detalheId} onClose={() => { setDetalheId(null); qc.invalidateQueries({ queryKey: ["admin-contas"] }); qc.invalidateQueries({ queryKey: ["admin-sistema"] }); }} />}
     </Shell>
@@ -508,7 +511,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   // Pelo servidor: além do banco, apaga as fotos da pessoa e das propriedades dela.
   const excluir = useMutation({
     mutationFn: async () => {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = (await sessao.getSession()).data.session?.access_token;
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
       const resp = await fetch("/api/admin/exclusao", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify({ user_id: id }) });
       const corpo = (await resp.json().catch(() => ({}))) as { ok?: boolean; erro?: string; arquivos?: number; resultado?: { propriedades_excluidas?: number } };
@@ -611,7 +614,7 @@ function ContaDialog({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "suporte" | "yui" | "criadores" | "imagens";
+type Aba = "tempo" | "manutencao" | "protecao" | "seguranca" | "contas" | "exclusoes" | "acesso" | "assinaturas" | "ebooks" | "metricas" | "desempenho" | "suporte" | "yui" | "criadores" | "imagens" | "chaves";
 type ItemAba = { k: Aba; label: string; icon: typeof Users };
 const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
   { rotulo: "Agora", abas: [
@@ -632,6 +635,7 @@ const GRUPOS_ADMIN: { rotulo: string; abas: ItemAba[] }[] = [
   ] },
   { rotulo: "Site", abas: [
     { k: "suporte", label: "Suporte e aplicativo", icon: LifeBuoy },
+    { k: "chaves", label: "Chaves e integrações", icon: Lock },
     { k: "desempenho", label: "Desempenho", icon: Gauge },
     { k: "yui", label: "Yui (assistente)", icon: Bot },
     { k: "criadores", label: "Criadores", icon: Contact },

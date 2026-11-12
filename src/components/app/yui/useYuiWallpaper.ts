@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
+import { armazem } from "@/lib/arquivos";
 import wallpaperPadrao from "@/assets/yui-wallpaper-original.png.asset.json";
 
 export const YUI_WALLPAPER_BUCKET = "yui-chat-wallpapers";
@@ -17,11 +18,11 @@ export function useYuiWallpaper(enabled = true) {
     enabled,
     staleTime: 40 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("configuracoes_sistema").select("valor").eq("chave", YUI_WALLPAPER_KEY).maybeSingle();
+      const { data, error } = await dados.from("configuracoes_sistema").select("valor").eq("chave", YUI_WALLPAPER_KEY).maybeSingle();
       if (error) throw error;
       const path = data?.valor;
       if (!path) return WALLPAPER_ORIGINAL;
-      const { data: signed, error: signError } = await supabase.storage.from(YUI_WALLPAPER_BUCKET).createSignedUrl(path, 3600);
+      const { data: signed, error: signError } = await armazem.from(YUI_WALLPAPER_BUCKET).createSignedUrl(path, 3600);
       if (signError) throw signError;
       return { path, url: signed.signedUrl, video: /\.mp4$/i.test(path), padrao: false };
     },

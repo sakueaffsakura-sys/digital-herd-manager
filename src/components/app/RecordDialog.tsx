@@ -43,7 +43,10 @@ export function RecordDialog({
     Object.fromEntries(
       config.fields.map((f) => [
         f.key,
-        row?.[f.key] ?? (f.type === "date" ? dateNow() : f.key === "situacao" ? f.options?.[0]?.value : ""),
+        // Ao editar, o valor gravado (sim/não vira texto para casar com a lista de opções);
+        // num registro novo, a data de hoje, o padrão do campo ou a primeira opção da situação.
+        (f.type === "sim" && typeof row?.[f.key] === "boolean" ? String(row[f.key]) : row?.[f.key])
+          ?? (f.type === "date" ? dateNow() : f.padrao ?? (f.key === "situacao" ? f.options?.[0]?.value : "")),
       ]),
     );
   const [form, setForm] = useState<Row>(initial);
@@ -67,9 +70,9 @@ export function RecordDialog({
       <Label htmlFor={`record-${f.key}`} className={isNote ? "text-[15px] font-bold" : ""}>{f.label}{isNote && f.required && <span className="ml-1 text-primary" aria-hidden="true">*</span>}</Label>
       {f.type === "textarea" ? (
         <Textarea id={`record-${f.key}`} placeholder={f.dica} className={isNote ? `resize-y leading-relaxed ${f.key === "observacao" ? "min-h-32" : "min-h-20"}` : undefined} required={f.required} value={String(form[f.key] ?? "")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-      ) : f.type === "animal" || f.type === "lote" || f.type === "vacina" ? (
-        <Input id={`record-${f.key}`} required={f.required} type="text" value={referenceText(f)} placeholder={f.dica ?? (f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : "Digite o nome do lote")} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
-      ) : f.type === "select" ? (
+      ) : f.type === "animal" || f.type === "lote" || f.type === "vacina" || f.type === "ref" ? (
+        <Input id={`record-${f.key}`} required={f.required} type="text" value={referenceText(f)} placeholder={f.dica ?? (f.type === "animal" ? "Digite o brinco ou nome do animal" : f.type === "vacina" ? "Digite o nome da vacina" : f.type === "ref" ? `Digite o nome: ${f.label.toLowerCase()}` : "Digite o nome do lote")} onChange={(e) => setWrittenRefs((previous) => ({ ...previous, [f.key]: e.target.value }))} />
+      ) : f.type === "select" || f.type === "sim" ? (
         <Input id={`record-${f.key}`} required={f.required} type="text" value={f.options?.find((option) => option.value === form[f.key])?.label ?? String(form[f.key] ?? "")} placeholder={f.options?.map((option) => option.label).join(" / ")} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
       ) : (
         <Input
@@ -165,10 +168,13 @@ export function RecordDialog({
       return;
     }
     const cleaned = Object.fromEntries(
-      Object.entries(resolved).map(([k, v]) => [
-        k,
-        v === "" || v === "none" ? null : config.fields.find((f) => f.key === k)?.type === "number" ? Number(v) : v,
-      ]),
+      Object.entries(resolved).map(([k, v]) => {
+        const tipo = config.fields.find((f) => f.key === k)?.type;
+        // "Sim/Não" vira verdadeiro/falso de verdade; o banco guarda sim/não, não texto.
+        if (tipo === "sim") return [k, v === true || v === "true"];
+        if (v === "" || v === "none") return [k, null];
+        return [k, tipo === "number" ? Number(v) : v];
+      }),
     );
     onSave(cleaned);
   };

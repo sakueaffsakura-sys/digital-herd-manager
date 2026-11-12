@@ -1,0 +1,112 @@
+name: Pacote da hospedagem
+# Gera o site compilado para servidor Node (e não para a Cloudflare), pronto para subir
+# no cPanel. O resultado fica como "artefato" desta execução, para baixar e enviar por FTP.
+#
+# Roda sozinho nos ramos claude/** e no main, e também pelo botão "Run workflow".
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main", "claude/**"]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "hospedagem/**"
+      - "package.json"
+      - "bun.lock"
+      - "vite.config.ts"
+      - ".github/workflows/hospedagem.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hospedagem-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  empacotar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Compilar para servidor Node
+        id: build
+        run: |
+          set -o pipefail
+          # Os valores públicos do navegador. Se o repositório tiver variáveis próprias, elas mandam.
+          set -a; . ./hospedagem/publico.env; set +a
+          [ -n "${{ vars.VITE_SUPABASE_URL }}" ] && export VITE_SUPABASE_URL='${{ vars.VITE_SUPABASE_URL }}'
+          [ -n "${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}" ] && export VITE_SUPABASE_PUBLISHABLE_KEY='${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}'
+
+          # O nome do alvo "servidor Node" mudou entre versões do nitro. Tenta os nomes conhecidos
+          # até sair um servidor de verdade, em vez de assumir um e falhar sem explicação.
+          for alvo in node-server node_server node; do
+            echo "::group::Tentando o alvo $alvo"
+            rm -rf .output
+            if NITRO_PRESET="$alvo" SERVER_PRESET="$alvo" bun run build 2>&1 | tee "build-$alvo.log"; then
+              if [ -f .output/server/index.mjs ]; then
+                echo "alvo=$alvo" >> "$GITHUB_OUTPUT"
+                echo "::endgroup::"
+                echo "Compilado com o alvo $alvo."
+                exit 0
+              fi
+              echo "O alvo $alvo compilou mas não gerou .output/server/index.mjs:"
+              find .output -maxdepth 2 -type f | head -20
+            fi
+            echo "::endgroup::"
+          done
+          echo "Nenhum alvo de servidor Node funcionou. Fim dos registros:"
+          tail -40 build-*.log
+          exit 1
+
+      - name: Conferir o que saiu
+        run: |
+          test -f .output/server/index.mjs || { echo "Faltou o servidor."; exit 1; }
+          test -d .output/public || { echo "Faltaram os arquivos do navegador."; exit 1; }
+          # O servidor não pode ter ficado com código da Cloudflare dentro.
+          if grep -rl "cloudflare:workers\|__STATIC_CONTENT" .output/server >/dev/null 2>&1; then
+            echo "O servidor saiu com código da Cloudflare dentro."; exit 1
+          fi
+          echo "Servidor: $(du -sh .output/server | cut -f1) · Navegador: $(du -sh .output/public | cut -f1)"
+
+      - name: Subir o servidor e conferir se ele responde
+        run: |
+          PORT=3000 PROXIES_CONFIAVEIS=1 node .output/server/index.mjs > servidor.log 2>&1 &
+          SERVIDOR=$!
+          for i in $(seq 1 40); do
+            sleep 1
+            CODIGO=$(curl -s -o resposta.html -w '%{http_code}' http://127.0.0.1:3000/ || true)
+            [ "$CODIGO" = "200" ] && break
+          done
+          echo "Resposta da página inicial: $CODIGO"
+          echo "--- registros do servidor ---"; tail -30 servidor.log || true
+          kill $SERVIDOR 2>/dev/null || true
+          [ "$CODIGO" = "200" ] || { echo "A página inicial não abriu."; head -40 resposta.html; exit 1; }
+          grep -qi "pecuária\|<!DOCTYPE html" resposta.html || { echo "A resposta não parece a página do site."; exit 1; }
+
+      - name: Montar o pacote
+        run: |
+          rm -rf pacote && mkdir -p pacote
+          cp -r .output/server pacote/server
+          cp -r .output/public pacote/public
+          cp hospedagem/app.js pacote/app.js
+          cp hospedagem/LEIA-ME.txt pacote/LEIA-ME.txt
+          # O Passenger do cPanel lê o package.json da pasta do aplicativo.
+          cat > pacote/package.json <<'JSON'
+          { "name": "pecuaria-digital", "private": true, "type": "commonjs", "main": "app.js" }
+          JSON
+          cd pacote && zip -qr ../pecuaria-digital-hospedagem.zip . && cd ..
+          echo "Pacote: $(du -h pecuaria-digital-hospedagem.zip | cut -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pecuaria-digital-hospedagem
+          path: pecuaria-digital-hospedagem.zip
+          retention-days: 30

@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Download, LoaderCircle, Smartphone, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
+import { armazem } from "@/lib/arquivos";
 import { diaBR } from "@/lib/datas";
 import { qrParaSvg } from "@/lib/qr";
 import { PageTitle } from "../shared";
@@ -18,7 +19,7 @@ export function useAppAndroid() {
     queryKey: ["app-android"],
     staleTime: 10 * 60_000,
     queryFn: async (): Promise<AppAndroid | null> => {
-      const { data, error } = await supabase.from("configuracoes_sistema").select("valor").eq("chave", CHAVE_APP).maybeSingle();
+      const { data, error } = await dados.from("configuracoes_sistema").select("valor").eq("chave", CHAVE_APP).maybeSingle();
       if (error) throw error;
       if (!data?.valor) return null;
       try {
@@ -63,7 +64,7 @@ export default function Aplicativo() {
     if (!app.data) return;
     setBaixando(true);
     try {
-      const { data, error } = await supabase.storage.from("aplicativo").createSignedUrl(app.data.arquivo, 300, { download: `apecuaria-digital-${app.data.versao}.apk` });
+      const { data, error } = await armazem.from("aplicativo").createSignedUrl(app.data.arquivo, 300, { download: `apecuaria-digital-${app.data.versao}.apk` });
       if (error || !data?.signedUrl) throw new Error("O arquivo não está disponível agora. Avise o suporte.");
       window.location.href = data.signedUrl;
     } catch (e) {

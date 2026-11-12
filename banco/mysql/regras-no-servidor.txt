@@ -1,0 +1,3 @@
+# Regras que o MySQL não aceita guardar e que o servidor precisa conferir ao gravar.
+animais animais_mae_dif mae_id IS NULL OR mae_id <> id
+animais animais_pai_dif pai_id IS NULL OR pai_id <> id

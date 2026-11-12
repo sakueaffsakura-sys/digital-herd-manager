@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { clienteDoSite, dentroDoLimite, EMAIL_VALIDO, falha, ipDe, lerCorpo, origemSegura, resposta } from "@/lib/conta.server";
 import { motivoSenhaFraca } from "@/lib/senha";
+import { BANCO_NOVO } from "@/lib/dados";
+import { criarConta } from "@/lib/conta/cadastro.server";
 
 type Corpo = { nome?: unknown; email?: unknown; senha?: unknown; site?: unknown; inicio?: unknown };
 
@@ -23,6 +25,15 @@ export const Route = createFileRoute("/api/public/conta/cadastro")({
         if (fraca) return falha(400, fraca);
         const ip = ipDe(request);
         if (!(await dentroDoLimite(`cad-ip:${ip}`, 5, 3600))) return falha(429, "Muitos cadastros deste aparelho. Tente de novo daqui a uma hora.");
+        if (BANCO_NOVO) {
+          const feito = await criarConta(request, nome, email, senha);
+          // A resposta é a mesma para e-mail novo e para e-mail que já tem conta: contar a
+          // diferença entregaria quem tem conta aqui. Quem já tinha recebe um aviso por
+          // e-mail explicando o que fazer.
+          if ("jaExistia" in feito) return resposta(200, { confirmar: true });
+          return resposta(200, { sessao: { access_token: feito.token, refresh_token: feito.token } }, { "set-cookie": feito.cookie });
+        }
+
         const { data, error } = await clienteDoSite().auth.signUp({
           email, password: senha, options: { data: { nome_completo: nome }, emailRedirectTo: `${origemSegura(request)}/` },
         });

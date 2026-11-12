@@ -10,10 +10,11 @@ import {
   ShoppingCart, Syringe, Trash2, TrendingUp, Upload, Warehouse,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { supabaseDinamico } from "@/lib/supabaseDinamico";
 import { formatarDataBR } from "@/lib/datas";
-import { loadFormRefs } from "./formRefs";
+import { chaveDeReferencias, loadFormRefs, tabelasDeReferencia } from "./formRefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,7 @@ import { BarraTopo } from "./casca/BarraTopo";
 import { BarraInferior } from "./casca/BarraInferior";
 import { BuscaGlobal } from "./casca/BuscaGlobal";
 import { filtrarMenu } from "./casca/navegacao";
+import { MODULOS_APLICATIVO, SECOES_APLICATIVO } from "./modulos-aplicativo";
 import { SegurancaPage } from "./conta/Seguranca";
 
 const Dashboard = lazy(() => import("./Dashboard"));
@@ -53,6 +55,7 @@ const Aplicativo = lazy(() => import("./aplicativo/Aplicativo"));
 const Ajuda = lazy(() => import("./ajuda/Ajuda"));
 
 const modules: Record<string, Module> = {
+  ...MODULOS_APLICATIVO,
   rebanho: { title: "Meu rebanho", singular: "animal", novo: "Novo animal", primeiro: "Cadastrar o primeiro animal", table: "animais", icon: HerdIcon, description: "Todos os animais, com brinco, lote e situação. Toque num animal para ver a ficha.", searchColumns: ["numero_brinco","nome","raca"], columns: [{key:"numero_brinco",label:"Brinco"},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo"},{key:"raca",label:"Raça"},{key:"situacao",label:"Situação"}], fields: [
     {key:"numero_brinco",label:"Número do brinco",required:true},{key:"nome",label:"Nome"},{key:"sexo",label:"Sexo",type:"select",required:true,options:[{value:"F",label:"Fêmea"},{value:"M",label:"Macho"}]},{key:"raca",label:"Raça"},{key:"data_nascimento",label:"Data de nascimento",type:"date"},{key:"lote_id",label:"Lote",type:"lote"},{key:"mae_id",label:"Mãe",type:"animal",sex:"F"},{key:"pai_id",label:"Pai",type:"animal",sex:"M"},{key:"situacao",label:"Situação",type:"select",required:true,options:[["ativo","Ativo"],["vendido","Vendido"],["perdido","Perdido"],["falecido","Morto"],["transferido","Transferido"]].map(([value,label])=>({value,label}))},{key:"observacoes",label:"Observações",type:"textarea"}
   ]},
@@ -67,7 +70,7 @@ const modules: Record<string, Module> = {
 
 const vaccineTypes: Module = { title:"Tipos de vacina", singular:"tipo de vacina", novo:"Novo tipo de vacina", primeiro:"Cadastrar a primeira vacina", table:"tipos_vacinas", icon:ShieldCheck, description:"As vacinas que você usa e de quantos em quantos dias repetir.", searchColumns:["nome"], columns:[{key:"nome",label:"Nome"},{key:"intervalo_dias",label:"Intervalo (dias)"},{key:"descricao",label:"Descrição"},{key:"ativo",label:"Status"}], fields:[{key:"nome",label:"Nome",required:true},{key:"intervalo_dias",label:"Intervalo em dias",type:"number"},{key:"descricao",label:"Descrição",type:"textarea"}]};
 
-const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "indicadores", "ferramentas", "biblioteca", "assinatura", "aplicativo", "ajuda", "perfil", "perfil-propriedade", "seguranca", "diagnostico"]);
+const IMPLEMENTADAS = new Set(["inicio", "agenda", "rebanho", "lotes", "bezerros", "vacinacao", "inseminacao", "nascimentos", "producao", "financeiro", "comercial", "relatorios", "indicadores", "ferramentas", "biblioteca", "assinatura", "aplicativo", "ajuda", "perfil", "perfil-propriedade", "seguranca", "diagnostico", ...SECOES_APLICATIVO]);
 const GRUPOS = filtrarMenu((chave) => IMPLEMENTADAS.has(chave));
 const GRUPOS_LATERAL = filtrarMenu((chave) => IMPLEMENTADAS.has(chave), { lateral: true });
 const CHAVE_PROPRIEDADE = "pd-propriedade";
@@ -84,8 +87,8 @@ export function ApecuariaApp() {
   const [propertyDialog, setPropertyDialog] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
 
-  const userQuery = useQuery({ queryKey: ["session-user"], queryFn: async () => { const cached = await supabase.auth.getSession(); if (cached.data.session?.user) return cached.data.session.user; const { data, error } = await supabase.auth.getUser(); if (error) throw error; return data.user; } });
-  const propertiesQuery = useQuery({ queryKey: ["properties", userQuery.data?.id], enabled: !!userQuery.data, queryFn: async () => { const { data, error } = await supabase.from("propriedades").select("*").eq("ativo", true).order("created_at"); if (error) throw error; return data; } });
+  const userQuery = useQuery({ queryKey: ["session-user"], queryFn: async () => { const cached = await sessao.getSession(); if (cached.data.session?.user) return cached.data.session.user; const { data, error } = await sessao.getUser(); if (error) throw error; return data.user; } });
+  const propertiesQuery = useQuery({ queryKey: ["properties", userQuery.data?.id], enabled: !!userQuery.data, queryFn: async () => { const { data, error } = await dados.from("propriedades").select("*").eq("ativo", true).order("created_at"); if (error) throw error; return data; } });
   const setPropertyId = (id: string) => { setPropertyIdState(id); try { localStorage.setItem(CHAVE_PROPRIEDADE, id); } catch { /* só nesta visita */ } };
   useEffect(() => {
     const lista = propertiesQuery.data;
@@ -101,13 +104,13 @@ export function ApecuariaApp() {
   const abrirRegistro = (secao: string, id: string) => navigate({ to: "/app/$section", params: { section: secao }, search: { editar: id } });
   const abrirAnimal = (id: string) => navigate({ to: "/app/$section", params: { section: "rebanho" }, search: { animal: id } });
   const limparBusca = () => navigate({ to: "/app/$section", params: { section }, search: {}, replace: true });
-  const isAdminQuery = useQuery({ queryKey: ["sou-admin"], queryFn: async () => { const r = await (supabase.rpc as unknown as (f: string) => Promise<{ data: unknown }>)("sou_admin"); return r.data === true; } });
-  const signOut = async () => { await queryClient.cancelQueries(); queryClient.clear(); await supabase.auth.signOut(); navigate({ to: "/", replace: true }); };
+  const isAdminQuery = useQuery({ queryKey: ["sou-admin"], queryFn: async () => { const r = await (dados.rpc as unknown as (f: string) => Promise<{ data: unknown }>)("sou_admin"); return r.data === true; } });
+  const signOut = async () => { await queryClient.cancelQueries(); queryClient.clear(); await sessao.signOut(); navigate({ to: "/", replace: true }); };
   const pedido = { novo: busca.novo, editar: busca.editar, animal: busca.animal, anotacao: busca.anotacao, limpar: limparBusca };
 
   const secaoPropriedade = ["perfil-propriedade", "configuracoes", "assinatura", "diagnostico"].includes(section) || !["perfil", "seguranca"].includes(section);
   let conteudo: ReactNode;
-  if (section === "perfil") conteudo = userQuery.data?.id ? <MyProfilePage userId={userQuery.data.id} email={userQuery.data.email} /> : <SectionLoading />;
+  if (section === "perfil") conteudo = userQuery.data?.id ? <MyProfilePage userId={userQuery.data.id} email={userQuery.data.email ?? undefined} /> : <SectionLoading />;
   else if (section === "seguranca") conteudo = userQuery.data ? <SegurancaPage email={userQuery.data.email ?? ""} /> : <SectionLoading />;
   else if (section === "aplicativo") conteudo = <Suspense fallback={<SectionLoading />}><Aplicativo /></Suspense>;
   else if (section === "ajuda") conteudo = <Suspense fallback={<SectionLoading />}><Ajuda propriedadeId={propertyId} /></Suspense>;
@@ -152,7 +155,7 @@ export function ApecuariaApp() {
           aoSair={() => void signOut()}
           aoSobre={() => setAboutOpen(true)}
           userId={userQuery.data?.id}
-          email={userQuery.data?.email}
+          email={userQuery.data?.email ?? undefined}
           ehAdmin={isAdminQuery.data === true}
         />
         <main id="conteudo" tabIndex={-1} data-tour="conteudo" className="mx-auto w-full max-w-[1400px] px-4 pb-28 pt-5 outline-none sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
@@ -223,7 +226,7 @@ function PropertyDialog({ open, userId, onClose, onCreated }: { open: boolean; u
     e.preventDefault();
     if (!userId || salvando) return;
     setSalvando(true);
-    const { data, error } = await supabase.from("propriedades").insert({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null, proprietario_id: userId }).select("id").single();
+    const { data, error } = await dados.from("propriedades").insert({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null, proprietario_id: userId }).select("id").single();
     setSalvando(false);
     if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Propriedade cadastrada.");
@@ -288,7 +291,8 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
     return bag;
   }, [config, filterValues, dateMode, dateValue]);
   useEffect(() => { setPage(1); }, [search, filterValues, pageSize, dateMode, dateValue]);
-  const refs = useQuery({ queryKey: ["form-refs", propertyId], queryFn: () => loadFormRefs(propertyId), staleTime: 5 * 60_000 });
+  const extrasRef = useMemo(() => tabelasDeReferencia(config.fields), [config]);
+  const refs = useQuery({ queryKey: ["form-refs", propertyId, chaveDeReferencias(extrasRef)], queryFn: () => loadFormRefs(propertyId, extrasRef), staleTime: 5 * 60_000 });
   const invalidateRelated = () => {
     const related: Record<string, string[]> = { animais: ["animais", "form-refs", "dashboard", "reports", "agenda", "avisos"], vacinacoes: ["form-refs", "dashboard", "agenda", "avisos"], tipos_vacinas: ["form-refs"], inseminacoes: ["dashboard", "agenda", "avisos"], nascimentos: ["animais", "form-refs", "dashboard", "reports"], lotes: ["form-refs", "animais", "dashboard"], producao_leite: ["dashboard", "reports", "avisos"], movimentacoes_financeiras: ["dashboard", "reports"], compras: ["movimentacoes_financeiras", "dashboard", "reports"], vendas: ["movimentacoes_financeiras", "dashboard", "reports"], pesagens: ["animal-history", "agenda", "avisos"], anotacoes_producao: ["animal-history"] };
     qc.invalidateQueries({ queryKey: [config.table, propertyId] });
@@ -330,8 +334,14 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
   }, [pedidoNovo, pedidoEditar, pedidoAnimal]);
 
   const animalRef = (value: unknown) => refs.data?.animals.find((x) => x.id === value);
+  const campoDe = (key: string) => config.fields.find((f) => f.key === key);
   const lookup = (key: string, value: unknown): ReactNode => {
     if (value == null || value === "") return "—";
+    const campo = campoDe(key);
+    // Cadastro ligado (pasto, máquina, item de estoque…): mostra o nome, não o identificador.
+    if (campo?.type === "ref") return refs.data?.extras?.[campo.refTabela ?? ""]?.find((x) => x.id === value)?.nome || "—";
+    if (campo?.moeda) return money(value);
+    if (campo?.type === "date") return formatarDataBR(value);
     if (key.includes("animal") || key === "vaca_id" || key === "bezerro_id") {
       const a = animalRef(value);
       if (!a) return "—";
@@ -348,9 +358,9 @@ function CrudModule({ config, propertyId, globalSearch, pedido }: { config: Modu
   };
   const render = (row: Row, col: { key: string }) =>
     col.key === "numero_brinco" ? <Brinco tamanho="pequeno" valor={String(row[col.key] ?? "—")} />
-      : col.key === "situacao" || col.key === "tipo" ? <Status value={String(row[col.key])} />
+      : col.key === "situacao" || col.key === "tipo" || col.key === "status" ? <Status value={String(row[col.key])} />
         : lookup(col.key, row[col.key]);
-  const paged = usePagedRows({ table: config.table, propertyId, cols: selectCols, page, pageSize, search, searchColumns: config.searchColumns, filters });
+  const paged = usePagedRows({ table: config.table, propertyId, cols: selectCols, page, pageSize, search, searchColumns: config.searchColumns, filters, ordem: config.ordem, ordemCrescente: config.ordemCrescente });
   useEffect(() => { if (!paged.totalReady) return; const last = Math.max(1, Math.ceil(paged.total / pageSize)); if (page > last) setPage(last); }, [paged.total, paged.totalReady, pageSize, page]);
   const acoes = (row: Row): AcaoLinha[] => [
     ...(config.table === "animais" ? [{ rotulo: "Ver ficha", icone: FileText, aoClicar: () => setDetails(row) }] : []),
@@ -465,12 +475,12 @@ function AnimalDetails({ open, animal, propertyId, refs, onClose }: { open: bool
     enabled: open && !!animalId,
     queryFn: async () => {
       const [weights, vaccines, inseminations, milk, notes, children] = await Promise.all([
-        supabase.from("pesagens").select("id,data,peso_kg,observacoes").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        supabase.from("vacinacoes").select("id,data_aplicacao,proxima_aplicacao,tipo_vacina_id,responsavel").eq("animal_id", animalId).order("data_aplicacao", { ascending: false }),
-        supabase.from("inseminacoes").select("id,data_inseminacao,previsao_parto,situacao,reprodutor_semen").eq("animal_id", animalId).order("data_inseminacao", { ascending: false }),
-        supabase.from("producao_leite").select("id,data,litros,valor_total").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        supabase.from("anotacoes_producao").select("id,data,observacao,producao").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
-        supabase.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).or(`mae_id.eq.${animalId},pai_id.eq.${animalId}`).order("data_nascimento", { ascending: false }),
+        dados.from("pesagens").select("id,data,peso_kg,observacoes").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
+        dados.from("vacinacoes").select("id,data_aplicacao,proxima_aplicacao,tipo_vacina_id,responsavel").eq("animal_id", animalId).order("data_aplicacao", { ascending: false }),
+        dados.from("inseminacoes").select("id,data_inseminacao,previsao_parto,situacao,reprodutor_semen").eq("animal_id", animalId).order("data_inseminacao", { ascending: false }),
+        dados.from("producao_leite").select("id,data,litros,valor_total").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
+        dados.from("anotacoes_producao").select("id,data,observacao,producao").eq("animal_id", animalId).order("data", { ascending: false }).limit(200),
+        dados.from("animais").select("id,nome,numero_brinco,data_nascimento,sexo,situacao").eq("propriedade_id", propertyId).qualquerIgual([{ coluna: "mae_id", valor: animalId }, { coluna: "pai_id", valor: animalId }]).order("data_nascimento", { ascending: false }),
       ]);
       const error = [weights, vaccines, inseminations, milk, notes, children].find((r) => r.error)?.error;
       if (error) throw error;
@@ -575,7 +585,7 @@ function SettingsPage({ property, onUpdated }: { property: Database["public"]["T
     e.preventDefault();
     if (!property || salvando) return;
     setSalvando(true);
-    const { error } = await supabase.from("propriedades").update({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null }).eq("id", property.id);
+    const { error } = await dados.from("propriedades").update({ nome: name.trim(), cidade: city.trim() || null, estado: state.trim().toUpperCase() || null }).eq("id", property.id);
     setSalvando(false);
     if (error) toast.error(friendlyError(error));
     else { toast.success("Dados da propriedade salvos."); onUpdated(); }

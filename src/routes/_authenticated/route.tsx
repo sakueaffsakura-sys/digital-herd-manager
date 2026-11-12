@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { lerEstadoManutencao, secaoBloqueada, TelaManutencao, useEstadoManutencao } from "@/components/app/Manutencao";
 
 function VerificandoSessao() {
@@ -19,10 +20,10 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   pendingComponent: VerificandoSessao,
   beforeLoad: async ({ location }) => {
-    const cached = await supabase.auth.getSession();
+    const cached = await sessao.getSession();
     let user = cached.data.session?.user ?? null;
     if (!user) {
-      const { data, error } = await supabase.auth.getUser();
+      const { data, error } = await sessao.getUser();
       if (error || !data.user) {
         const volta = encodeURIComponent(location.href);
         throw redirect({ to: "/", search: { motivo: "sessao-expirada", redirect: volta } });
@@ -30,13 +31,13 @@ export const Route = createFileRoute("/_authenticated")({
       user = data.user;
     }
     // Conta com verificação em duas etapas: sem o código, volta para a tela de entrar pedir o código.
-    const nivel = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const nivel = await sessao.mfa.getAuthenticatorAssuranceLevel();
     if (nivel.data && nivel.data.nextLevel === "aal2" && nivel.data.currentLevel !== "aal2") {
       throw redirect({ to: "/", search: { motivo: "duas-etapas" } });
     }
-    const { data: perfil } = await supabase.from("profiles").select("bloqueado").eq("id", user.id).maybeSingle();
+    const { data: perfil } = await dados.from("profiles").select("bloqueado").eq("id", user.id).maybeSingle();
     if ((perfil as { bloqueado?: boolean } | null)?.bloqueado) {
-      await supabase.auth.signOut();
+      await sessao.signOut();
       throw redirect({ to: "/", search: { motivo: "conta-bloqueada" } });
     }
     const manutencao = location.pathname === "/admin" ? null : await lerEstadoManutencao();
@@ -54,7 +55,7 @@ function AreaLogada() {
   useEffect(() => {
     const ping = () => {
       if (document.visibilityState !== "visible") return;
-      void supabase.from("presenca_usuarios").upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current }).then(({ error }) => {
+      void dados.from("presenca_usuarios").upsert({ user_id: user.id, visto_em: new Date().toISOString(), pagina: paginaRef.current }).then(({ error }) => {
         if (error) console.warn("Não foi possível atualizar a presença do usuário.");
       });
     };

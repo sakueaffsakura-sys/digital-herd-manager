@@ -17,7 +17,8 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/lib/dados";
+import { armazem } from "@/lib/arquivos";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,7 +119,7 @@ export async function getSignedUrl(
   const key = `${bucket}/${path}`;
   const hit = urlCache.get(key);
   if (hit && hit.expires > Date.now() + ttl * 1000 * 0.15) return hit.url;
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, ttl);
+  const { data, error } = await armazem.from(bucket).createSignedUrl(path, ttl);
   if (error || !data?.signedUrl) throw error ?? new Error("URL da imagem indisponível.");
   urlCache.set(key, { url: data.signedUrl, expires: Date.now() + ttl * 1000 });
   return data.signedUrl;
@@ -167,7 +168,7 @@ export async function uploadWithProgress(opts: {
   onProgress?: (percent: number) => void;
 }): Promise<void> {
   opts.onProgress?.(10);
-  const { error } = await supabase.storage
+  const { error } = await armazem
     .from(opts.bucket)
     .upload(opts.path, opts.blob, {
       upsert: true,
@@ -178,7 +179,7 @@ export async function uploadWithProgress(opts: {
 }
 
 async function removeStorageObject(bucket: ImageBucket, path: string): Promise<void> {
-  const { error } = await supabase.storage.from(bucket).remove([path]);
+  const { error } = await armazem.from(bucket).remove([path]);
   if (error) throw error;
 }
 
@@ -280,7 +281,7 @@ export function useMyProfile(userId?: string) {
     enabled: !!userId,
     queryFn: async (): Promise<ProfileRow | null> => {
       if (!userId) return null;
-      const response = await supabase
+      const response = await dados
         .from("profiles")
         .select("*")
         .eq("id", userId)
@@ -289,11 +290,11 @@ export function useMyProfile(userId?: string) {
       const error = response.error;
       if (error) throw error;
       if (!data) {
-        const { error: insErr } = await supabase
+        const { error: insErr } = await dados
           .from("profiles")
           .insert({ id: userId } as never);
         if (insErr) throw insErr;
-        const res = await supabase
+        const res = await dados
           .from("profiles")
           .select("*")
           .eq("id", userId)
@@ -312,7 +313,7 @@ export function usePropertyProfile(propertyId: string | null) {
     enabled: !!propertyId,
     queryFn: async (): Promise<PropertyProfileRow | null> => {
       if (!propertyId) return null;
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("propriedade_perfil")
         .select("*")
         .eq("propriedade_id", propertyId)
@@ -329,7 +330,7 @@ export function usePlan(propertyId: string | null) {
     enabled: !!propertyId,
     queryFn: async (): Promise<PlanView> => {
       if (!propertyId) return PLANO_GRATUITO;
-      const { data, error } = await supabase.rpc("minha_assinatura", {
+      const { data, error } = await dados.rpc("minha_assinatura", {
         _propriedade_id: propertyId,
       });
       if (error) {
@@ -348,7 +349,7 @@ export function useCanManagePlans() {
   return useQuery({
     queryKey: ["can-manage-plans"],
     queryFn: async (): Promise<boolean> => {
-      const { data, error } = await supabase.rpc("pode_gerenciar_planos");
+      const { data, error } = await dados.rpc("pode_gerenciar_planos");
       if (error) return false;
       return !!data;
     },
@@ -360,7 +361,7 @@ export function useAudit(propertyId: string) {
     queryKey: ["plan-audit", propertyId],
     enabled: !!propertyId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("plano_auditoria")
         .select("*")
         .eq("propriedade_id", propertyId)
@@ -382,7 +383,7 @@ export function useSetPlanDemo(propertyId: string) {
       dataExpiracao?: string | null;
       motivo?: string | null;
     }) => {
-      const { data, error } = await supabase.rpc("setar_plano_demonstracao", {
+      const { data, error } = await dados.rpc("setar_plano_demonstracao", {
         _propriedade_id: propertyId,
         _plano: args.plano,
         _status: args.status,
@@ -404,7 +405,7 @@ export function useCancelPlanDemo(propertyId: string) {
   return useMutation({
     mutationKey: ["cancel-plan-demo", propertyId],
     mutationFn: async (motivo?: string) => {
-      const { data, error } = await supabase.rpc("cancelar_plano_demonstracao", {
+      const { data, error } = await dados.rpc("cancelar_plano_demonstracao", {
         _propriedade_id: propertyId,
         _motivo: motivo ?? undefined,
       });
@@ -556,7 +557,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
       toast.error(res.motivo);
       return;
     }
-    const { error } = await supabase.from("profiles").update({ avatar_url: res.path }).eq("id", userId);
+    const { error } = await dados.from("profiles").update({ avatar_url: res.path }).eq("id", userId);
     if (error) {
       toast.error(friendlyError(error));
       return;
@@ -568,7 +569,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
   const removeAvatar = async () => {
     const current = p?.avatar_url;
     if (!current) return;
-    const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", userId);
+    const { error } = await dados.from("profiles").update({ avatar_url: null }).eq("id", userId);
     if (error) {
       toast.error(friendlyError(error));
       return;
@@ -593,7 +594,7 @@ export function MyProfilePage({ userId, email }: { userId: string; email?: strin
       return;
     }
     setSaving(true);
-    const { error } = await supabase
+    const { error } = await dados
       .from("profiles")
       .update({
         nome_completo: nomeLimp,
@@ -753,19 +754,19 @@ export function PropertyProfilePage({ propertyId }: { propertyId: string }) {
   }, [p]);
 
   const upsert = async (patch: Partial<PropertyProfileRow>) => {
-    const { data: existing } = await supabase
+    const { data: existing } = await dados
       .from("propriedade_perfil")
       .select("id")
       .eq("propriedade_id", propertyId)
       .maybeSingle();
     if (existing) {
-      const { error } = await supabase
+      const { error } = await dados
         .from("propriedade_perfil")
         .update(patch)
         .eq("id", existing.id);
       return error;
     }
-    const { error } = await supabase.from("propriedade_perfil").insert({
+    const { error } = await dados.from("propriedade_perfil").insert({
       propriedade_id: propertyId,
       ...patch,
     } as never);

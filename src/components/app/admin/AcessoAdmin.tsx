@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { plural } from "@/lib/texto";
 
 type Estado = { nivel: string; tenho: boolean; exigir: boolean; admins: { email: string; tem_2fa: boolean; eu: boolean }[] };
@@ -25,10 +26,10 @@ export function AcessoAdmin() {
     queryKey: ["admin-2fa"],
     queryFn: async (): Promise<Estado> => {
       const [fatores, nivel, conf, admins] = await Promise.all([
-        supabase.auth.mfa.listFactors(),
-        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-        supabase.from("configuracoes_sistema").select("valor").eq("chave", "exigir_2fa_admin").maybeSingle(),
-        supabase.rpc("admin_2fa_resumo"),
+        sessao.mfa.listFactors(),
+        sessao.mfa.getAuthenticatorAssuranceLevel(),
+        dados.from("configuracoes_sistema").select("valor").eq("chave", "exigir_2fa_admin").maybeSingle(),
+        dados.rpc("admin_2fa_resumo"),
       ]);
       if (admins.error) throw admins.error;
       return {
@@ -45,7 +46,7 @@ export function AcessoAdmin() {
 
   const mudar = async (ligar: boolean) => {
     setSalvando(true);
-    const { error } = await supabase.rpc("admin_exigir_2fa", { _ligar: ligar });
+    const { error } = await dados.rpc("admin_exigir_2fa", { _ligar: ligar });
     setSalvando(false);
     setConfirmar(false);
     if (error) { toast.error(error.message || "Não foi possível mudar a regra."); return; }

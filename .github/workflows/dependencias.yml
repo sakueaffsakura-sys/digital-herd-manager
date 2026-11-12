@@ -1,0 +1,40 @@
+name: Dependências
+# Atualiza o bun.lock quando o package.json muda. O ambiente de desenvolvimento não
+# alcança o registro de pacotes, então quem resolve as versões é esta rotina.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: ["package.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependencias-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  travar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Resolver as versões
+        run: bun install
+      - name: Guardar o bun.lock se ele mudou
+        run: |
+          if git diff --quiet -- bun.lock; then
+            echo "bun.lock já estava certo."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bun.lock
+          git commit -m "bun.lock: versões resolvidas pela rotina de dependências"
+          git push origin HEAD:${{ github.ref_name }}

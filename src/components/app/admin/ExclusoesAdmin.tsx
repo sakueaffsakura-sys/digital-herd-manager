@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { sessao } from "@/lib/conta";
+import { dados } from "@/lib/dados";
 import { dataNoFuso, diaBR } from "@/lib/datas";
 import { plural } from "@/lib/texto";
 
@@ -27,7 +28,7 @@ function Confirmar({ pedido, aoFechar }: { pedido: Pedido; aoFechar: () => void 
   const concluir = async () => {
     setEnviando(true);
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = (await sessao.getSession()).data.session?.access_token;
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
       const r = await fetch("/api/admin/exclusao", {
         method: "POST",
@@ -80,7 +81,7 @@ export function ExclusoesAdmin() {
     queryKey: ["admin-exclusoes"],
     refetchInterval: 60_000,
     queryFn: async (): Promise<Pedido[]> => {
-      const { data, error } = await supabase.from("solicitacoes_exclusao").select("id,user_id,email,motivo,status,criado_em,prazo,concluida_em").order("criado_em", { ascending: false }).limit(200);
+      const { data, error } = await dados.from("solicitacoes_exclusao").select("id,user_id,email,motivo,status,criado_em,prazo,concluida_em").order("criado_em", { ascending: false }).limit(200);
       if (error) throw error;
       return data ?? [];
     },

@@ -36,9 +36,29 @@ export function allowRequest(key: string, max: number, windowMs: number, blockMs
 }
 
 /**
- * IP de quem chamou. Só o cabeçalho da Cloudflare é confiável: x-forwarded-for e x-real-ip podem ser
- * escritos pelo próprio cliente e serviriam para escapar do limite trocando o "IP" a cada pedido.
+ * Quantos servidores nossos ficam na frente do site (o servidor web da hospedagem conta como um).
+ * Serve para achar o IP verdadeiro sem acreditar no que o cliente escreve. Zero = ninguém na frente.
+ */
+const proxiesConfiaveis = () => Math.max(0, Math.trunc(Number(process.env["PROXIES_CONFIAVEIS"] ?? "1")) || 0);
+
+/**
+ * IP de quem chamou, usado para o limite de requisições.
+ *
+ * O cliente pode escrever qualquer coisa em x-forwarded-for, então ler o primeiro endereço da lista
+ * deixaria qualquer um trocar de "IP" a cada pedido e escapar do limite. Mas o servidor que está na
+ * nossa frente *acrescenta* o endereço real no fim da lista. Contando de trás para frente a
+ * quantidade de servidores nossos, chega-se ao endereço que o cliente não tem como forjar.
+ *
+ * Atrás da Cloudflare, o cabeçalho dela resolve direto.
  */
 export function clientIp(request: Request): string {
-  return request.headers.get("cf-connecting-ip")?.trim() || "desconhecido";
+  const cf = request.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
+  const nossos = proxiesConfiaveis();
+  if (nossos > 0) {
+    const lista = (request.headers.get("x-forwarded-for") ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+    const ip = lista[lista.length - nossos];
+    if (ip) return ip;
+  }
+  return "desconhecido";
 }
