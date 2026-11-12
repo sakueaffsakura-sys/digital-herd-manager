@@ -117,6 +117,23 @@ Quando estiver tudo no ar e conferido, o `boooh.sbs` passa a apontar para a hosp
 nova. Esse é o passo que troca o site de lugar de verdade, então deixe por último — e me
 avise antes, para eu conferir que não ficou nada para trás.
 
+> **Atenção, e isto é o mais importante deste documento.**
+>
+> O aplicativo que está nos celulares hoje (APK 7.4) fala direto com o banco antigo, não
+> com o site. Depois da virada ele **não dá erro**: continua lendo e gravando no banco
+> velho, que ninguém mais olha. Quem anotar um nascimento no pasto vai ver "salvo" e aquilo
+> nunca vai chegar ao site.
+>
+> Por isso a virada tem uma ordem:
+>
+> 1. eu termino o aplicativo novo e te mando o APK;
+> 2. você instala nos celulares que usam o aplicativo;
+> 3. só então aponta o domínio.
+>
+> Se preferir apontar o domínio antes, me avise: eu fecho o banco antigo para gravação no
+> mesmo momento, e aí o aplicativo antigo passa a dar erro na cara de quem usa. Errar alto
+> é ruim; errar calado é pior.
+
 ---
 
 ## Uma decisão sua
